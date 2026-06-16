@@ -65,7 +65,7 @@ export default function HomePage() {
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-12">
       {/* Header + countdown */}
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-extrabold text-gc-gold">Liekkipoika Kesäkisa 2026</h1>
+        <h1 className="text-4xl font-extrabold text-gc-green">Liekkipoika Kesäkisa 2026</h1>
         <p className="text-gray-500">Golf Company</p>
         <div className="flex justify-center gap-4 mt-4">
           {[
@@ -100,7 +100,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex-1 font-medium text-white">{entry.player.full_name}</div>
                 <div className="text-sm text-gray-500">{entry.rounds_played} kierr.</div>
-                <div className="text-gc-gold font-bold text-lg w-14 text-right">
+                <div className="text-gc-green font-bold text-lg w-14 text-right">
                   {entry.total_points} p
                 </div>
               </Link>

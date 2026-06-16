@@ -75,7 +75,7 @@ export default function AdminCards() {
                     {r.course?.name} · {new Date(r.played_date).toLocaleDateString('fi-FI')}
                   </div>
                 </div>
-                <div className="text-gc-gold font-bold shrink-0">{r.total_points}p</div>
+                <div className="text-gc-green font-bold shrink-0">{r.total_points}p</div>
               </button>
             ))}
           </div>

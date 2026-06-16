@@ -63,7 +63,7 @@ export default function PersonalDashboard() {
           { value: totalCourses - coursesPlayed, label: 'Kenttää jäljellä', gold: false },
         ].map(({ value, label, gold }) => (
           <div key={label} className="card p-4 text-center">
-            <div className={`text-3xl font-bold ${gold ? 'text-gc-gold' : 'text-white'}`}>{value}</div>
+            <div className={`text-3xl font-bold ${gold ? 'text-gc-green' : 'text-white'}`}>{value}</div>
             <div className="text-xs text-gray-500 mt-1">{label}</div>
           </div>
         ))}
@@ -109,7 +109,7 @@ export default function PersonalDashboard() {
                     {new Date(r.played_date).toLocaleDateString('fi-FI')}
                   </div>
                 </div>
-                <div className="text-gc-gold font-bold text-xl">{r.total_points} p</div>
+                <div className="text-gc-green font-bold text-xl">{r.total_points} p</div>
               </div>
             ))}
           </div>

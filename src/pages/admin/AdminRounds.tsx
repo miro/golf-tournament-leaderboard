@@ -71,14 +71,14 @@ export default function AdminRounds() {
                   {r.correction_note && ` · ${r.correction_note}`}
                 </div>
               </div>
-              <div className="text-gc-gold font-bold shrink-0">{r.total_points}p</div>
+              <div className="text-gc-green font-bold shrink-0">{r.total_points}p</div>
               <button
                 onClick={() => handleToggleStatus(r)}
                 className={`text-xs px-2 py-1 rounded-full shrink-0 ${
                   r.status === 'published'
                     ? 'bg-gc-green/20 text-gc-green'
                     : r.status === 'corrected'
-                    ? 'bg-gc-gold/20 text-gc-gold'
+                    ? 'bg-gc-gold/20 text-gc-green'
                     : 'bg-gray-700 text-gray-400'
                 }`}
               >

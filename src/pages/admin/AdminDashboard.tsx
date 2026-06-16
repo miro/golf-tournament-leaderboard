@@ -40,7 +40,7 @@ export default function AdminDashboard() {
           <div className="text-xs text-gray-500 mt-1">Kierrosta</div>
         </div>
         <div className="card p-4 text-center col-span-2">
-          <div className="text-xl font-bold text-gc-gold truncate">
+          <div className="text-xl font-bold text-gc-green truncate">
             {leader ? `${leader.player.full_name} (${leader.total_points}p)` : '–'}
           </div>
           <div className="text-xs text-gray-500 mt-1">Johtaja</div>
@@ -62,13 +62,13 @@ export default function AdminDashboard() {
                   <span className="text-white font-medium">{r.player?.full_name}</span>
                   <span className="text-gray-500"> · {r.course?.name}</span>
                 </div>
-                <div className="text-gc-gold font-bold">{r.total_points}p</div>
+                <div className="text-gc-green font-bold">{r.total_points}p</div>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
                     r.status === 'published'
                       ? 'bg-gc-green/20 text-gc-green'
                       : r.status === 'corrected'
-                      ? 'bg-gc-gold/20 text-gc-gold'
+                      ? 'bg-gc-gold/20 text-gc-green'
                       : 'bg-gray-700 text-gray-400'
                   }`}
                 >
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
               <div className="w-6 text-gray-400 font-bold shrink-0">{entry.rank}</div>
               <div className="flex-1 text-white">{entry.player.full_name}</div>
               <div className="text-gray-500">{entry.rounds_played} kierr.</div>
-              <div className="text-gc-gold font-bold">{entry.total_points}p</div>
+              <div className="text-gc-green font-bold">{entry.total_points}p</div>
             </div>
           ))}
           {leaderboard.length === 0 && (

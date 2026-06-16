@@ -34,7 +34,7 @@ export default function RoundCard({ round, rank, totalPlayers, compact }: Props)
           <div className="font-semibold text-white truncate">{round.player?.full_name}</div>
           <div className="text-sm text-gray-400">{round.course?.name} · {date}</div>
         </div>
-        <div className="text-gc-gold font-bold text-xl">{round.total_points}</div>
+        <div className="text-gc-green font-bold text-xl">{round.total_points}</div>
         {rankEmoji && <div className="text-xl">{rankEmoji}</div>}
       </div>
     )
@@ -58,7 +58,7 @@ export default function RoundCard({ round, rank, totalPlayers, compact }: Props)
         <div className="flex items-end gap-6 flex-wrap">
           <div>
             <div className="text-xs text-gray-500 uppercase tracking-wider">Pisteet</div>
-            <div className="text-gc-gold font-bold text-4xl">{round.total_points}</div>
+            <div className="text-gc-green font-bold text-4xl">{round.total_points}</div>
           </div>
           {rank && totalPlayers && (
             <div>

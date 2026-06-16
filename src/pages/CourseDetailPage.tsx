@@ -62,7 +62,7 @@ export default function CourseDetailPage() {
           <div className="text-xs text-gray-500 mt-1">Kierroksia</div>
         </div>
         <div className="card p-4 text-center">
-          <div className="text-2xl font-bold text-gc-gold">{leader?.total_points ?? '–'}</div>
+          <div className="text-2xl font-bold text-gc-green">{leader?.total_points ?? '–'}</div>
           <div className="text-xs text-gray-500 mt-1">Paras tulos</div>
         </div>
       </div>

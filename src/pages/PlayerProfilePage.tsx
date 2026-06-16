@@ -50,7 +50,7 @@ export default function PlayerProfilePage() {
       {entry && (
         <div className="grid grid-cols-3 gap-3 mb-8">
           <div className="card p-4 text-center">
-            <div className="text-2xl font-bold text-gc-gold">{entry.rank}</div>
+            <div className="text-2xl font-bold text-gc-green">{entry.rank}</div>
             <div className="text-xs text-gray-500 mt-1">Sijoitus</div>
           </div>
           <div className="card p-4 text-center">

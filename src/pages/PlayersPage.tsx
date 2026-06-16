@@ -32,11 +32,11 @@ export default function PlayersPage() {
             to={`/player/${entry.player.slug}`}
             className="flex items-center gap-4 px-4 py-4 hover:bg-white/5 transition-colors group"
           >
-            <div className="w-8 h-8 rounded-full bg-gc-dark border border-white/10 flex items-center justify-center text-sm font-bold text-gc-gold shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gc-dark border border-white/10 flex items-center justify-center text-sm font-bold text-gc-green shrink-0">
               {entry.rank}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-white group-hover:text-gc-gold transition-colors">
+              <div className="font-medium text-white group-hover:text-gc-green transition-colors">
                 {entry.player.full_name}
               </div>
               <div className="text-sm text-gray-500">
@@ -44,7 +44,7 @@ export default function PlayersPage() {
                 {entry.rounds_played} kierr.
               </div>
             </div>
-            <div className="text-gc-gold font-bold text-xl">{entry.total_points} p</div>
+            <div className="text-gc-green font-bold text-xl">{entry.total_points} p</div>
           </Link>
         ))}
       </div>

@@ -15,11 +15,16 @@ export default function AdminLayout() {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) navigate('/admin', { replace: true })
-      setChecking(false)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate('/admin', { replace: true })
+      } else {
+        setChecking(false)
+      }
     })
-  }, [navigate])
+    return () => subscription.unsubscribe()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (checking) {
     return (
@@ -31,8 +36,8 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-gc-dark flex">
-      <aside className="w-56 bg-gc-card border-r border-white/5 flex flex-col p-4 gap-1 shrink-0">
-        <div className="text-gc-gold font-bold text-base mb-5">⛳ GC Admin</div>
+      <aside className="w-56 bg-gc-card border-r border-white/8 flex flex-col p-4 gap-1 shrink-0">
+        <div className="text-gc-green font-black text-base mb-5 tracking-wide">GC ADMIN</div>
         {links.map(l => (
           <NavLink
             key={l.to}

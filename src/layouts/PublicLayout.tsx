@@ -11,26 +11,31 @@ const navItems = [
 export default function PublicLayout() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-40 bg-gc-dark/95 backdrop-blur border-b border-white/10">
+      {/* Nike-style stripe bar */}
+      <div className="stripe-bar">
+        <span /><span /><span /><span />
+      </div>
+
+      <header className="sticky top-0 z-40 bg-gc-dark/95 backdrop-blur border-b border-white/8">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
-          <NavLink to="/" className="flex items-center gap-2">
-            <span className="text-gc-gold text-xl">⛳</span>
-            <span className="font-bold text-white text-sm hidden sm:block">
+          <NavLink to="/" className="flex items-center gap-2.5">
+            <span className="text-gc-green text-lg font-black tracking-tight">GC</span>
+            <span className="font-bold text-white text-sm hidden sm:block tracking-wide">
               Liekkipoika 2026
             </span>
           </NavLink>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-0.5">
             {navItems.map(({ to, label, end }) => (
               <NavLink
                 key={to}
                 to={to}
                 end={end}
                 className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-gc-green text-white'
-                      : 'text-white/60 hover:text-white hover:bg-white/10'
+                      ? 'bg-gc-green text-gc-dark font-bold'
+                      : 'text-gc-muted hover:text-white hover:bg-white/8'
                   }`
                 }
               >
@@ -41,11 +46,11 @@ export default function PublicLayout() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+      <main className="flex-1">
         <Outlet />
       </main>
 
-      <footer className="border-t border-white/10 py-6 text-center text-white/30 text-xs">
+      <footer className="border-t border-white/8 py-6 text-center text-gc-muted text-xs">
         Golf Company — Liekkipoika Kesäkisa 2026
       </footer>
     </div>

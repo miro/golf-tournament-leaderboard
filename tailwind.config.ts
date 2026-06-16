@@ -6,10 +6,14 @@ export default {
     extend: {
       colors: {
         gc: {
-          green: '#2D6A4F',
-          gold: '#D4AF37',
-          dark: '#0F1A0F',
-          card: '#1A2E1A',
+          dark:     '#17130F',   // warm near-black
+          card:     '#221D17',   // warm dark brown
+          green:    '#E8A820',   // amber — primary accent
+          gold:     '#E05218',   // burnt orange — secondary
+          red:      '#C12820',   // brick red
+          burgundy: '#8A1C38',   // dark burgundy
+          cream:    '#F0E8D0',   // off-white accent
+          muted:    '#9A8870',   // warm muted text
         },
       },
       fontFamily: {
