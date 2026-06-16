@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { getCurrentSeason, getRecentRounds, getLeaderboard, getCourses } from '../../lib/queries'
-import type { RoundWithDetails, LeaderboardEntry, Course } from '../../lib/database.types'
+import { getCurrentSeason, getRecentRounds, getLeaderboard, getCourses, getActivePlayers, getHoleResultsForRounds } from '../../lib/queries'
+import type { RoundWithDetails, LeaderboardEntry, Course, HoleResult } from '../../lib/database.types'
 import RoundCard from '../../components/RoundCard'
 
 export default function AdminCards() {
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [courses, setCourses] = useState<Course[]>([])
+  const [activePlayerCount, setActivePlayerCount] = useState<number | undefined>()
+  const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
   const [selected, setSelected] = useState<RoundWithDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -18,9 +20,20 @@ export default function AdminCards() {
         getLeaderboard(season.id),
         getCourses(),
       ])
+      const [activePlayers, holeResults] = await Promise.all([
+        getActivePlayers(),
+        getHoleResultsForRounds(allRounds.map(r => r.id)),
+      ])
       setRounds(allRounds)
       setLeaderboard(lb)
       setCourses(c)
+      setActivePlayerCount(activePlayers.length)
+      const hrMap: Record<string, HoleResult[]> = {}
+      for (const hr of holeResults) {
+        hrMap[hr.round_id] = hrMap[hr.round_id] ?? []
+        hrMap[hr.round_id].push(hr)
+      }
+      setHoleResultsByRound(hrMap)
     }
     load().catch(console.error).finally(() => setLoading(false))
   }, [])
@@ -76,6 +89,8 @@ export default function AdminCards() {
                 leaderboard={leaderboard}
                 seasonCourses={courses}
                 allRounds={rounds}
+                holeResults={holeResultsByRound[selected.id]}
+                activePlayerCount={activePlayerCount}
               />
             </div>
           ) : (

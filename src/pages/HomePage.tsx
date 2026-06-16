@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getCurrentSeason, getLeaderboard, getSeasonCourses, getRecentRounds } from '../lib/queries'
-import type { LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
+import { getCurrentSeason, getLeaderboard, getSeasonCourses, getRecentRounds, getActivePlayers, getHoleResultsForRounds } from '../lib/queries'
+import type { LeaderboardEntry, RoundWithDetails, HoleResult } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
 
 function useCountdown(deadline: string) {
@@ -28,6 +28,8 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [courses, setCourses] = useState<CourseInfo[]>([])
   const [recentRounds, setRecentRounds] = useState<RoundWithDetails[]>([])
+  const [activePlayerCount, setActivePlayerCount] = useState<number | undefined>()
+  const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
   const [deadline, setDeadline] = useState('2026-08-31')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,6 +44,10 @@ export default function HomePage() {
         getSeasonCourses(season.id),
         getRecentRounds(season.id, 3),
       ])
+      const [activePlayers, holeResults] = await Promise.all([
+        getActivePlayers(),
+        getHoleResultsForRounds(rounds.map(r => r.id)),
+      ])
       setLeaderboard(lb)
       setCourses(
         sc.map(c => {
@@ -50,6 +56,13 @@ export default function HomePage() {
         }),
       )
       setRecentRounds(rounds)
+      setActivePlayerCount(activePlayers.length)
+      const hrMap: Record<string, HoleResult[]> = {}
+      for (const hr of holeResults) {
+        hrMap[hr.round_id] = hrMap[hr.round_id] ?? []
+        hrMap[hr.round_id].push(hr)
+      }
+      setHoleResultsByRound(hrMap)
     }
     load().catch(() => setError('Tietoja ei voitu ladata')).finally(() => setLoading(false))
   }, [])
@@ -168,6 +181,8 @@ export default function HomePage() {
                 round={round}
                 rank={leaderboard.find(e => e.player.id === round.player_id)?.rank}
                 leaderboard={leaderboard}
+                holeResults={holeResultsByRound[round.id]}
+                activePlayerCount={activePlayerCount}
                 showCaption={false}
               />
             ))}

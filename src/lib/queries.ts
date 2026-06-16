@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Season, Course, Player, LeaderboardEntry, RoundWithDetails } from './database.types'
+import type { Season, Course, Player, LeaderboardEntry, RoundWithDetails, HoleResult } from './database.types'
 
 export async function getCurrentSeason(): Promise<Season> {
   const { data, error } = await supabase
@@ -142,6 +142,16 @@ export async function getCourseRounds(courseId: string, seasonId: string): Promi
     player: Array.isArray(r.player) ? r.player[0] : r.player,
     course: Array.isArray(r.course) ? r.course[0] : r.course,
   }))
+}
+
+export async function getHoleResultsForRounds(roundIds: string[]): Promise<HoleResult[]> {
+  if (roundIds.length === 0) return []
+  const { data, error } = await supabase
+    .from('hole_results')
+    .select('*')
+    .in('round_id', roundIds)
+  if (error) throw error
+  return (data ?? []) as unknown as HoleResult[]
 }
 
 export function generateWhatsAppText(

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { getCurrentSeason, getLeaderboard, getRecentRounds, getCourses } from '../lib/queries'
-import type { Course, LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
+import { getCurrentSeason, getLeaderboard, getRecentRounds, getCourses, getActivePlayers, getHoleResultsForRounds } from '../lib/queries'
+import type { Course, LeaderboardEntry, RoundWithDetails, HoleResult } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
 
 export default function FeedPage() {
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [courses, setCourses] = useState<Course[]>([])
+  const [activePlayerCount, setActivePlayerCount] = useState<number | undefined>()
+  const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -17,9 +19,20 @@ export default function FeedPage() {
         getLeaderboard(season.id),
         getCourses(),
       ])
+      const [activePlayers, holeResults] = await Promise.all([
+        getActivePlayers(),
+        getHoleResultsForRounds(r.map(x => x.id)),
+      ])
       setRounds(r)
       setLeaderboard(lb)
       setCourses(c)
+      setActivePlayerCount(activePlayers.length)
+      const hrMap: Record<string, HoleResult[]> = {}
+      for (const hr of holeResults) {
+        hrMap[hr.round_id] = hrMap[hr.round_id] ?? []
+        hrMap[hr.round_id].push(hr)
+      }
+      setHoleResultsByRound(hrMap)
     }
     load().catch(console.error).finally(() => setLoading(false))
   }, [])
@@ -43,6 +56,8 @@ export default function FeedPage() {
               leaderboard={leaderboard}
               seasonCourses={courses}
               allRounds={rounds}
+              holeResults={holeResultsByRound[round.id]}
+              activePlayerCount={activePlayerCount}
             />
           ))}
         </div>

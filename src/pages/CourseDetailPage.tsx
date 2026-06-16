@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { getCourseBySlug, getCourseRounds, getCurrentSeason, getLeaderboard, getCourses } from '../lib/queries'
-import type { Course, LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
+import { getCourseBySlug, getCourseRounds, getCurrentSeason, getLeaderboard, getCourses, getActivePlayers, getHoleResultsForRounds } from '../lib/queries'
+import type { Course, LeaderboardEntry, RoundWithDetails, HoleResult } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
 
 const COURSE_HERO: Record<string, string> = {
@@ -17,6 +17,8 @@ export default function CourseDetailPage() {
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [allCourses, setAllCourses] = useState<Course[]>([])
+  const [activePlayerCount, setActivePlayerCount] = useState<number | undefined>()
+  const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
@@ -29,10 +31,21 @@ export default function CourseDetailPage() {
         getLeaderboard(season.id),
         getCourses(),
       ])
+      const [activePlayers, holeResults] = await Promise.all([
+        getActivePlayers(),
+        getHoleResultsForRounds(courseRounds.map(r => r.id)),
+      ])
       setCourse(c)
       setRounds(courseRounds)
       setLeaderboard(lb)
       setAllCourses(ac)
+      setActivePlayerCount(activePlayers.length)
+      const hrMap: Record<string, HoleResult[]> = {}
+      for (const hr of holeResults) {
+        hrMap[hr.round_id] = hrMap[hr.round_id] ?? []
+        hrMap[hr.round_id].push(hr)
+      }
+      setHoleResultsByRound(hrMap)
     }
     load()
       .catch(() => setNotFound(true))
@@ -115,6 +128,8 @@ export default function CourseDetailPage() {
               leaderboard={leaderboard}
               seasonCourses={allCourses}
               allRounds={rounds}
+              holeResults={holeResultsByRound[r.id]}
+              activePlayerCount={activePlayerCount}
               showCaption={false}
             />
           ))}

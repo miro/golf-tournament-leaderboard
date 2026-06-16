@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { getPlayerBySlug, getCurrentSeason, getPlayerRounds, getLeaderboard } from '../lib/queries'
-import type { Player, LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
+import { getPlayerBySlug, getCurrentSeason, getPlayerRounds, getLeaderboard, getActivePlayers, getHoleResultsForRounds } from '../lib/queries'
+import type { Player, LeaderboardEntry, RoundWithDetails, HoleResult } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
 
 export default function PlayerProfilePage() {
@@ -10,6 +10,8 @@ export default function PlayerProfilePage() {
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [entry, setEntry] = useState<LeaderboardEntry | null>(null)
+  const [activePlayerCount, setActivePlayerCount] = useState<number | undefined>()
+  const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
@@ -21,10 +23,21 @@ export default function PlayerProfilePage() {
         getPlayerRounds(p.id, season.id),
         getLeaderboard(season.id),
       ])
+      const [activePlayers, holeResults] = await Promise.all([
+        getActivePlayers(),
+        getHoleResultsForRounds(playerRounds.map(r => r.id)),
+      ])
       setPlayer(p)
       setRounds(playerRounds)
       setLeaderboard(lb)
       setEntry(lb.find(e => e.player.id === p.id) ?? null)
+      setActivePlayerCount(activePlayers.length)
+      const hrMap: Record<string, HoleResult[]> = {}
+      for (const hr of holeResults) {
+        hrMap[hr.round_id] = hrMap[hr.round_id] ?? []
+        hrMap[hr.round_id].push(hr)
+      }
+      setHoleResultsByRound(hrMap)
     }
     load()
       .catch(() => setNotFound(true))
@@ -75,6 +88,8 @@ export default function PlayerProfilePage() {
               round={r}
               rank={entry?.rank}
               leaderboard={leaderboard}
+              holeResults={holeResultsByRound[r.id]}
+              activePlayerCount={activePlayerCount}
               showCaption={false}
             />
           ))}
