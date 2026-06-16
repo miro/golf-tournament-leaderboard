@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom'
 import { getCourses, getCurrentSeason, getLeaderboard } from '../lib/queries'
 import type { Course, LeaderboardEntry } from '../lib/database.types'
 
+const COURSE_HERO: Record<string, string> = {
+  kajaani: '/course-hero-kag.jpg',
+  paltamo: '/course-hero-paltamo.jpg',
+  nuas:    '/course-hero-nuas.jpg',
+  tenetti: '/course-hero-tenetti.jpg',
+}
+
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
@@ -32,23 +39,35 @@ export default function CoursesPage() {
             <Link
               key={course.id}
               to={`/courses/${course.slug}`}
-              className="card p-5 hover:border-gc-green/40 transition-colors group"
+              className="card overflow-hidden hover:border-gc-green/40 transition-colors group"
             >
-              <div className="flex items-start gap-3">
+              {/* Hero image banner */}
+              <div className="relative h-36 overflow-hidden">
+                {COURSE_HERO[course.slug ?? ''] ? (
+                  <img
+                    src={COURSE_HERO[course.slug ?? '']}
+                    alt={course.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gc-card" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-gc-card via-gc-card/20 to-transparent" />
                 <div
-                  className="w-3 h-3 rounded-full mt-1.5 shrink-0"
+                  className="absolute bottom-2 left-3 w-2.5 h-2.5 rounded-full ring-2 ring-white/20"
                   style={{ background: course.color_hex ?? '#2D6A4F' }}
                 />
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-white group-hover:text-gc-gold transition-colors">
-                    {course.name}
-                  </div>
-                  <div className="text-sm text-gray-400 mt-0.5">
-                    {course.location_city} · Par {course.par_total}
-                  </div>
-                  <div className="text-xs text-gray-600 mt-2">
-                    {playedCount}/{leaderboard.length} pelaajaa pelannut
-                  </div>
+              </div>
+              {/* Card content */}
+              <div className="px-4 py-3">
+                <div className="font-bold text-white group-hover:text-gc-gold transition-colors">
+                  {course.name}
+                </div>
+                <div className="text-sm text-gray-400 mt-0.5">
+                  {course.location_city} · Par {course.par_total}
+                </div>
+                <div className="text-xs text-gray-600 mt-1.5">
+                  {playedCount}/{leaderboard.length} pelaajaa pelannut
                 </div>
               </div>
             </Link>

@@ -8,8 +8,8 @@ export default function PlayerProfilePage() {
   const { slug } = useParams<{ slug: string }>()
   const [player, setPlayer] = useState<Player | null>(null)
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [entry, setEntry] = useState<LeaderboardEntry | null>(null)
-  const [totalPlayers, setTotalPlayers] = useState(0)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
@@ -23,8 +23,8 @@ export default function PlayerProfilePage() {
       ])
       setPlayer(p)
       setRounds(playerRounds)
+      setLeaderboard(lb)
       setEntry(lb.find(e => e.player.id === p.id) ?? null)
-      setTotalPlayers(lb.length)
     }
     load()
       .catch(() => setNotFound(true))
@@ -68,13 +68,14 @@ export default function PlayerProfilePage() {
       {rounds.length === 0 ? (
         <div className="card p-8 text-center text-gray-500">Ei kierroksia vielä</div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-8">
           {rounds.map(r => (
             <RoundCard
               key={r.id}
               round={r}
               rank={entry?.rank}
-              totalPlayers={totalPlayers}
+              leaderboard={leaderboard}
+              showCaption={false}
             />
           ))}
         </div>

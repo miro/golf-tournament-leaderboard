@@ -161,14 +161,14 @@ export default function HomePage() {
               Kaikki →
             </Link>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-8">
             {recentRounds.map(round => (
               <RoundCard
                 key={round.id}
                 round={round}
                 rank={leaderboard.find(e => e.player.id === round.player_id)?.rank}
-                totalPlayers={leaderboard.length}
-                compact
+                leaderboard={leaderboard}
+                showCaption={false}
               />
             ))}
           </div>
