@@ -3,7 +3,8 @@ import { getCurrentSeason, getActivePlayers, getCourses } from '../../lib/querie
 import { supabase } from '../../lib/supabase'
 import type { Player, Course } from '../../lib/database.types'
 
-const GAMEBOOK_PROMPT = `You are processing a GameBook golf scorecard screenshot for the Golf Company Liekkipoika Kesäkisa 2026 tournament admin system.
+function buildPrompt(playerName: string): string {
+  return `You are processing a GameBook golf scorecard screenshot for the Golf Company Liekkipoika Kesäkisa 2026 tournament admin system.
 
 Return ONLY the following block, nothing else — no preamble, no markdown code fences, no explanation:
 
@@ -12,9 +13,18 @@ hcp: [player HCP as number]
 total_points: [total stableford points as integer]
 total_strokes: [total raw strokes as integer]
 to_par: [strokes relative to par, e.g. -3 or +5]
-summary: [2-4 sentence match summary in Finnish, sports broadcaster tone,
-enthusiastic but factual, player first name only after first mention,
-highlight best holes, collapses, front/back nine contrast]
+summary: [Exactly 3 sentences in Finnish. Casual but sharp tone — like a knowledgeable friend reporting to a WhatsApp group. Player name is ${playerName}, use first name only after first mention.
+
+Sentence 1: The overall result — total points and the general character of the round in one sentence.
+Sentence 2: The most interesting specific moment — best hole, a collapse, front/back nine contrast, or a streak. Must reference a specific hole number or sequence.
+Sentence 3: A punchy concluding verdict on the round. Factual — no opinion on tournament standings or what the result means for the competition.
+
+Summary rules:
+- Exactly 3 sentences, no more no less
+- Never mention tournament position, standings, or rivals
+- Never use filler without a specific fact attached — forbidden phrases: "vahva kokonaisuus", "tasainen kierros", "hieno suoritus"
+- Emojis: only 📈 or ✍️ permitted, maximum one total, only if it genuinely adds something — default is no emoji
+- No exclamation marks]
 
 CSV:
 hole,par,stroke_index,strokes_played,hcp_strokes,points
@@ -25,10 +35,13 @@ hole,par,stroke_index,strokes_played,hcp_strokes,points
 ---END---
 
 Rules:
-- to_par: negative number if under par (e.g. -3), positive if over par
+- IMPORTANT: The screenshot must be from the "Pistebogey NET" tab in GameBook, not "Lyöntipeli NET". If the data you are reading appears to be stroke play (no points column, or points values that look like raw strokes), add this line to the output block before ---END---:
+  warning: LYÖNTIPELI — tarkista välilehti
+- to_par: negative number if under par (e.g. -3), positive if over
 - If any hole value is missing or illegible, write NULL for that value
 - CSV must have exactly 18 data rows, one per hole
 - Do not add any extra fields or change the order`
+}
 
 interface ParsedHole {
   hole: number | null
@@ -46,6 +59,7 @@ interface LLMParseResult {
   totalStrokes: string | null
   toPar: string | null
   summary: string | null
+  warning: string | null
   holes: ParsedHole[]
 }
 
@@ -56,7 +70,7 @@ function parseLLMResponse(text: string): LLMParseResult {
   const endIdx = text.indexOf(END)
 
   if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
-    return { found: false, hcp: null, totalPoints: null, totalStrokes: null, toPar: null, summary: null, holes: [] }
+    return { found: false, hcp: null, totalPoints: null, totalStrokes: null, toPar: null, summary: null, warning: null, holes: [] }
   }
 
   const block = text.slice(startIdx + START.length, endIdx)
@@ -67,6 +81,7 @@ function parseLLMResponse(text: string): LLMParseResult {
   let totalStrokes: string | null = null
   let toPar: string | null = null
   let summary: string | null = null
+  let warning: string | null = null
   const holes: ParsedHole[] = []
   type Mode = 'header' | 'summary' | 'csv'
   let mode: Mode = 'header'
@@ -109,6 +124,7 @@ function parseLLMResponse(text: string): LLMParseResult {
     else if (trimmed.startsWith('total_points:')) { totalPoints = trimmed.slice(13).trim() }
     else if (trimmed.startsWith('total_strokes:')) { totalStrokes = trimmed.slice(14).trim() }
     else if (trimmed.startsWith('to_par:')) { toPar = trimmed.slice(7).trim().replace(/^\+/, '') }
+    else if (trimmed.startsWith('warning:')) { warning = trimmed.slice(8).trim() }
     else if (trimmed.startsWith('summary:')) {
       mode = 'summary'
       const first = trimmed.slice(8).trim()
@@ -118,7 +134,7 @@ function parseLLMResponse(text: string): LLMParseResult {
 
   if (mode === 'summary') summary = summaryLines.join('\n').trim()
 
-  return { found: true, hcp, totalPoints, totalStrokes, toPar, summary, holes }
+  return { found: true, hcp, totalPoints, totalStrokes, toPar, summary, warning, holes }
 }
 
 function rowBg(points: number | null): string {
@@ -166,7 +182,10 @@ export default function AdminSubmit() {
     load().catch(console.error)
   }, [])
 
-  // Derived parse state (computed each render)
+  // Derived values (computed each render)
+  const selectedPlayer = players.find(p => p.id === playerId) ?? null
+  const promptText = selectedPlayer ? buildPrompt(selectedPlayer.full_name) : null
+
   const parseResult = llmPaste.trim() ? parseLLMResponse(llmPaste) : null
   const parsedHoles = parseResult?.found ? parseResult.holes : []
   const llmSourced = parseResult?.found === true
@@ -235,11 +254,12 @@ export default function AdminSubmit() {
   const fieldCls = (_val: string) => llmSourced ? parsedCls : base
   const fieldPlaceholder = (val: string) => llmSourced && !val ? 'Tarkista manuaalisesti' : ''
 
+  const llmWarning = parseResult?.warning ?? null
   const missingRequired = !playerId || !courseId || !playedDate || !totalPoints
   const csvPasted = parseResult?.found === true
   const csvInvalid = csvPasted && (parsedHoles.length !== 18 || parsedHoles.some(h => h.points === null))
-  const saveDisabled = submitting || missingRequired || csvInvalid
-  const saveHint = missingRequired ? 'Täytä pakolliset kentät' : csvInvalid ? 'Tarkista CSV ennen tallennusta' : null
+  const saveDisabled = submitting || missingRequired || csvInvalid || !!llmWarning
+  const saveHint = llmWarning ? 'Väärä välilehti — korjaa ensin' : missingRequired ? 'Täytä pakolliset kentät' : csvInvalid ? 'Tarkista CSV ennen tallennusta' : null
 
   const calcPoints = parsedHoles.reduce((s, h) => s + (h.points ?? 0), 0)
   const calcStrokes = parsedHoles.reduce((s, h) => s + (h.strokes_played ?? 0), 0)
@@ -308,19 +328,33 @@ export default function AdminSubmit() {
               </div>
             </details>
 
-            <div className="relative rounded-md border border-white/10 overflow-hidden">
-              <pre className="bg-black/20 p-3 pr-28 text-xs text-gray-400 font-mono whitespace-pre-wrap leading-relaxed max-h-24 overflow-hidden">
-                {GAMEBOOK_PROMPT}
-              </pre>
-              <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-gc-card to-transparent pointer-events-none" />
+            <div
+              className="relative rounded-md border border-white/10 overflow-hidden"
+              style={{ opacity: selectedPlayer ? 1 : 0.4, transition: 'opacity 200ms' }}
+            >
+              {selectedPlayer ? (
+                <>
+                  <pre className="bg-black/20 p-3 pr-28 text-xs text-gray-400 font-mono whitespace-pre-wrap leading-relaxed max-h-24 overflow-hidden">
+                    {promptText}
+                  </pre>
+                  <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-gc-card to-transparent pointer-events-none" />
+                </>
+              ) : (
+                <div className="bg-black/20 p-3 pr-28 flex items-center justify-center" style={{ minHeight: 96 }}>
+                  <span className="text-xs text-gray-500 italic">Valitse pelaaja nähdäksesi prompt</span>
+                </div>
+              )}
               <button
                 type="button"
+                disabled={!selectedPlayer}
+                title={!selectedPlayer ? 'Valitse pelaaja ensin' : undefined}
                 onClick={async () => {
-                  await navigator.clipboard.writeText(GAMEBOOK_PROMPT)
+                  if (!promptText) return
+                  await navigator.clipboard.writeText(promptText)
                   setPromptCopied(true)
                   setTimeout(() => setPromptCopied(false), 2000)
                 }}
-                className="absolute top-2 right-2 text-xs px-2.5 py-1.5 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors whitespace-nowrap"
+                className="absolute top-2 right-2 text-xs px-2.5 py-1.5 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {promptCopied ? 'Kopioitu ✓' : 'Kopioi prompt'}
               </button>
@@ -349,6 +383,17 @@ export default function AdminSubmit() {
             )}
           </div>
         </div>
+
+        {/* ── Wrong-tab warning banner ── */}
+        {llmWarning && (
+          <div className="bg-amber-900/30 border border-amber-500/50 rounded-md px-4 py-3 flex gap-3">
+            <span className="text-amber-400 text-lg shrink-0">⚠</span>
+            <p className="text-sm text-amber-300 leading-relaxed">
+              <span className="font-bold">Väärä välilehti</span> — GameBookissa on valittuna Lyöntipeli NET.
+              Ota uusi kuvakaappaus <span className="font-bold">Pistebogey NET</span> -välilehdeltä ja aja prompt uudelleen.
+            </p>
+          </div>
+        )}
 
         {/* ── STAGE 3: Auto-populated editable fields ── */}
         <div className="grid grid-cols-2 gap-4">
@@ -450,7 +495,7 @@ export default function AdminSubmit() {
               {headerPoints !== null && (
                 pointsMatch
                   ? <span className="text-gc-green">✓ Pisteet täsmäävät</span>
-                  : <span className="text-gc-gold">⚠ Ero: CSV {calcPoints} pistettä, yhteenveto {headerPoints} pistettä</span>
+                  : <span className="text-gc-gold">⚠ Ero: CSV {calcPoints} pistettä, yhteenveto {headerPoints} pistettä — tarkista että kuvakaappaus on otettu Pistebogey NET -välilehdeltä, ei Lyöntipeli NET</span>
               )}
             </div>
           </div>

@@ -44,6 +44,7 @@ export type Database = {
           cover_photo_url: string | null
           color_hex: string | null
           website_url: string | null
+          summary_text: string | null
           latitude: number | null
           longitude: number | null
         }

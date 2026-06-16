@@ -82,46 +82,6 @@ function GapRow({ bg }: { bg: string }) {
   )
 }
 
-function buildCaption(
-  round: RoundWithDetails,
-  rank: number | undefined,
-  leaderboard: LeaderboardEntry[],
-  seasonCourses: Course[],
-): string {
-  const entry = leaderboard.find(e => e.player.id === round.player_id)
-  const leader = leaderboard[0]
-  const name = round.player?.full_name ?? ''
-  const course = round.course?.name ?? ''
-
-  const emoji = round.is_backfill ? '📅'
-    : round.total_points >= 35 ? '🔥'
-    : round.total_points >= 28 ? '⛳' : '📊'
-  const line1 = `${emoji} ${name} pelasi ${course}n — ${round.total_points} pistettä!`
-
-  const total = entry?.total_points ?? round.total_points
-  let line2 = ''
-  if (rank === 1) {
-    line2 = `Sarjan kärkeen ${total}p — muiden vuoro. 👀`
-  } else if (rank && leader) {
-    const gap = leader.total_points - total
-    line2 = `Sijalla ${rank}. Eroa kärkeen ${gap}p.`
-  }
-
-  const played = entry?.courses_played.length ?? 1
-  const total4 = seasonCourses.length || 4
-  const playedIds = new Set(entry?.courses_played ?? [])
-  const remaining = seasonCourses.filter(c => !playedIds.has(c.id))
-  let line3 = `${played}/${total4} kenttää pelattu — `
-  if (played >= total4) {
-    line3 += 'kaikki kentät pelattu! 🏁'
-  } else if (remaining.length > 0) {
-    line3 += `${remaining.map(c => c.name).join(', ')} vielä pelaamatta.`
-  } else {
-    line3 += `${total4 - played} kenttää jäljellä.`
-  }
-
-  return [line1, line2, line3, 'Sarjataulukko → gc.fi'].filter(Boolean).join('\n')
-}
 
 const BG = '#1a1a18'
 
@@ -133,7 +93,6 @@ export default function RoundCard({
 
   const color = round.course?.color_hex ?? '#2D6A4F'
   const date = fmtDate(round.played_date)
-  const captionText = buildCaption(round, rank, leaderboard, seasonCourses)
 
   // ── Player leaderboard entry ──
   const playerEntry = leaderboard.find(e => e.player.id === round.player_id)
@@ -403,20 +362,22 @@ export default function RoundCard({
         </div>
       </div>
 
-      {/* ── PART 2: Caption ── */}
-      {showCaption && (
-        <div className="mt-4 px-1">
-          <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-line">{captionText}</p>
-          <button
-            onClick={async () => {
-              await navigator.clipboard.writeText(captionText)
-              setCopied(true)
-              setTimeout(() => setCopied(false), 2000)
-            }}
-            className="mt-2 text-xs text-gray-600 hover:text-gray-300 transition-colors"
-          >
-            {copied ? 'Kopioitu ✓' : 'Kopioi kuvateksti'}
-          </button>
+      {/* ── Kuvateksti ── */}
+      {round.summary_text && (
+        <div className="mt-3 px-1">
+          <p className="text-sm text-gray-400 italic leading-relaxed">{round.summary_text}</p>
+          {showCaption && (
+            <button
+              onClick={async () => {
+                await navigator.clipboard.writeText(round.summary_text!)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }}
+              className="mt-2 text-xs text-gray-600 hover:text-gray-300 transition-colors"
+            >
+              {copied ? 'Kopioitu ✓' : 'Kopioi kuvateksti'}
+            </button>
+          )}
         </div>
       )}
     </div>

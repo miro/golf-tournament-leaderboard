@@ -100,6 +100,10 @@ export default function CourseDetailPage() {
         </div>
       )}
 
+      {course.summary_text && (
+        <p className="text-gray-400 text-sm leading-relaxed mb-6">{course.summary_text}</p>
+      )}
+
       <div className="grid grid-cols-3 gap-3 mb-8">
         <div className="card p-4 text-center">
           <div className="text-2xl font-bold text-white">{course.par_total}</div>
