@@ -15,14 +15,29 @@ export default function AdminLayout() {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
+    let fallback: ReturnType<typeof setTimeout>
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') {
+        // Auth state is known — cancel the fallback redirect
+        clearTimeout(fallback)
+        if (session) {
+          setChecking(false)
+        } else {
+          navigate('/admin', { replace: true })
+        }
+      } else if (event === 'SIGNED_OUT') {
         navigate('/admin', { replace: true })
-      } else {
-        setChecking(false)
       }
     })
-    return () => subscription.unsubscribe()
+
+    // Only fires if INITIAL_SESSION never arrives (e.g. network issue)
+    fallback = setTimeout(() => navigate('/admin', { replace: true }), 5000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(fallback)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -56,8 +71,8 @@ export default function AdminLayout() {
         <div className="mt-auto">
           <button
             onClick={async () => {
-              await supabase.auth.signOut()
-              navigate('/admin')
+              await supabase.auth.signOut({ scope: 'global' })
+              window.location.href = '/admin'
             }}
             className="w-full px-3 py-2 rounded-md text-sm text-gray-500 hover:text-white hover:bg-white/5 text-left transition-colors"
           >

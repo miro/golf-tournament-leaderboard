@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import PublicLayout from './layouts/PublicLayout'
 import AdminLayout from './layouts/AdminLayout'
 import HomePage from './pages/HomePage'
@@ -32,14 +32,15 @@ export default function App() {
       </Route>
 
       {/* Admin */}
-      <Route path="/admin" element={<AdminLogin />} />
-      <Route path="/admin/*" element={<AdminLayout />}>
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="submit" element={<AdminSubmit />} />
-        <Route path="players" element={<AdminPlayers />} />
-        <Route path="rounds" element={<AdminRounds />} />
-        <Route path="cards" element={<AdminCards />} />
-        <Route index element={<Navigate to="dashboard" replace />} />
+      <Route path="/admin">
+        <Route index element={<AdminLogin />} />
+        <Route element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="submit" element={<AdminSubmit />} />
+          <Route path="players" element={<AdminPlayers />} />
+          <Route path="rounds" element={<AdminRounds />} />
+          <Route path="cards" element={<AdminCards />} />
+        </Route>
       </Route>
     </Routes>
   )
