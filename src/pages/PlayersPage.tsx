@@ -18,7 +18,7 @@ function stblFmt(rounds_played: number, total_points: number): { text: string; c
 
 function Dots({ playedIds, courses, muted }: { playedIds: string[]; courses: CourseInfo[]; muted?: boolean }) {
   return (
-    <div className="flex items-center gap-1 shrink-0">
+    <div className="flex items-center gap-1 shrink-0 max-[480px]:hidden">
       {DOT_SLUGS.map(slug => {
         const c = courses.find(x => x.slug === slug)
         const played = !muted && c ? playedIds.includes(c.id) : false

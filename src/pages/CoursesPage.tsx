@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getCourses, getCurrentSeason, getLeaderboard } from '../lib/queries'
+import { getCourses, getCurrentSeason, getLeaderboard, getActivePlayers } from '../lib/queries'
 import type { Course, LeaderboardEntry } from '../lib/database.types'
 
 const COURSE_HERO: Record<string, string> = {
@@ -13,14 +13,16 @@ const COURSE_HERO: Record<string, string> = {
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [totalPlayers, setTotalPlayers] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       const [allCourses, season] = await Promise.all([getCourses(), getCurrentSeason()])
-      const lb = await getLeaderboard(season.id)
+      const [lb, players] = await Promise.all([getLeaderboard(season.id), getActivePlayers()])
       setCourses(allCourses)
       setLeaderboard(lb)
+      setTotalPlayers(players.length)
     }
     load().catch(console.error).finally(() => setLoading(false))
   }, [])
@@ -72,7 +74,7 @@ export default function CoursesPage() {
                   </div>
                 )}
                 <div className="text-xs text-gray-600 mt-1.5">
-                  {playedCount}/{leaderboard.length} pelaajaa pelannut
+                  {playedCount}/{totalPlayers} pelaajaa pelannut
                 </div>
               </div>
             </Link>

@@ -214,7 +214,7 @@ export default function RoundCard({
         {/* Header band — 12px top/bottom */}
         <div className="px-5 py-3 flex items-center justify-between" style={{ background: color }}>
           <div className="leading-none">
-            <div className="text-white font-extrabold text-xl uppercase" style={{ letterSpacing: '0.04em' }}>
+            <div className="text-white font-extrabold text-[22px] uppercase" style={{ letterSpacing: '0.04em' }}>
               {round.player?.full_name}
             </div>
             <div className="text-white/70 text-[13px] mt-0.5 font-sans">Liekkipoika Kesäkisa 2026</div>
@@ -236,9 +236,6 @@ export default function RoundCard({
           <div className="font-bold uppercase" style={{ color, fontSize: 34, letterSpacing: '0.06em' }}>
             {round.course?.name}
           </div>
-          {round.is_backfill && (
-            <div className="text-[11px] text-gray-600 mt-1">📅 Aiemmin pelattu</div>
-          )}
         </div>
 
         {/* Hero STBL — 16px top, 8px bottom */}
@@ -251,8 +248,8 @@ export default function RoundCard({
         {/* Gap stat — 8px top, 16px bottom */}
         {gapStat && (
           <div className="pt-2 pb-4 text-center">
-            <span className="text-[10px] uppercase text-gray-600 font-medium" style={{ letterSpacing: '0.08em' }}>{gapStat.label} </span>
-            <span className="text-[20px] font-bold" style={{ color: gapStat.positive ? color : '#E05218' }}>
+            <span className="text-[13px] uppercase text-gray-600 font-semibold" style={{ letterSpacing: '0.1em' }}>{gapStat.label} </span>
+            <span className="text-[28px] font-extrabold" style={{ color: gapStat.positive ? color : '#E05218' }}>
               {gapStat.value}
             </span>
           </div>
@@ -261,7 +258,7 @@ export default function RoundCard({
         {/* Marquee banner */}
         {marquee && (
           <div className="flex items-center justify-center" style={{ background: color, height: 36 }}>
-            <span className="text-white font-extrabold text-sm" style={{ letterSpacing: '0.08em' }}>{marquee}</span>
+            <span className="text-white font-extrabold text-[22px]" style={{ letterSpacing: '0.08em' }}>{marquee}</span>
           </div>
         )}
 
@@ -276,8 +273,8 @@ export default function RoundCard({
           <div className="grid grid-cols-4">
             {stats.map(s => (
               <div key={s.label} className="text-center">
-                <div className="text-gray-600 text-[11px] uppercase font-medium" style={{ letterSpacing: '0.1em' }}>{s.label}</div>
-                <div className="text-white font-bold mt-1" style={{ fontSize: 26 }}>{s.value}</div>
+                <div className="text-gray-600 text-[11px] uppercase font-semibold" style={{ letterSpacing: '0.1em' }}>{s.label}</div>
+                <div className="text-white font-bold mt-1" style={{ fontSize: 28 }}>{s.value}</div>
               </div>
             ))}
           </div>
@@ -286,8 +283,8 @@ export default function RoundCard({
         {/* Best hole callout — 8px top/bottom */}
         {bestHole && (
           <div className="px-6 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <span className="text-gray-600 text-[11px] uppercase font-medium" style={{ letterSpacing: '0.1em' }}>Kierroksen paras </span>
-            <span className="text-gray-400 text-[15px] font-semibold">
+            <span className="text-gray-600 text-[11px] uppercase font-semibold" style={{ letterSpacing: '0.1em' }}>Kierroksen paras </span>
+            <span className="text-gray-400 text-[16px] font-bold">
               Reikä {bestHole.hole_number} — {holeResultName ?? '?'}, {bestHole.points}p{holeEmoji ? ` ${holeEmoji}` : ''}
             </span>
           </div>
@@ -296,7 +293,7 @@ export default function RoundCard({
         {/* Section 1: Course leaderboard */}
         {courseRows.length > 0 && (
           <div className="px-6 pt-4 pb-0">
-            <div className="text-gray-600 text-[11px] uppercase font-medium mb-2" style={{ letterSpacing: '0.12em' }}>
+            <div className="text-gray-600 text-[11px] uppercase font-semibold mb-2" style={{ letterSpacing: '0.12em' }}>
               {round.course?.name} Tulokset
             </div>
             {courseRows.map((e, _i) =>
@@ -306,7 +303,7 @@ export default function RoundCard({
                         style={{ color: e.player_id === round.player_id ? color : '#6b7280' }}>
                     {e.rank}
                   </span>
-                  <span className="flex-1 text-[16px] truncate min-w-0"
+                  <span className="flex-1 text-[17px] truncate min-w-0"
                         style={{
                           color: e.player_id === round.player_id ? color : '#9ca3af',
                           fontWeight: 600,
@@ -318,7 +315,7 @@ export default function RoundCard({
                     <div className="h-full rounded-full"
                          style={{ width: `${(e.points / maxCourse) * 100}%`, background: color }} />
                   </div>
-                  <span className="w-10 text-right text-[16px] font-bold shrink-0"
+                  <span className="w-10 text-right text-[17px] font-bold shrink-0"
                         style={{ color: e.player_id === round.player_id ? color : '#6b7280' }}>
                     {e.points}p
                   </span>
@@ -336,7 +333,7 @@ export default function RoundCard({
         {/* Section 2: Overall standings */}
         {overallRows.length > 0 && (
           <div className={`px-6 pb-2 ${courseRows.length === 0 ? 'pt-3' : 'pt-0'}`}>
-            <div className="text-gray-600 text-[11px] uppercase font-medium mb-2" style={{ letterSpacing: '0.12em' }}>Sarjataulukko</div>
+            <div className="text-gray-600 text-[11px] uppercase font-semibold mb-2" style={{ letterSpacing: '0.12em' }}>Sarjataulukko</div>
             {overallRows.map((e, _i) =>
               e === 'gap' ? <GapRow key="gap-o" bg={BG} /> : (
                 <div key={e.player.id} className="flex items-center gap-2 py-1.5">
@@ -344,7 +341,7 @@ export default function RoundCard({
                         style={{ color: e.player.id === round.player_id ? color : '#6b7280' }}>
                     {e.rank}
                   </span>
-                  <span className="flex-1 text-[16px] truncate min-w-0"
+                  <span className="flex-1 text-[17px] truncate min-w-0"
                         style={{
                           color: e.player.id === round.player_id ? color : '#9ca3af',
                           fontWeight: 600,
@@ -371,7 +368,7 @@ export default function RoundCard({
                       )
                     })}
                   </div>
-                  <span className="w-10 text-right text-[16px] font-bold shrink-0"
+                  <span className="w-10 text-right text-[17px] font-bold shrink-0"
                         style={{ color: e.player.id === round.player_id ? color : '#6b7280' }}>
                     {e.total_points}p
                   </span>
