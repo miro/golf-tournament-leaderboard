@@ -65,11 +65,6 @@ function fmtDate(s: string): string {
   return `${parseInt(d)}.${parseInt(m)}.${y}`
 }
 
-function fmtToPar(n: number | null): string {
-  if (n === null) return '–'
-  if (n === 0) return '0'
-  return n > 0 ? `+${n}` : `${n}`
-}
 
 function GapRow({ bg }: { bg: string }) {
   return (
@@ -102,14 +97,14 @@ export default function RoundCard({
   // ── Marquee ──
   let marquee: string | null = null
   if (isLeading) {
-    marquee = '👑 JOHTAA SARJAA'
+    marquee = '🎩 JOHTAA SARJAA'
   } else if (allRounds) {
     const courseRounds = allRounds.filter(r => r.course_id === round.course_id)
     if (courseRounds.length > 0) {
       const best = courseRounds.reduce((b, r) => r.total_points > b.total_points ? r : b, courseRounds[0])
       if (best.player_id === round.player_id) {
         const slug = round.course?.slug ?? ''
-        marquee = `🏅 JOHTAA ${COURSE_GENITIVE[slug] ?? round.course?.name?.toUpperCase() ?? ''}`
+        marquee = `🎩 JOHTAA ${COURSE_GENITIVE[slug] ?? round.course?.name?.toUpperCase() ?? ''}`
       }
     }
   }
@@ -152,6 +147,10 @@ export default function RoundCard({
   const maxOverall = leaderboard[0]?.total_points || 1
 
   // ── Stats ──
+  const stblNet = 36 - round.total_points
+  const stblDisplay = stblNet === 0 ? 'E' : stblNet > 0 ? `+${stblNet}` : `${stblNet}`
+  const stblColor = stblNet < 0 ? '#E8453C' : '#ffffff'
+
   const sijoitusValue = rank != null
     ? (activePlayerCount ? `${rank}/${activePlayerCount}` : `${rank}.`)
     : '–'
@@ -169,46 +168,52 @@ export default function RoundCard({
         className="overflow-hidden w-full"
         style={{ background: BG, border: `2px solid ${color}`, borderRadius: 12 }}
       >
-        {/* Header band */}
-        <div className="flex items-center justify-between px-5" style={{ background: color, height: 64 }}>
+        {/* Header band — 12px top/bottom */}
+        <div className="px-5 py-3 flex items-center justify-between" style={{ background: color }}>
           <div className="leading-none">
-            <div className="text-white font-black text-xl tracking-tight">GC</div>
+            <div className="text-white font-black text-xl uppercase tracking-widest">
+              {round.player?.full_name}
+            </div>
             <div className="text-white/70 text-[11px] mt-0.5 tracking-wide">Liekkipoika Kesäkisa 2026</div>
           </div>
-          <div className="text-right leading-none">
-            {round.is_backfill && (
-              <div className="text-white/60 text-[10px] mb-1 tracking-wide">📅 Aiemmin pelattu</div>
+          <div className="text-right leading-none shrink-0 ml-3">
+            <div className="text-white/70 text-[11px] tracking-wide">{date}</div>
+            {remainingCount !== null && (
+              <div className="text-white/50 text-[10px] mt-0.5">
+                {remainingCount === 0
+                  ? 'Kaikki kentät pelattu ✅'
+                  : `${remainingCount} kenttä${remainingCount !== 1 ? 'ä' : ''} jäljellä`}
+              </div>
             )}
-            <div className="text-white font-black text-xl uppercase tracking-widest">
-              {round.course?.name}
-            </div>
           </div>
         </div>
 
-        {/* Player + Date + Courses remaining */}
-        <div className="px-6 pt-5 pb-4">
-          <div className="flex items-start justify-between">
-            <div className="font-black uppercase text-white truncate mr-4" style={{ fontSize: 22, letterSpacing: '0.12em' }}>
-              {round.player?.full_name}
-            </div>
-            <div className="text-gray-500 text-sm shrink-0 mt-0.5">{date}</div>
+        {/* Course name — 16px top, 8px bottom */}
+        <div className="px-6 pt-4 pb-2">
+          <div className="font-black uppercase" style={{ color, fontSize: 34, letterSpacing: '0.06em' }}>
+            {round.course?.name}
           </div>
-          {remainingCount !== null && (
-            <div className="text-[11px] text-gray-600 mt-1.5">
-              {remainingCount === 0
-                ? 'Kaikki kentät pelattu ✅'
-                : `${remainingCount} kenttä${remainingCount !== 1 ? 'ä' : ''} jäljellä`}
-            </div>
+          {round.is_backfill && (
+            <div className="text-[11px] text-gray-600 mt-1">📅 Aiemmin pelattu</div>
           )}
         </div>
 
-        {/* Hero +/- par */}
-        <div className="text-center pt-1 pb-5">
-          <div className="font-black leading-none tabular-nums" style={{ color, fontSize: 88 }}>
-            {fmtToPar(round.to_par)}
+        {/* Hero STBL — 16px top, 8px bottom */}
+        <div className="text-center pt-4 pb-2">
+          <div className="font-black leading-none tabular-nums" style={{ color: stblColor, fontSize: 88 }}>
+            {stblDisplay}
           </div>
-          <div className="text-gray-600 text-xs uppercase tracking-widest mt-2">+/- par</div>
         </div>
+
+        {/* Gap stat — 8px top, 16px bottom */}
+        {gapStat && (
+          <div className="pt-2 pb-4 text-center">
+            <span className="text-[10px] uppercase tracking-widest text-gray-600">{gapStat.label} </span>
+            <span className="text-[20px] font-bold" style={{ color: gapStat.positive ? color : '#E05218' }}>
+              {gapStat.value}
+            </span>
+          </div>
+        )}
 
         {/* Marquee banner */}
         {marquee && (
@@ -217,42 +222,29 @@ export default function RoundCard({
           </div>
         )}
 
-        {/* Stats row */}
+        {/* Stats row — 12px top/bottom */}
         <div
-          className="px-6 py-4"
+          className="px-6 py-3"
           style={{
             borderTop: '1px solid rgba(255,255,255,0.08)',
-            borderBottom: gapStat ? 'none' : '1px solid rgba(255,255,255,0.08)',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
           }}
         >
           <div className="grid grid-cols-4">
             {stats.map(s => (
               <div key={s.label} className="text-center">
                 <div className="text-gray-600 text-[9px] uppercase tracking-widest">{s.label}</div>
-                <div className="text-white font-bold text-lg mt-1">{s.value}</div>
+                <div className="text-white font-semibold mt-1" style={{ fontSize: 22 }}>{s.value}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Gap stat */}
-        {gapStat && (
-          <div
-            className="px-6 pt-1 pb-4 text-center"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
-          >
-            <span className="text-[10px] uppercase tracking-widest text-gray-600">{gapStat.label} </span>
-            <span className="text-sm font-bold" style={{ color: gapStat.positive ? color : '#E05218' }}>
-              {gapStat.value}
-            </span>
-          </div>
-        )}
-
-        {/* Best hole callout */}
+        {/* Best hole callout — 8px top/bottom */}
         {bestHole && (
-          <div className="px-6 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="px-6 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <span className="text-gray-600 text-[10px] uppercase tracking-widest">Kierroksen paras </span>
-            <span className="text-gray-400 text-[11px] font-medium">
+            <span className="text-gray-400 text-[15px] font-medium">
               Reikä {bestHole.hole_number} — {bestHole.strokes_played ?? '?'} lyöntiä, {bestHole.points}p{holeEmoji ? ` ${holeEmoji}` : ''}
             </span>
           </div>
@@ -260,21 +252,21 @@ export default function RoundCard({
 
         {/* Section 1: Course leaderboard */}
         {courseRows.length > 0 && (
-          <div className="px-6 pt-4 pb-2">
+          <div className="px-6 pt-4 pb-0">
             <div className="text-gray-600 text-[10px] uppercase tracking-widest mb-2">
               {round.course?.name} Tulokset
             </div>
             {courseRows.map((e, _i) =>
               e === 'gap' ? <GapRow key="gap-c" bg={BG} /> : (
-                <div key={e.player_id} className="flex items-center gap-2 mb-1.5">
-                  <span className="w-4 text-right text-[11px] font-bold shrink-0"
+                <div key={e.player_id} className="flex items-center gap-2 py-1.5">
+                  <span className="w-4 text-right text-[15px] font-semibold shrink-0"
                         style={{ color: e.player_id === round.player_id ? color : '#6b7280' }}>
                     {e.rank}
                   </span>
-                  <span className="flex-1 text-[11px] truncate min-w-0"
+                  <span className="flex-1 text-[15px] truncate min-w-0"
                         style={{
                           color: e.player_id === round.player_id ? color : '#9ca3af',
-                          fontWeight: e.player_id === round.player_id ? 700 : 400,
+                          fontWeight: e.player_id === round.player_id ? 700 : 500,
                         }}>
                     {e.player_name}
                   </span>
@@ -283,7 +275,7 @@ export default function RoundCard({
                     <div className="h-full rounded-full"
                          style={{ width: `${(e.points / maxCourse) * 100}%`, background: color }} />
                   </div>
-                  <span className="w-10 text-right text-[11px] font-bold shrink-0"
+                  <span className="w-10 text-right text-[15px] font-semibold shrink-0"
                         style={{ color: e.player_id === round.player_id ? color : '#6b7280' }}>
                     {e.points}p
                   </span>
@@ -293,26 +285,26 @@ export default function RoundCard({
           </div>
         )}
 
-        {/* Divider between sections */}
+        {/* Divider between sections — 12px gap */}
         {courseRows.length > 0 && overallRows.length > 0 && (
-          <div className="mx-6 my-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
+          <div className="mx-6 my-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
         )}
 
         {/* Section 2: Overall standings */}
         {overallRows.length > 0 && (
-          <div className="px-6 pt-2 pb-3">
+          <div className="px-6 pt-0 pb-2">
             <div className="text-gray-600 text-[10px] uppercase tracking-widest mb-2">Sarjataulukko</div>
             {overallRows.map((e, _i) =>
               e === 'gap' ? <GapRow key="gap-o" bg={BG} /> : (
-                <div key={e.player.id} className="flex items-center gap-2 mb-1.5">
-                  <span className="w-4 text-right text-[11px] font-bold shrink-0"
+                <div key={e.player.id} className="flex items-center gap-2 py-1.5">
+                  <span className="w-4 text-right text-[15px] font-semibold shrink-0"
                         style={{ color: e.player.id === round.player_id ? color : '#6b7280' }}>
                     {e.rank}
                   </span>
-                  <span className="flex-1 text-[11px] truncate min-w-0"
+                  <span className="flex-1 text-[15px] truncate min-w-0"
                         style={{
                           color: e.player.id === round.player_id ? color : '#9ca3af',
-                          fontWeight: e.player.id === round.player_id ? 700 : 400,
+                          fontWeight: e.player.id === round.player_id ? 700 : 500,
                         }}>
                     {e.player.full_name}
                   </span>
@@ -336,7 +328,7 @@ export default function RoundCard({
                       )
                     })}
                   </div>
-                  <span className="w-10 text-right text-[11px] font-bold shrink-0"
+                  <span className="w-10 text-right text-[15px] font-semibold shrink-0"
                         style={{ color: e.player.id === round.player_id ? color : '#6b7280' }}>
                     {e.total_points}p
                   </span>
@@ -346,9 +338,9 @@ export default function RoundCard({
           </div>
         )}
 
-        {/* Footer */}
+        {/* Footer — 8px top/bottom */}
         <div
-          className="px-6 py-3 flex items-center justify-center gap-2 flex-wrap"
+          className="px-6 py-2 flex items-center justify-center gap-2 flex-wrap"
           style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
         >
           <span className="text-[11px] tracking-widest" style={{ color: 'rgba(255,255,255,0.2)' }}>
@@ -356,7 +348,7 @@ export default function RoundCard({
           </span>
           {showDaysLeft && (
             <span className="text-[11px] font-medium" style={{ color: daysColor }}>
-              · {daysLeft}p jäljellä
+              · {daysLeft}pv jäljellä
             </span>
           )}
         </div>

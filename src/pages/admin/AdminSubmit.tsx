@@ -35,6 +35,7 @@ hole,par,stroke_index,strokes_played,hcp_strokes,points
 ---END---
 
 Rules:
+- Player name: always use exactly "${playerName}" as the player name in the summary. Ignore any name shown on the screenshot — the name in this prompt is the authoritative source.
 - IMPORTANT: The screenshot must be from the "Pistebogey NET" tab in GameBook, not "Lyöntipeli NET". If the data you are reading appears to be stroke play (no points column, or points values that look like raw strokes), add this line to the output block before ---END---:
   warning: LYÖNTIPELI — tarkista välilehti
 - to_par: negative number if under par (e.g. -3), positive if over
