@@ -344,7 +344,7 @@ export default function RoundCard({
           style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
         >
           <span className="text-[11px] tracking-widest" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            gc.fi · Liekkipoika Kesäkisa 2026
+            liekkipoika.com · Liekkipoika Kesäkisa 2026
           </span>
           {showDaysLeft && (
             <span className="text-[11px] font-medium" style={{ color: daysColor }}>
