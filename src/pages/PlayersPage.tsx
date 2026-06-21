@@ -97,7 +97,7 @@ export default function PlayersPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-white mb-2">Pelaajat</h1>
+      <h1 className="text-2xl font-bold text-white mb-2 font-display">Pelaajat</h1>
       <p className="text-gray-600 text-sm mb-6">
         {leaderboard.length} pelaajaa aloittanut · {totalRounds} kierrosta pelattu · {remaining} kenttäsuoritusta jäljellä
       </p>
@@ -127,10 +127,10 @@ export default function PlayersPage() {
               <RankCircle rank={entry.rank} />
 
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-white text-[15px] truncate">{entry.player.full_name}</div>
+                <div className="font-bold text-white text-[15px] truncate font-display">{entry.player.full_name}</div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-[10px] text-gray-600 uppercase tracking-wider">STBL</span>
-                  <span className="text-[13px] font-semibold tabular-nums" style={{ color: stbl.color }}>
+                  <span className="text-[13px] font-bold tabular-nums font-display" style={{ color: stbl.color }}>
                     {stbl.text}
                   </span>
                 </div>
@@ -139,7 +139,7 @@ export default function PlayersPage() {
               <Dots playedIds={entry.courses_played} courses={courses} />
 
               <div className="text-right shrink-0 ml-1">
-                <div className="text-xl font-bold tabular-nums" style={{ color: GOLD }}>
+                <div className="text-xl font-bold tabular-nums font-display" style={{ color: GOLD }}>
                   {entry.total_points}p
                 </div>
                 <div className="text-[11px] text-gray-600 mt-0.5 tabular-nums">
@@ -197,7 +197,7 @@ export default function PlayersPage() {
       {/* ── Kenttätilanne ── */}
       {courses.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-[10px] uppercase tracking-widest text-gray-600 mb-3">Kenttätilanne</h2>
+          <h2 className="text-[10px] uppercase text-gray-600 mb-3 font-display font-medium" style={{ letterSpacing: '0.08em' }}>Kenttätilanne</h2>
           <div className="card px-4">
             {DOT_SLUGS.map((slug, i) => {
               const course = courses.find(c => c.slug === slug)

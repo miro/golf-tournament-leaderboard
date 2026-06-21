@@ -20,7 +20,7 @@ export default function PublicLayout() {
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
           <NavLink to="/" className="flex items-center gap-2.5">
             <img src="/gc-logo.png" alt="GC" style={{ height: 36, width: 'auto', filter: 'invert(1)' }} />
-            <span className="font-bold text-white text-sm hidden sm:block tracking-wide">
+            <span className="font-bold text-white text-sm hidden sm:block font-display" style={{ letterSpacing: '0.04em' }}>
               Liekkipoika Kesäkisa 2026
             </span>
           </NavLink>
@@ -32,7 +32,7 @@ export default function PublicLayout() {
                 to={to}
                 end={end}
                 className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  `px-3 py-1.5 rounded-md text-sm font-medium font-display transition-colors ${
                     isActive
                       ? 'bg-gc-green text-gc-dark font-bold'
                       : 'text-gc-muted hover:text-white hover:bg-white/8'

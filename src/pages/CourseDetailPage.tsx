@@ -48,7 +48,7 @@ function RankTable({
   return (
     <div style={{ background: CARD_BG, borderRadius: 12, padding: 16 }}>
       <div className="mb-3">
-        <div className="text-white font-bold text-sm">{title}</div>
+        <div className="text-white font-bold text-sm font-display">{title}</div>
         <div className="text-gray-600 text-[11px] mt-0.5">{subtitle}</div>
       </div>
       {rows.length === 0 ? (
@@ -68,14 +68,14 @@ function RankTable({
               className="grid grid-cols-[20px_1fr_auto_auto] gap-x-2 items-center py-1.5"
               style={i < rows.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.05)' } : undefined}
             >
-              <span className="text-[13px] font-semibold" style={{ color: '#6b7280' }}>{row.rank}</span>
-              <span className="text-[13px] truncate" style={{ color: row.isFirst ? color : '#ffffff', fontWeight: row.isFirst ? 700 : 400 }}>
+              <span className="text-[13px] font-semibold font-display" style={{ color: '#6b7280' }}>{row.rank}</span>
+              <span className="text-[13px] truncate font-display" style={{ color: row.isFirst ? color : '#ffffff', fontWeight: row.isFirst ? 700 : 600 }}>
                 {row.name}
               </span>
-              <span className="text-[13px] font-semibold text-right pr-2" style={{ color: row.isFirst ? color : '#ffffff' }}>
+              <span className="text-[13px] font-bold text-right pr-2 font-display" style={{ color: row.isFirst ? color : '#ffffff' }}>
                 {row.primary}
               </span>
-              <span className="text-[13px] font-semibold text-right tabular-nums" style={{ color: row.derived.color }}>
+              <span className="text-[13px] font-bold text-right tabular-nums font-display" style={{ color: row.derived.color }}>
                 {row.derived.text}
               </span>
             </div>
@@ -122,7 +122,7 @@ function CourseRankings({ rounds, course }: { rounds: RoundWithDetails[]; course
 
   return (
     <div className="mb-4">
-      <div className="text-gray-600 text-[10px] uppercase tracking-widest mb-3">Kenttäranking</div>
+      <div className="text-gray-600 text-[10px] uppercase mb-3 font-display font-medium" style={{ letterSpacing: '0.08em' }}>Kenttäranking</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <RankTable title="PISTEBOGEY" subtitle="eniten pisteitä voittaa"
           colPrimary="Pisteet" colDerived="STBL" rows={pbRows} color={color} />
@@ -208,7 +208,7 @@ function VaylamestariGrid({
 
   return (
     <div className="mb-8">
-      <div className="text-gray-600 text-[10px] uppercase tracking-widest mb-3">Väylämestari</div>
+      <div className="text-gray-600 text-[10px] uppercase mb-3 font-display font-medium" style={{ letterSpacing: '0.08em' }}>Väylämestari</div>
       <div style={{ background: CARD_BG, borderRadius: 12, overflow: 'hidden' }}>
         {!hasAnyData ? (
           <div className="text-center text-gray-600 text-sm py-8 px-4">
@@ -409,7 +409,7 @@ export default function CourseDetailPage() {
           <div className="absolute bottom-0 left-0 p-5 flex items-center gap-3">
             <div className="w-3.5 h-3.5 rounded-full shrink-0 ring-2 ring-white/20"
                  style={{ background: color }} />
-            <h1 className="text-2xl font-bold text-white drop-shadow">{course.name}</h1>
+            <h1 className="text-2xl font-extrabold text-white drop-shadow font-display">{course.name}</h1>
             <span className="text-gray-300 text-sm">{course.location_city}</span>
           </div>
         </div>
@@ -418,7 +418,7 @@ export default function CourseDetailPage() {
       {!heroSrc && (
         <div className="flex items-center gap-3 mb-6">
           <div className="w-4 h-4 rounded-full shrink-0" style={{ background: color }} />
-          <h1 className="text-2xl font-bold text-white">{course.name}</h1>
+          <h1 className="text-2xl font-extrabold text-white font-display">{course.name}</h1>
           <span className="text-gray-500 text-sm">{course.location_city}</span>
         </div>
       )}
@@ -431,12 +431,12 @@ export default function CourseDetailPage() {
       <div className="grid grid-cols-3 gap-3 mb-8">
         {/* Box 1: Pelaajat */}
         <div className="card flex flex-col items-center justify-center text-center px-3 py-4" style={{ minHeight: 100 }}>
-          <div className="text-[10px] uppercase tracking-widest text-gray-600 mb-2">Pelaajat</div>
+          <div className="text-[10px] uppercase text-gray-600 mb-2 font-display font-medium" style={{ letterSpacing: '0.08em' }}>Pelaajat</div>
           {activePlayerCount !== undefined && distinctPlayers >= activePlayerCount ? (
             <div className="text-base font-bold" style={{ color }}>Kaikki pelannut ✅</div>
           ) : (
             <>
-              <div className="text-2xl font-bold text-white leading-tight">{distinctPlayers} pelannut</div>
+              <div className="text-2xl font-bold text-white leading-tight font-display">{distinctPlayers} pelannut</div>
               <div className="text-sm text-gray-500 mt-1">
                 {(activePlayerCount ?? 0) - distinctPlayers} jäljellä
               </div>
@@ -445,13 +445,13 @@ export default function CourseDetailPage() {
         </div>
         {/* Box 2: Paras tulos */}
         <div className="card flex flex-col items-center justify-center text-center px-3 py-4" style={{ minHeight: 100 }}>
-          <div className="text-[10px] uppercase tracking-widest text-gray-600 mb-2">Paras tulos</div>
+          <div className="text-[10px] uppercase text-gray-600 mb-2 font-display font-medium" style={{ letterSpacing: '0.08em' }}>Paras tulos</div>
           {pbRecord ? (
             <>
-              <div className="font-semibold leading-tight" style={{ color, fontSize: 18 }}>
+              <div className="font-semibold leading-tight font-display" style={{ color, fontSize: 18 }}>
                 {leaderLastName ?? pbRecord.player?.full_name}
               </div>
-              <div className="font-bold leading-tight mt-1" style={{ color, fontSize: 32 }}>
+              <div className="font-bold leading-tight mt-1 font-display" style={{ color, fontSize: 32 }}>
                 {pbRecord.total_points}p
               </div>
             </>
@@ -461,8 +461,8 @@ export default function CourseDetailPage() {
         </div>
         {/* Box 3: Kenttäkeskiarvo */}
         <div className="card flex flex-col items-center justify-center text-center px-3 py-4" style={{ minHeight: 100 }}>
-          <div className="text-[10px] uppercase tracking-widest text-gray-600 mb-2">Kenttäkeskiarvo</div>
-          <div className="text-2xl font-bold" style={{ color }}>
+          <div className="text-[10px] uppercase text-gray-600 mb-2 font-display font-medium" style={{ letterSpacing: '0.08em' }}>Kenttäkeskiarvo</div>
+          <div className="text-2xl font-bold font-display" style={{ color }}>
             {avgPoints !== null ? avgPoints.toFixed(1) : '–'}
           </div>
         </div>
@@ -477,7 +477,7 @@ export default function CourseDetailPage() {
 
       <VaylamestariGrid rounds={rounds} holeResultsByRound={holeResultsByRound} course={course} />
 
-      <h2 className="text-lg font-bold text-white mb-4">Kierrokset</h2>
+      <h2 className="text-lg font-bold text-white mb-4 font-display">Kierrokset</h2>
       {rounds.length === 0 ? (
         <div className="card p-8 text-center text-gray-500">Ei kierroksia tällä kentällä vielä</div>
       ) : (

@@ -28,19 +28,19 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-white font-display">Dashboard</h1>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-white">{leaderboard.length}</div>
+          <div className="text-3xl font-bold text-white font-display">{leaderboard.length}</div>
           <div className="text-xs text-gray-500 mt-1">Pelaajaa</div>
         </div>
         <div className="card p-4 text-center">
-          <div className="text-3xl font-bold text-white">{totalRounds}</div>
+          <div className="text-3xl font-bold text-white font-display">{totalRounds}</div>
           <div className="text-xs text-gray-500 mt-1">Kierrosta</div>
         </div>
         <div className="card p-4 text-center col-span-2">
-          <div className="text-xl font-bold text-gc-green truncate">
+          <div className="text-xl font-bold text-gc-green truncate font-display">
             {leader ? `${leader.player.full_name} (${leader.total_points}p)` : '–'}
           </div>
           <div className="text-xs text-gray-500 mt-1">Johtaja</div>
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-white">Viimeisimmät kierrokset</h2>
+          <h2 className="font-bold text-white font-display">Viimeisimmät kierrokset</h2>
           <Link to="/admin/rounds" className="text-sm text-gc-green hover:underline">Kaikki</Link>
         </div>
         <div className="card divide-y divide-white/5">
