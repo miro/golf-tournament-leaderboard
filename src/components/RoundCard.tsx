@@ -149,7 +149,22 @@ export default function RoundCard({
         h.points > b.points || (h.points === b.points && h.hole_number < b.hole_number) ? h : b
       , holeResults[0])
     : null
-  const holeEmoji = !bestHole ? '' : bestHole.points >= 4 ? '🦅' : bestHole.points === 3 ? '🐦' : ''
+  const strokesVsPar = bestHole && bestHole.strokes_played != null
+    ? bestHole.strokes_played - bestHole.par
+    : null
+  const holeResultName = strokesVsPar == null || bestHole?.strokes_played == null ? null
+    : bestHole.strokes_played === 1 ? 'Hole-in-one'
+    : strokesVsPar <= -3 ? 'Albatross'
+    : strokesVsPar === -2 ? 'Eagle'
+    : strokesVsPar === -1 ? 'Birdie'
+    : strokesVsPar === 0  ? 'Par'
+    : strokesVsPar === 1  ? 'Bogey'
+    : strokesVsPar === 2  ? 'Double bogey'
+    : 'Triple bogey'
+  const holeEmoji = strokesVsPar == null ? ''
+    : strokesVsPar <= -2 ? '🦅'
+    : strokesVsPar === -1 ? '🐦'
+    : ''
 
   // ── Courses remaining ──
   const slugToCourse = new Map(seasonCourses.map(c => [c.slug, c]))
@@ -273,7 +288,7 @@ export default function RoundCard({
           <div className="px-6 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <span className="text-gray-600 text-[11px] uppercase font-medium" style={{ letterSpacing: '0.1em' }}>Kierroksen paras </span>
             <span className="text-gray-400 text-[15px] font-semibold">
-              Reikä {bestHole.hole_number} — {bestHole.strokes_played ?? '?'} lyöntiä, {bestHole.points}p{holeEmoji ? ` ${holeEmoji}` : ''}
+              Reikä {bestHole.hole_number} — {holeResultName ?? '?'}, {bestHole.points}p{holeEmoji ? ` ${holeEmoji}` : ''}
             </span>
           </div>
         )}
