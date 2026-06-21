@@ -1,7 +1,16 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { getCurrentSeason, getLeaderboard, getRecentRounds, getCourses, getActivePlayers, getHoleResultsForRounds } from '../lib/queries'
 import type { Course, LeaderboardEntry, RoundWithDetails, HoleResult } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
+
+function FeedSeparator() {
+  return (
+    <div className="relative flex items-center justify-center" style={{ margin: '32px 0' }}>
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }} />
+      <span className="relative text-sm px-2" style={{ background: '#17130F' }}>⛳</span>
+    </div>
+  )
+}
 
 export default function FeedPage() {
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
@@ -47,18 +56,20 @@ export default function FeedPage() {
       {rounds.length === 0 ? (
         <div className="card p-8 text-center text-gray-500">Ei kierroksia vielä</div>
       ) : (
-        <div className="space-y-12">
-          {rounds.map(round => (
-            <RoundCard
-              key={round.id}
-              round={round}
-              rank={leaderboard.find(e => e.player.id === round.player_id)?.rank}
-              leaderboard={leaderboard}
-              seasonCourses={courses}
-              allRounds={rounds}
-              holeResults={holeResultsByRound[round.id]}
-              activePlayerCount={activePlayerCount}
-            />
+        <div>
+          {rounds.map((round, i) => (
+            <Fragment key={round.id}>
+              <RoundCard
+                round={round}
+                rank={leaderboard.find(e => e.player.id === round.player_id)?.rank}
+                leaderboard={leaderboard}
+                seasonCourses={courses}
+                allRounds={rounds}
+                holeResults={holeResultsByRound[round.id]}
+                activePlayerCount={activePlayerCount}
+              />
+              {i < rounds.length - 1 && <FeedSeparator />}
+            </Fragment>
           ))}
         </div>
       )}

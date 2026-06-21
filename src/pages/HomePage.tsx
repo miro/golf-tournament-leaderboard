@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   getCurrentSeason, getLeaderboard, getSeasonCourses,
@@ -8,6 +8,16 @@ import type { LeaderboardEntry, RoundWithDetails, HoleResult, Player, Course } f
 import RoundCard from '../components/RoundCard'
 
 const GOLD = '#FBBF24'
+const PAGE_BG = '#17130F'
+
+function FeedSeparator() {
+  return (
+    <div className="relative flex items-center justify-center" style={{ margin: '32px 0' }}>
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }} />
+      <span className="relative text-sm px-2" style={{ background: PAGE_BG }}>⛳</span>
+    </div>
+  )
+}
 const COURSE_SLUG_ORDER = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 
 function useCountdownDays(deadline: string): number {
@@ -247,17 +257,19 @@ export default function HomePage() {
             <h2 className="text-[10px] uppercase tracking-widest text-gray-600">Viimeisimmät kierrokset</h2>
             <Link to="/feed" className="text-gc-green text-sm hover:underline">Kaikki →</Link>
           </div>
-          <div className="space-y-8 max-w-[480px] mx-auto">
-            {recentRounds.map(round => (
-              <RoundCard
-                key={round.id}
-                round={round}
-                rank={leaderboard.find(e => e.player.id === round.player_id)?.rank}
-                leaderboard={leaderboard}
-                holeResults={holeResultsByRound[round.id]}
-                activePlayerCount={activePlayers.length}
-                showCaption={false}
-              />
+          <div className="max-w-[480px] mx-auto">
+            {recentRounds.map((round, i) => (
+              <Fragment key={round.id}>
+                <RoundCard
+                  round={round}
+                  rank={leaderboard.find(e => e.player.id === round.player_id)?.rank}
+                  leaderboard={leaderboard}
+                  holeResults={holeResultsByRound[round.id]}
+                  activePlayerCount={activePlayers.length}
+                  showCaption={false}
+                />
+                {i < recentRounds.length - 1 && <FeedSeparator />}
+              </Fragment>
             ))}
           </div>
         </section>

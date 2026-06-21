@@ -356,18 +356,29 @@ export default function RoundCard({
 
       {/* ── Kuvateksti ── */}
       {round.summary_text && (
-        <div className="mt-3 px-1">
-          <p className="text-sm text-gray-400 italic leading-relaxed">{round.summary_text}</p>
+        <div className="mt-2 relative" style={{ borderLeft: `2px solid ${color}66`, paddingLeft: 12 }}>
+          <p className="text-sm text-gray-400 italic leading-relaxed pr-5">
+            {round.summary_text}
+          </p>
           {showCaption && (
             <button
               onClick={async () => {
                 await navigator.clipboard.writeText(round.summary_text!)
                 setCopied(true)
-                setTimeout(() => setCopied(false), 2000)
+                setTimeout(() => setCopied(false), 800)
               }}
-              className="mt-2 text-xs text-gray-600 hover:text-gray-300 transition-colors"
+              aria-label="Kopioi kuvateksti"
+              style={{
+                position: 'absolute', bottom: 0, right: 0,
+                opacity: copied ? 1 : 0.3,
+                transition: 'opacity 200ms',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1,
+              }}
             >
-              {copied ? 'Kopioitu ✓' : 'Kopioi kuvateksti'}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              </svg>
             </button>
           )}
         </div>
