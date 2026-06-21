@@ -290,49 +290,9 @@ export default function RoundCard({
           </div>
         )}
 
-        {/* Section 1: Course leaderboard */}
-        {courseRows.length > 0 && (
-          <div className="px-6 pt-4 pb-0">
-            <div className="text-gray-600 text-[11px] uppercase font-semibold mb-2" style={{ letterSpacing: '0.12em' }}>
-              {round.course?.name} Tulokset
-            </div>
-            {courseRows.map((e, _i) =>
-              e === 'gap' ? <GapRow key="gap-c" bg={BG} /> : (
-                <div key={e.player_id} className="flex items-center gap-2 py-1.5">
-                  <span className="w-4 text-right text-[15px] font-semibold shrink-0"
-                        style={{ color: e.player_id === round.player_id ? color : '#6b7280' }}>
-                    {e.rank}
-                  </span>
-                  <span className="flex-1 text-[17px] truncate min-w-0"
-                        style={{
-                          color: e.player_id === round.player_id ? color : '#9ca3af',
-                          fontWeight: 600,
-                        }}>
-                    {e.player_name}
-                  </span>
-                  <div className="w-20 h-1.5 rounded-full overflow-hidden shrink-0"
-                       style={{ background: 'rgba(255,255,255,0.06)' }}>
-                    <div className="h-full rounded-full"
-                         style={{ width: `${(e.points / maxCourse) * 100}%`, background: color }} />
-                  </div>
-                  <span className="w-10 text-right text-[17px] font-bold shrink-0"
-                        style={{ color: e.player_id === round.player_id ? color : '#6b7280' }}>
-                    {e.points}p
-                  </span>
-                </div>
-              )
-            )}
-          </div>
-        )}
-
-        {/* Divider between sections — 12px gap */}
-        {courseRows.length > 0 && overallRows.length > 0 && (
-          <div className="mx-6 my-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
-        )}
-
         {/* Section 2: Overall standings */}
         {overallRows.length > 0 && (
-          <div className={`px-6 pb-2 ${courseRows.length === 0 ? 'pt-3' : 'pt-0'}`}>
+          <div className="px-6 pb-2 pt-3">
             <div className="text-gray-600 text-[11px] uppercase font-semibold mb-2" style={{ letterSpacing: '0.12em' }}>Sarjataulukko</div>
             {overallRows.map((e, _i) =>
               e === 'gap' ? <GapRow key="gap-o" bg={BG} /> : (
