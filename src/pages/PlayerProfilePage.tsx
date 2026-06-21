@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { getPlayerBySlug, getCurrentSeason, getPlayerRounds, getLeaderboard, getActivePlayers, getHoleResultsForRounds } from '../lib/queries'
+import { getPlayerBySlug, getCurrentSeason, getPlayerRounds, getLeaderboard, getAllSeasonRounds, getActivePlayers, getHoleResultsForRounds } from '../lib/queries'
 import type { Player, LeaderboardEntry, RoundWithDetails, HoleResult } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
 
@@ -8,7 +8,7 @@ export default function PlayerProfilePage() {
   const { slug } = useParams<{ slug: string }>()
   const [player, setPlayer] = useState<Player | null>(null)
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [allSeasonRounds, setAllSeasonRounds] = useState<RoundWithDetails[]>([])
   const [entry, setEntry] = useState<LeaderboardEntry | null>(null)
   const [activePlayerCount, setActivePlayerCount] = useState<number | undefined>()
   const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
@@ -19,9 +19,10 @@ export default function PlayerProfilePage() {
     async function load() {
       if (!slug) return
       const [p, season] = await Promise.all([getPlayerBySlug(slug), getCurrentSeason()])
-      const [playerRounds, lb] = await Promise.all([
+      const [playerRounds, lb, allRounds] = await Promise.all([
         getPlayerRounds(p.id, season.id),
         getLeaderboard(season.id),
+        getAllSeasonRounds(season.id),
       ])
       const [activePlayers, holeResults] = await Promise.all([
         getActivePlayers(),
@@ -29,7 +30,7 @@ export default function PlayerProfilePage() {
       ])
       setPlayer(p)
       setRounds(playerRounds)
-      setLeaderboard(lb)
+      setAllSeasonRounds(allRounds)
       setEntry(lb.find(e => e.player.id === p.id) ?? null)
       setActivePlayerCount(activePlayers.length)
       const hrMap: Record<string, HoleResult[]> = {}
@@ -86,8 +87,7 @@ export default function PlayerProfilePage() {
             <RoundCard
               key={r.id}
               round={r}
-              rank={entry?.rank}
-              leaderboard={leaderboard}
+              allRounds={allSeasonRounds}
               holeResults={holeResultsByRound[r.id]}
               activePlayerCount={activePlayerCount}
               showCaption={false}

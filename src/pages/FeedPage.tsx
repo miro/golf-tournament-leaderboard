@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
-import { getCurrentSeason, getLeaderboard, getRecentRounds, getCourses, getActivePlayers, getHoleResultsForRounds } from '../lib/queries'
-import type { Course, LeaderboardEntry, RoundWithDetails, HoleResult } from '../lib/database.types'
+import { getCurrentSeason, getAllSeasonRounds, getCourses, getActivePlayers, getHoleResultsForRounds } from '../lib/queries'
+import type { Course, RoundWithDetails, HoleResult } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
 
 function FeedSeparator() {
@@ -14,7 +14,6 @@ function FeedSeparator() {
 
 export default function FeedPage() {
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [activePlayerCount, setActivePlayerCount] = useState<number | undefined>()
   const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
@@ -23,9 +22,8 @@ export default function FeedPage() {
   useEffect(() => {
     async function load() {
       const season = await getCurrentSeason()
-      const [r, lb, c] = await Promise.all([
-        getRecentRounds(season.id, 100),
-        getLeaderboard(season.id),
+      const [r, c] = await Promise.all([
+        getAllSeasonRounds(season.id),
         getCourses(),
       ])
       const [activePlayers, holeResults] = await Promise.all([
@@ -33,7 +31,6 @@ export default function FeedPage() {
         getHoleResultsForRounds(r.map(x => x.id)),
       ])
       setRounds(r)
-      setLeaderboard(lb)
       setCourses(c)
       setActivePlayerCount(activePlayers.length)
       const hrMap: Record<string, HoleResult[]> = {}
@@ -61,8 +58,6 @@ export default function FeedPage() {
             <Fragment key={round.id}>
               <RoundCard
                 round={round}
-                rank={leaderboard.find(e => e.player.id === round.player_id)?.rank}
-                leaderboard={leaderboard}
                 seasonCourses={courses}
                 allRounds={rounds}
                 holeResults={holeResultsByRound[round.id]}

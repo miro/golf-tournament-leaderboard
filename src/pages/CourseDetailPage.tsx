@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
-  getCourseBySlug, getCourseRounds, getCurrentSeason, getLeaderboard,
+  getCourseBySlug, getCourseRounds, getCurrentSeason, getAllSeasonRounds,
   getCourses, getActivePlayers, getHoleResultsForRounds, getSeasonRoundAverages,
 } from '../lib/queries'
-import type { Course, LeaderboardEntry, RoundWithDetails, HoleResult } from '../lib/database.types'
+import type { Course, RoundWithDetails, HoleResult } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -316,7 +316,7 @@ export default function CourseDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const [course, setCourse] = useState<Course | null>(null)
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [allSeasonRounds, setAllSeasonRounds] = useState<RoundWithDetails[]>([])
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [activePlayerCount, setActivePlayerCount] = useState<number | undefined>()
   const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
@@ -328,9 +328,9 @@ export default function CourseDetailPage() {
     async function load() {
       if (!slug) return
       const [c, season] = await Promise.all([getCourseBySlug(slug), getCurrentSeason()])
-      const [courseRounds, lb, ac] = await Promise.all([
+      const [courseRounds, allRounds, ac] = await Promise.all([
         getCourseRounds(c.id, season.id),
-        getLeaderboard(season.id),
+        getAllSeasonRounds(season.id),
         getCourses(),
       ])
       const [activePlayers, holeResults, avgs] = await Promise.all([
@@ -340,7 +340,7 @@ export default function CourseDetailPage() {
       ])
       setCourse(c)
       setRounds(courseRounds)
-      setLeaderboard(lb)
+      setAllSeasonRounds(allRounds)
       setAllCourses(ac)
       setActivePlayerCount(activePlayers.length)
       setCourseAverages(avgs)
@@ -486,10 +486,8 @@ export default function CourseDetailPage() {
             <RoundCard
               key={r.id}
               round={r}
-              rank={leaderboard.find(e => e.player.id === r.player_id)?.rank}
-              leaderboard={leaderboard}
               seasonCourses={allCourses}
-              allRounds={rounds}
+              allRounds={allSeasonRounds}
               holeResults={holeResultsByRound[r.id]}
               activePlayerCount={activePlayerCount}
               showCaption={false}

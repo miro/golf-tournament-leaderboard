@@ -73,6 +73,21 @@ export async function getRecentRounds(seasonId: string, limit = 10): Promise<Rou
   }))
 }
 
+export async function getAllSeasonRounds(seasonId: string): Promise<RoundWithDetails[]> {
+  const { data, error } = await supabase
+    .from('rounds')
+    .select('*, player:players(*), course:courses(*)')
+    .eq('season_id', seasonId)
+    .eq('status', 'published')
+    .order('submitted_at', { ascending: false })
+  if (error) throw error
+  return ((data ?? []) as unknown as RoundWithDetails[]).map(r => ({
+    ...r,
+    player: Array.isArray(r.player) ? r.player[0] : r.player,
+    course: Array.isArray(r.course) ? r.course[0] : r.course,
+  }))
+}
+
 export async function getActivePlayers(): Promise<Player[]> {
   const { data, error } = await supabase
     .from('players')

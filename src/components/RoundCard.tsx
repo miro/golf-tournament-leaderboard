@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { LeaderboardEntry, RoundWithDetails, Course, HoleResult } from '../lib/database.types'
+import type { LeaderboardEntry, Player, RoundWithDetails, Course, HoleResult } from '../lib/database.types'
 
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 
@@ -14,13 +14,36 @@ const DEADLINE = new Date('2026-08-31T23:59:59')
 
 interface Props {
   round: RoundWithDetails
-  rank?: number
-  leaderboard: LeaderboardEntry[]
   seasonCourses?: Course[]
   showCaption?: boolean
   allRounds?: RoundWithDetails[]
   holeResults?: HoleResult[]
   activePlayerCount?: number
+}
+
+function computeLeaderboardFromRounds(rounds: RoundWithDetails[]): LeaderboardEntry[] {
+  const map = new Map<string, LeaderboardEntry>()
+  for (const r of rounds) {
+    const player = r.player as Player | undefined
+    if (!player) continue
+    const existing = map.get(r.player_id)
+    if (existing) {
+      existing.total_points += r.total_points
+      existing.rounds_played += 1
+      existing.courses_played.push(r.course_id)
+    } else {
+      map.set(r.player_id, {
+        player,
+        total_points: r.total_points,
+        rounds_played: 1,
+        rank: 0,
+        courses_played: [r.course_id],
+      })
+    }
+  }
+  const sorted = [...map.values()].sort((a, b) => b.total_points - a.total_points)
+  sorted.forEach((e, i) => { e.rank = i + 1 })
+  return sorted
 }
 
 interface CourseStanding {
@@ -81,7 +104,7 @@ function GapRow({ bg }: { bg: string }) {
 const BG = '#1a1a18'
 
 export default function RoundCard({
-  round, rank, leaderboard, seasonCourses = [], showCaption = true,
+  round, seasonCourses = [], showCaption = true,
   allRounds, holeResults, activePlayerCount,
 }: Props) {
   const [copied, setCopied] = useState(false)
@@ -89,17 +112,22 @@ export default function RoundCard({
   const color = round.course?.color_hex ?? '#2D6A4F'
   const date = fmtDate(round.played_date)
 
+  // ── Historical snapshot: only rounds played on or before this round's date ──
+  const snapshot = (allRounds ?? []).filter(r => r.played_date <= round.played_date)
+  const leaderboard = computeLeaderboardFromRounds(snapshot)
+
   // ── Player leaderboard entry ──
   const playerEntry = leaderboard.find(e => e.player.id === round.player_id)
   const isLeading = leaderboard.length > 0 && leaderboard[0].player.id === round.player_id
   const playersWithRounds = leaderboard.filter(e => e.rounds_played > 0)
+  const rank = playerEntry?.rank
 
   // ── Marquee ──
   let marquee: string | null = null
   if (isLeading) {
     marquee = '🎩 JOHTAA SARJAA'
-  } else if (allRounds) {
-    const courseRounds = allRounds.filter(r => r.course_id === round.course_id)
+  } else if (snapshot.length > 0) {
+    const courseRounds = snapshot.filter(r => r.course_id === round.course_id)
     if (courseRounds.length > 0) {
       const best = courseRounds.reduce((b, r) => r.total_points > b.total_points ? r : b, courseRounds[0])
       if (best.player_id === round.player_id) {
@@ -138,7 +166,7 @@ export default function RoundCard({
   const daysColor = daysLeft < 7 ? '#C12820' : daysLeft < 14 ? '#E05218' : 'rgba(255,255,255,0.25)'
 
   // ── Section 1: course standings ──
-  const courseStandings = allRounds ? computeCourseStandings(allRounds, round.course_id) : []
+  const courseStandings = snapshot.length > 0 ? computeCourseStandings(snapshot, round.course_id) : []
   const courseRows = buildList(courseStandings, e => e.player_id === round.player_id)
   const maxCourse = courseStandings[0]?.points || 1
 

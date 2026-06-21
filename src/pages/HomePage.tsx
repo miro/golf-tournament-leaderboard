@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   getCurrentSeason, getLeaderboard, getSeasonCourses,
-  getRecentRounds, getActivePlayers, getHoleResultsForRounds,
+  getAllSeasonRounds, getActivePlayers, getHoleResultsForRounds,
 } from '../lib/queries'
 import type { LeaderboardEntry, RoundWithDetails, HoleResult, Player, Course } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
@@ -38,8 +38,9 @@ interface CourseInfo { id: string; name: string; slug: string; color_hex: string
 export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [courses, setCourses] = useState<CourseInfo[]>([])
+  const [seasonCoursesFull, setSeasonCoursesFull] = useState<Course[]>([])
   const [activePlayers, setActivePlayers] = useState<Player[]>([])
-  const [recentRounds, setRecentRounds] = useState<RoundWithDetails[]>([])
+  const [allRounds, setAllRounds] = useState<RoundWithDetails[]>([])
   const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
   const [deadline, setDeadline] = useState('2026-08-31')
   const [loading, setLoading] = useState(true)
@@ -55,17 +56,19 @@ export default function HomePage() {
       const [lb, sc, rounds, players] = await Promise.all([
         getLeaderboard(season.id),
         getSeasonCourses(season.id),
-        getRecentRounds(season.id, 5),
+        getAllSeasonRounds(season.id),
         getActivePlayers(),
       ])
-      const holeResults = await getHoleResultsForRounds(rounds.map(r => r.id))
+      const recentRounds = rounds.slice(0, 5)
+      const holeResults = await getHoleResultsForRounds(recentRounds.map(r => r.id))
       setLeaderboard(lb)
       setCourses(sc.map(c => {
         const course = c.course as unknown as Course
         return { id: c.course_id, name: course?.name ?? c.course_id, slug: course?.slug ?? '', color_hex: course?.color_hex ?? null }
       }))
+      setSeasonCoursesFull(sc.map(c => c.course as unknown as Course))
       setActivePlayers(players)
-      setRecentRounds(rounds)
+      setAllRounds(rounds)
       const hrMap: Record<string, HoleResult[]> = {}
       for (const hr of holeResults) {
         hrMap[hr.round_id] = hrMap[hr.round_id] ?? []
@@ -85,6 +88,8 @@ export default function HomePage() {
   const sortedActivePlayers = [...activePlayers].sort((a, b) => a.full_name.localeCompare(b.full_name))
   const notStartedCount = activePlayers.filter(p => !leaderboard.find(e => e.player.id === p.id)).length
   const leaderPts = leaderboard[0]?.total_points ?? 0
+
+  const recentRounds = allRounds.slice(0, 5)
 
   // Most recently played course per player (from recent rounds, sorted newest first)
   const latestCourseByPlayer: Record<string, string> = {}
@@ -262,8 +267,8 @@ export default function HomePage() {
               <Fragment key={round.id}>
                 <RoundCard
                   round={round}
-                  rank={leaderboard.find(e => e.player.id === round.player_id)?.rank}
-                  leaderboard={leaderboard}
+                  seasonCourses={seasonCoursesFull}
+                  allRounds={allRounds}
                   holeResults={holeResultsByRound[round.id]}
                   activePlayerCount={activePlayers.length}
                   showCaption={false}

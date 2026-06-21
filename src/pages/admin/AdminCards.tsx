@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import { getCurrentSeason, getRecentRounds, getLeaderboard, getCourses, getActivePlayers, getHoleResultsForRounds } from '../../lib/queries'
-import type { RoundWithDetails, LeaderboardEntry, Course, HoleResult } from '../../lib/database.types'
+import { getCurrentSeason, getAllSeasonRounds, getCourses, getActivePlayers, getHoleResultsForRounds } from '../../lib/queries'
+import type { RoundWithDetails, Course, HoleResult } from '../../lib/database.types'
 import RoundCard from '../../components/RoundCard'
 
 export default function AdminCards() {
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [activePlayerCount, setActivePlayerCount] = useState<number | undefined>()
   const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
@@ -15,9 +14,8 @@ export default function AdminCards() {
   useEffect(() => {
     async function load() {
       const season = await getCurrentSeason()
-      const [allRounds, lb, c] = await Promise.all([
-        getRecentRounds(season.id, 50),
-        getLeaderboard(season.id),
+      const [allRounds, c] = await Promise.all([
+        getAllSeasonRounds(season.id),
         getCourses(),
       ])
       const [activePlayers, holeResults] = await Promise.all([
@@ -25,7 +23,6 @@ export default function AdminCards() {
         getHoleResultsForRounds(allRounds.map(r => r.id)),
       ])
       setRounds(allRounds)
-      setLeaderboard(lb)
       setCourses(c)
       setActivePlayerCount(activePlayers.length)
       const hrMap: Record<string, HoleResult[]> = {}
@@ -85,8 +82,6 @@ export default function AdminCards() {
               </h2>
               <RoundCard
                 round={selected}
-                rank={leaderboard.find(e => e.player.id === selected.player_id)?.rank}
-                leaderboard={leaderboard}
                 seasonCourses={courses}
                 allRounds={rounds}
                 holeResults={holeResultsByRound[selected.id]}
