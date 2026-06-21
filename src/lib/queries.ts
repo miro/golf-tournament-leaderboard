@@ -154,6 +154,28 @@ export async function getHoleResultsForRounds(roundIds: string[]): Promise<HoleR
   return (data ?? []) as unknown as HoleResult[]
 }
 
+export async function getSeasonRoundAverages(seasonId: string): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('rounds')
+    .select('course_id, total_points')
+    .eq('season_id', seasonId)
+    .eq('status', 'published')
+  if (error) throw error
+  const byCourse = new Map<string, number[]>()
+  for (const r of (data ?? []) as Array<{ course_id: string; total_points: number }>) {
+    const arr = byCourse.get(r.course_id) ?? []
+    arr.push(r.total_points)
+    byCourse.set(r.course_id, arr)
+  }
+  const result: Record<string, number> = {}
+  for (const [id, pts] of byCourse.entries()) {
+    if (pts.length >= 2) {
+      result[id] = pts.reduce((a, b) => a + b, 0) / pts.length
+    }
+  }
+  return result
+}
+
 export function generateWhatsAppText(
   playerName: string,
   courseName: string,

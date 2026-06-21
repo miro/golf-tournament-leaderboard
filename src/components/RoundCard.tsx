@@ -177,7 +177,7 @@ export default function RoundCard({
             <div className="text-white/70 text-[11px] mt-0.5 tracking-wide">Liekkipoika Kesäkisa 2026</div>
           </div>
           <div className="text-right leading-none shrink-0 ml-3">
-            <div className="text-white/70 text-[11px] tracking-wide">{date}</div>
+            <div className="text-white/70 text-[14px] tracking-wide font-medium">{date}</div>
             {remainingCount !== null && (
               <div className="text-white/50 text-[10px] mt-0.5">
                 {remainingCount === 0
@@ -292,7 +292,7 @@ export default function RoundCard({
 
         {/* Section 2: Overall standings */}
         {overallRows.length > 0 && (
-          <div className="px-6 pt-0 pb-2">
+          <div className={`px-6 pb-2 ${courseRows.length === 0 ? 'pt-3' : 'pt-0'}`}>
             <div className="text-gray-600 text-[10px] uppercase tracking-widest mb-2">Sarjataulukko</div>
             {overallRows.map((e, _i) =>
               e === 'gap' ? <GapRow key="gap-o" bg={BG} /> : (

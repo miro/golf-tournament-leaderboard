@@ -174,7 +174,7 @@ export default function HomePage() {
               Kaikki →
             </Link>
           </div>
-          <div className="space-y-8">
+          <div className="space-y-8 max-w-[480px]">
             {recentRounds.map(round => (
               <RoundCard
                 key={round.id}
