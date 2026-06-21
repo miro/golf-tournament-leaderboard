@@ -19,9 +19,9 @@ export default function PublicLayout() {
       <header className="sticky top-0 z-40 bg-gc-dark/95 backdrop-blur border-b border-white/8">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
           <NavLink to="/" className="flex items-center gap-2.5">
-            <span className="text-gc-green text-lg font-black tracking-tight">GC</span>
+            <img src="/gc-logo.png" alt="GC" style={{ height: 36, width: 'auto', filter: 'invert(1)' }} />
             <span className="font-bold text-white text-sm hidden sm:block tracking-wide">
-              Liekkipoika 2026
+              Liekkipoika Kesäkisa 2026
             </span>
           </NavLink>
 
