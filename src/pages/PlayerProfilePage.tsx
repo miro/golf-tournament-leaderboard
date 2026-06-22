@@ -10,6 +10,9 @@ import RoundCard from '../components/RoundCard'
 const COURSE_SLUG_ORDER = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 const HOLES = Array.from({ length: 18 }, (_, i) => i + 1)
 const CARD_BG = '#1a1a18'
+const GOLD = '#FBBF24'
+const RED = '#E8453C'
+const BLUE = '#5B9BD5'
 
 type HoleState = 'mestari' | 'jaettu' | 'ei-johtoa' | 'no-data'
 
@@ -18,6 +21,19 @@ interface HoleStatus {
   par: number | null
   state: HoleState
   strokes: number | null
+  points: number | null
+}
+
+function holeStrokeStyle(strokes: number, par: number): {
+  outer: string | null; inner: string | null; radius: number | string; color: string
+} {
+  const diff = strokes - par
+  if (diff <= -2) return { outer: RED,  inner: RED,  radius: '50%', color: '#ffffff' }
+  if (diff === -1) return { outer: RED,  inner: null, radius: '50%', color: '#ffffff' }
+  if (diff === 0)  return { outer: null, inner: null, radius: 0,     color: '#ffffff' }
+  if (diff === 1)  return { outer: BLUE, inner: null, radius: 2,     color: '#ffffff' }
+  if (diff === 2)  return { outer: BLUE, inner: BLUE, radius: 2,     color: '#ffffff' }
+  return               { outer: null, inner: null, radius: 0,     color: '#6b7280' }
 }
 
 function computeHoleStatuses(
@@ -38,16 +54,19 @@ function computeHoleStatuses(
     const par = allForHole[0]?.par ?? null
 
     if (playerForHole.length === 0) {
-      return { holeNumber: holeNum, par, state: 'no-data', strokes: null }
+      return { holeNumber: holeNum, par, state: 'no-data', strokes: null, points: null }
     }
 
-    const playerBestStrokes = Math.min(...playerForHole.map(hr => hr.strokes_played!))
-    const minStrokes = allForHole.length > 0
-      ? Math.min(...allForHole.map(hr => hr.strokes_played!))
-      : playerBestStrokes
+    const bestResult = playerForHole.reduce((best, cur) =>
+      (cur.strokes_played ?? 999) < (best.strokes_played ?? 999) ? cur : best
+    , playerForHole[0])
+    const playerBestStrokes = bestResult.strokes_played!
+    const displayPoints = bestResult.points
+
+    const minStrokes = Math.min(...allForHole.map(hr => hr.strokes_played!))
 
     if (playerBestStrokes > minStrokes) {
-      return { holeNumber: holeNum, par, state: 'ei-johtoa', strokes: playerBestStrokes }
+      return { holeNumber: holeNum, par, state: 'ei-johtoa', strokes: playerBestStrokes, points: displayPoints }
     }
 
     // Player is tied — determine tiebreak winner
@@ -70,8 +89,22 @@ function computeHoleStatuses(
       par,
       state: playerWins ? 'mestari' : 'jaettu',
       strokes: playerBestStrokes,
+      points: displayPoints,
     }
   })
+}
+
+const ROW_LABEL_STYLE: React.CSSProperties = { letterSpacing: '0.1em' }
+
+function RowLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{ width: 64, minWidth: 64, ...ROW_LABEL_STYLE }}
+      className="text-[11px] uppercase text-gray-600 font-semibold flex items-center"
+    >
+      {children}
+    </div>
+  )
 }
 
 function VaylamestariSection({
@@ -112,143 +145,177 @@ function VaylamestariSection({
     .filter((x): x is CourseData => x !== null)
 
   const totalMestari = courseData.reduce((sum, cd) => sum + cd.mestariCount, 0)
+  const totalJaettu = courseData.reduce((sum, cd) => sum + cd.jaettuCount, 0)
 
-  const lastCourseId = rounds.length > 0 ? rounds[0].course_id : null
-  const summaryColor = (lastCourseId ? seasonCourses.find(c => c.id === lastCourseId) : null)?.color_hex ?? '#FBBF24'
+  const heroText = totalMestari > 0
+    ? `${totalMestari} väylämestaria${totalJaettu > 0 ? ` · ${totalJaettu} jaettua tulosta` : ''}`
+    : null
 
   return (
     <section className="mb-8">
+      {/* Section label */}
       <div
-        className="text-gray-600 text-[11px] uppercase font-semibold mb-0.5 font-display"
+        className="text-gray-600 text-[12px] uppercase font-semibold mb-0.5 font-display"
         style={{ letterSpacing: '0.12em' }}
       >
         Väylämestari
       </div>
-      <div className="text-gray-500 text-[12px] mb-4">Reikäkohtaiset parhaat tulokset</div>
+      <div className="text-gray-500 text-[13px] mb-4">Reikäkohtaiset parhaat tulokset</div>
 
+      {/* Hero summary */}
       <div className="mb-6">
-        {totalMestari > 0 ? (
-          <div className="text-[20px] font-bold font-display" style={{ color: summaryColor }}>
-            {totalMestari} väylämestaria yhteensä
+        {heroText ? (
+          <div className="text-[24px] font-bold font-display" style={{ color: GOLD }}>
+            {heroText}
           </div>
         ) : (
-          <div className="text-[20px] font-bold text-gray-600 font-display">
+          <div className="text-[24px] font-bold text-gray-600 font-display">
             Ei vielä väylämestariutta
           </div>
         )}
       </div>
 
+      {/* Per-course grids */}
       <div className="space-y-6">
-        {courseData.map(({ course, hasPlayed, holeStatuses, mestariCount, jaettuCount }) => (
+        {courseData.map(({ course, hasPlayed, holeStatuses }) => (
           <div key={course.id}>
             <div
-              className="text-[12px] font-bold uppercase mb-2 font-display"
-              style={{ color: course.color_hex ?? '#ffffff', letterSpacing: '0.08em' }}
+              className="text-[13px] font-bold uppercase mb-2 font-display"
+              style={{ color: course.color_hex ?? '#ffffff', letterSpacing: '0.1em' }}
             >
               {course.name}
             </div>
 
             {!hasPlayed ? (
-              <div className="text-gray-600 text-[13px]">Ei pelattu</div>
+              <div className="text-[14px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Ei pelattu</div>
             ) : (
-              <>
-                <div style={{ background: CARD_BG, borderRadius: 12, overflow: 'hidden' }}>
-                  <div className="overflow-x-auto">
-                    <div style={{ minWidth: 64 + 18 * 44, padding: 16, paddingBottom: 12 }}>
+              <div style={{ background: CARD_BG, borderRadius: 12, overflow: 'hidden' }}>
+                <div className="overflow-x-auto">
+                  <div style={{ minWidth: 64 + 18 * 44, padding: 16, paddingBottom: 12 }}>
 
-                      {/* Row 1: Hole numbers */}
-                      <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    {/* Row 1: Hole numbers */}
+                    <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                      <RowLabel>Reikä</RowLabel>
+                      {HOLES.map(h => (
                         <div
-                          style={{ width: 64, minWidth: 64, height: 32, letterSpacing: '0.08em' }}
-                          className="text-[12px] uppercase text-gray-600 font-semibold flex items-center"
+                          key={h}
+                          style={{ width: 44, minWidth: 44, height: 32, color: 'rgba(255,255,255,0.45)' }}
+                          className="flex items-center justify-center text-[12px] font-semibold"
                         >
-                          Reikä
+                          {h}
                         </div>
-                        {HOLES.map(h => (
-                          <div
-                            key={h}
-                            style={{ width: 44, minWidth: 44, height: 32 }}
-                            className="flex items-center justify-center text-[13px] font-semibold text-gray-600"
-                          >
-                            {h}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Row 2: Par */}
-                      <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div
-                          style={{ width: 64, minWidth: 64, height: 32, letterSpacing: '0.08em' }}
-                          className="text-[12px] uppercase text-gray-600 font-semibold flex items-center"
-                        >
-                          Par
-                        </div>
-                        {holeStatuses.map(({ holeNumber, par }) => (
-                          <div
-                            key={holeNumber}
-                            style={{ width: 44, minWidth: 44, height: 32 }}
-                            className="flex items-center justify-center text-[14px] font-medium text-gray-500"
-                          >
-                            {par ?? '–'}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Row 3: Tulos (dots) */}
-                      <div className="flex">
-                        <div
-                          style={{ width: 64, minWidth: 64, height: 44, letterSpacing: '0.08em' }}
-                          className="text-[12px] uppercase text-gray-600 font-semibold flex items-center"
-                        >
-                          Tulos
-                        </div>
-                        {holeStatuses.map(({ holeNumber, state, strokes }) => (
-                          <div
-                            key={holeNumber}
-                            style={{ width: 44, minWidth: 44, height: 44 }}
-                            className="flex items-center justify-center"
-                          >
-                            {state === 'mestari' && (
-                              <div
-                                title={`Väylämestari — ${strokes} lyöntiä`}
-                                style={{
-                                  width: 14, height: 14, borderRadius: '50%',
-                                  background: course.color_hex ?? '#ffffff',
-                                }}
-                              />
-                            )}
-                            {state === 'jaettu' && (
-                              <div
-                                title={`Jaettu tulos — ${strokes} lyöntiä`}
-                                style={{
-                                  width: 14, height: 14, borderRadius: '50%',
-                                  background: 'transparent',
-                                  border: `1.5px solid ${course.color_hex ?? '#ffffff'}`,
-                                }}
-                              />
-                            )}
-                            {(state === 'ei-johtoa' || state === 'no-data') && (
-                              <div
-                                style={{
-                                  width: 14, height: 14, borderRadius: '50%',
-                                  background: 'rgba(255,255,255,0.12)',
-                                }}
-                              />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
+                      ))}
                     </div>
+
+                    {/* Row 2: Par */}
+                    <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <RowLabel>Par</RowLabel>
+                      {holeStatuses.map(({ holeNumber, par }) => (
+                        <div
+                          key={holeNumber}
+                          style={{ width: 44, minWidth: 44, height: 32 }}
+                          className="flex items-center justify-center text-[14px] font-medium text-white"
+                        >
+                          {par ?? '–'}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Row 3: Lyönnit (scorecard coded) */}
+                    <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <RowLabel>Lyönnit</RowLabel>
+                      {holeStatuses.map(({ holeNumber, par, strokes }) => (
+                        <div
+                          key={holeNumber}
+                          style={{ width: 44, minWidth: 44, height: 44 }}
+                          className="flex items-center justify-center"
+                        >
+                          {strokes == null || par == null ? (
+                            <span className="text-[15px] font-bold" style={{ color: '#374151' }}>—</span>
+                          ) : (() => {
+                            const s = holeStrokeStyle(strokes, par)
+                            return (
+                              <div style={{
+                                width: 30, height: 30,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                border: s.outer ? `1.5px solid ${s.outer}` : 'none',
+                                borderRadius: s.radius,
+                                position: 'relative',
+                              }}>
+                                {s.inner && (
+                                  <div style={{
+                                    position: 'absolute', inset: 4,
+                                    border: `1.5px solid ${s.inner}`,
+                                    borderRadius: s.radius,
+                                  }} />
+                                )}
+                                <span className="text-[15px] font-bold" style={{ color: s.color, position: 'relative' }}>
+                                  {strokes}
+                                </span>
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Row 4: Pisteet (stableford points) */}
+                    <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <RowLabel>Pisteet</RowLabel>
+                      {holeStatuses.map(({ holeNumber, points }) => (
+                        <div
+                          key={holeNumber}
+                          style={{ width: 44, minWidth: 44, height: 32 }}
+                          className="flex items-center justify-center text-[14px] font-semibold text-white"
+                        >
+                          {points ?? '–'}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Row 5: Mestari (dots) */}
+                    <div className="flex">
+                      <RowLabel>Mestari</RowLabel>
+                      {holeStatuses.map(({ holeNumber, state, strokes }) => (
+                        <div
+                          key={holeNumber}
+                          style={{ width: 44, minWidth: 44, height: 44 }}
+                          className="flex items-center justify-center"
+                        >
+                          {state === 'mestari' && (
+                            <div
+                              title={`Väylämestari — ${strokes} lyöntiä`}
+                              style={{
+                                width: 14, height: 14, borderRadius: '50%',
+                                background: course.color_hex ?? '#ffffff',
+                              }}
+                            />
+                          )}
+                          {state === 'jaettu' && (
+                            <div
+                              title={`Jaettu tulos — ${strokes} lyöntiä`}
+                              style={{
+                                width: 14, height: 14, borderRadius: '50%',
+                                background: 'transparent',
+                                border: `1.5px solid ${course.color_hex ?? '#ffffff'}`,
+                              }}
+                            />
+                          )}
+                          {(state === 'ei-johtoa' || state === 'no-data') && (
+                            <div
+                              style={{
+                                width: 14, height: 14, borderRadius: '50%',
+                                background: 'rgba(255,255,255,0.12)',
+                              }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
                   </div>
                 </div>
-
-                <div className="text-[12px] text-gray-600 mt-2">
-                  {mestariCount === 0 && jaettuCount === 0
-                    ? 'Ei väylämestariutta tällä kentällä'
-                    : `${mestariCount} väylämestaria · ${jaettuCount} jaettua tulosta`}
-                </div>
-              </>
+              </div>
             )}
           </div>
         ))}
@@ -315,7 +382,7 @@ export default function PlayerProfilePage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">{player.full_name}</h1>
+        <h1 className="text-3xl font-bold text-white font-display">{player.full_name}</h1>
         {player.hcp_current != null && (
           <p className="text-gray-400 mt-1">HCP {player.hcp_current}</p>
         )}
@@ -323,18 +390,26 @@ export default function PlayerProfilePage() {
 
       {entry && (
         <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="card p-4 text-center">
-            <div className="text-2xl font-bold text-gc-green">{entry.rank}</div>
-            <div className="text-xs text-gray-500 mt-1">Sijoitus</div>
-          </div>
-          <div className="card p-4 text-center">
-            <div className="text-2xl font-bold text-white">{entry.total_points}</div>
-            <div className="text-xs text-gray-500 mt-1">Pistettä</div>
-          </div>
-          <div className="card p-4 text-center">
-            <div className="text-2xl font-bold text-white">{entry.rounds_played}</div>
-            <div className="text-xs text-gray-500 mt-1">Kierrosta</div>
-          </div>
+          {[
+            { value: entry.rank, label: 'Sijoitus', gold: entry.rank === 1 },
+            { value: entry.total_points, label: 'Pistettä', gold: false },
+            { value: entry.rounds_played, label: 'Kierrosta', gold: false },
+          ].map(({ value, label, gold }) => (
+            <div key={label} className="card p-4 text-center">
+              <div
+                className="text-[32px] font-extrabold font-display"
+                style={{ color: gold ? GOLD : '#ffffff' }}
+              >
+                {value}
+              </div>
+              <div
+                className="text-[12px] uppercase font-semibold mt-1"
+                style={{ color: '#6b7280', letterSpacing: '0.1em' }}
+              >
+                {label}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

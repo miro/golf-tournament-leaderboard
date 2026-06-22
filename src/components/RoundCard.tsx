@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { LeaderboardEntry, Player, RoundWithDetails, Course, HoleResult } from '../lib/database.types'
 
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
@@ -42,34 +43,6 @@ function computeLeaderboardFromRounds(rounds: RoundWithDetails[]): LeaderboardEn
     }
   }
   const sorted = [...map.values()].sort((a, b) => b.total_points - a.total_points)
-  sorted.forEach((e, i) => { e.rank = i + 1 })
-  return sorted
-}
-
-interface CourseStanding {
-  player_id: string
-  player_name: string
-  points: number
-  rank: number
-}
-
-function computeCourseStandings(rounds: RoundWithDetails[], courseId: string): CourseStanding[] {
-  const map = new Map<string, CourseStanding>()
-  for (const r of rounds) {
-    if (r.course_id !== courseId) continue
-    const existing = map.get(r.player_id)
-    if (existing) {
-      existing.points += r.total_points
-    } else {
-      map.set(r.player_id, {
-        player_id: r.player_id,
-        player_name: r.player?.full_name ?? '',
-        points: r.total_points,
-        rank: 0,
-      })
-    }
-  }
-  const sorted = [...map.values()].sort((a, b) => b.points - a.points)
   sorted.forEach((e, i) => { e.rank = i + 1 })
   return sorted
 }
@@ -180,11 +153,6 @@ export default function RoundCard({
   const showDaysLeft = daysLeft > 0
   const daysColor = daysLeft < 7 ? '#C12820' : daysLeft < 14 ? '#E05218' : 'rgba(255,255,255,0.25)'
 
-  // ── Section 1: course standings ──
-  const courseStandings = snapshot.length > 0 ? computeCourseStandings(snapshot, round.course_id) : []
-  const courseRows = buildList(courseStandings, e => e.player_id === round.player_id)
-  const maxCourse = courseStandings[0]?.points || 1
-
   // ── Section 2: overall standings ──
   const overallRows = buildList(leaderboard, e => e.player.id === round.player_id)
   const maxOverall = leaderboard[0]?.total_points || 1
@@ -214,9 +182,13 @@ export default function RoundCard({
         {/* Header band — 12px top/bottom */}
         <div className="px-5 py-3 flex items-center justify-between" style={{ background: color }}>
           <div className="leading-none">
-            <div className="text-white font-extrabold text-[22px] uppercase" style={{ letterSpacing: '0.04em' }}>
+            <Link
+              to={`/player/${round.player?.slug}`}
+              className="text-white font-extrabold text-[22px] uppercase"
+              style={{ letterSpacing: '0.04em' }}
+            >
               {round.player?.full_name}
-            </div>
+            </Link>
             <div className="text-white/70 text-[13px] mt-0.5 font-sans">Liekkipoika Kesäkisa 2026</div>
           </div>
           <div className="text-right leading-none shrink-0 ml-3">
