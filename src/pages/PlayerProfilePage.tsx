@@ -96,13 +96,54 @@ function computeHoleStatuses(
 
 const ROW_LABEL_STYLE: React.CSSProperties = { letterSpacing: '0.1em' }
 
-function RowLabel({ children }: { children: React.ReactNode }) {
+function InfoTooltip({ text }: { text: string }) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  return (
+    <span
+      style={{ display: 'inline-flex', alignItems: 'center', cursor: 'default', marginLeft: 3 }}
+      onMouseEnter={e => {
+        const r = e.currentTarget.getBoundingClientRect()
+        setPos({ x: r.right + 6, y: r.top })
+      }}
+      onMouseLeave={() => setPos(null)}
+    >
+      <span style={{ fontSize: 10, color: '#4b5563', lineHeight: 1 }}>ⓘ</span>
+      {pos && (
+        <span
+          style={{
+            position: 'fixed',
+            left: pos.x,
+            top: pos.y,
+            zIndex: 9999,
+            width: 200,
+            background: '#2a2520',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 6,
+            padding: '6px 8px',
+            fontSize: 11,
+            color: '#d1d5db',
+            whiteSpace: 'normal',
+            letterSpacing: 'normal',
+            textTransform: 'none',
+            fontWeight: 400,
+            pointerEvents: 'none',
+          }}
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
+function RowLabel({ children, tooltip }: { children: React.ReactNode; tooltip?: string }) {
   return (
     <div
       style={{ width: 64, minWidth: 64, ...ROW_LABEL_STYLE }}
       className="text-[11px] uppercase text-gray-600 font-semibold flex items-center"
     >
       {children}
+      {tooltip && <InfoTooltip text={tooltip} />}
     </div>
   )
 }
@@ -147,9 +188,6 @@ function VaylamestariSection({
   const totalMestari = courseData.reduce((sum, cd) => sum + cd.mestariCount, 0)
   const totalJaettu = courseData.reduce((sum, cd) => sum + cd.jaettuCount, 0)
 
-  const heroText = totalMestari > 0
-    ? `${totalMestari} väylämestaria${totalJaettu > 0 ? ` · ${totalJaettu} jaettua tulosta` : ''}`
-    : null
 
   return (
     <section className="mb-8">
@@ -160,17 +198,20 @@ function VaylamestariSection({
       >
         Väylämestari
       </div>
-      <div className="text-gray-500 text-[13px] mb-4">Reikäkohtaiset parhaat tulokset</div>
+      <div className="text-gray-500 text-[13px] mb-4">Reikäkohtaiset skins-voitot</div>
 
       {/* Hero summary */}
       <div className="mb-6">
-        {heroText ? (
-          <div className="text-[24px] font-bold font-display" style={{ color: GOLD }}>
-            {heroText}
+        {totalMestari === 0 && totalJaettu === 0 ? (
+          <div className="text-[24px] font-bold text-gray-600 font-display">
+            Ei vielä skinejä
           </div>
         ) : (
-          <div className="text-[24px] font-bold text-gray-600 font-display">
-            Ei vielä väylämestariutta
+          <div className="text-[24px] font-bold font-display">
+            <span style={{ color: GOLD }}>{totalMestari} skiniä</span>
+            {totalJaettu > 0 && (
+              <span className="text-gray-500"> · {totalJaettu} jaettua tulosta</span>
+            )}
           </div>
         )}
       </div>
@@ -275,7 +316,7 @@ function VaylamestariSection({
 
                     {/* Row 5: Mestari (dots) */}
                     <div className="flex">
-                      <RowLabel>Mestari</RowLabel>
+                      <RowLabel tooltip="Skin = reikäkohtainen voitto pienimmällä lyöntimäärällä. Täytetty piste = sinulla on skin yksin, ympyrä = jaettu tulos.">Skins</RowLabel>
                       {holeStatuses.map(({ holeNumber, state, strokes }) => (
                         <div
                           key={holeNumber}
@@ -284,7 +325,7 @@ function VaylamestariSection({
                         >
                           {state === 'mestari' && (
                             <div
-                              title={`Väylämestari — ${strokes} lyöntiä`}
+                              title={`Skin — ${strokes} lyöntiä`}
                               style={{
                                 width: 14, height: 14, borderRadius: '50%',
                                 background: course.color_hex ?? '#ffffff',
@@ -293,7 +334,7 @@ function VaylamestariSection({
                           )}
                           {state === 'jaettu' && (
                             <div
-                              title={`Jaettu tulos — ${strokes} lyöntiä`}
+                              title={`Jaettu — ${strokes} lyöntiä`}
                               style={{
                                 width: 14, height: 14, borderRadius: '50%',
                                 background: 'transparent',
