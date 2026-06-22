@@ -10,6 +10,165 @@ import RoundCard from '../components/RoundCard'
 const GOLD = '#FBBF24'
 const PAGE_BG = '#17130F'
 
+function VaylamestariRankingSection({
+  ranking,
+  coursesBySlug,
+}: {
+  ranking: PlayerVaylamestariStats[]
+  coursesBySlug: Map<string, CourseInfo>
+}) {
+  const [openId, setOpenId] = useState<string | null>(null)
+
+  return (
+    <section>
+      <h2 className="text-[13px] uppercase text-gray-600 mb-3 font-display font-semibold" style={{ letterSpacing: '0.12em' }}>Skins</h2>
+      <div className="card overflow-hidden">
+        {ranking.length === 0 ? (
+          <div className="p-6 text-center text-gray-600 text-sm">
+            Ei vielä väylämestariutta — tulokset päivittyvät kun kierroksia on syötetty
+          </div>
+        ) : (
+          ranking.map((stats, i) => {
+            const isOpen = openId === stats.player.id
+            return (
+              <div
+                key={stats.player.id}
+                style={{ borderBottom: i < ranking.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
+              >
+                {/* Main row */}
+                <div
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 transition-colors select-none"
+                  onClick={() => setOpenId(isOpen ? null : stats.player.id)}
+                >
+                  {/* Rank */}
+                  <span className="text-[15px] font-semibold text-gray-500 w-4 text-right shrink-0 tabular-nums">
+                    {i + 1}
+                  </span>
+
+                  {/* Name */}
+                  <span className="shrink-0 text-white text-[18px] font-semibold font-display">
+                    {stats.player.full_name}
+                  </span>
+
+                  {/* Course pills */}
+                  <div className="flex flex-wrap gap-[6px] flex-1 items-center">
+                    {COURSE_SLUG_ORDER.map(slug => {
+                      const course = coursesBySlug.get(slug)
+                      if (!course) return null
+                      const count = stats.mestariPerCourse[course.id] ?? 0
+                      if (count === 0) return null
+                      const abbr = COURSE_ABBR[slug] ?? slug.substring(0, 3).toUpperCase()
+                      const color = course.color_hex ?? '#888'
+                      return (
+                        <span
+                          key={slug}
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color,
+                            background: `${color}40`,
+                            border: `1px solid ${color}99`,
+                            borderRadius: 4,
+                            padding: '3px 8px',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {abbr} {count}
+                        </span>
+                      )
+                    })}
+                  </div>
+
+                  {/* Mestari count */}
+                  <span className="text-[17px] font-bold text-white tabular-nums shrink-0 flex items-center gap-1">
+                    {stats.totalMestari}
+                    <span style={{ color: GOLD, fontSize: 10 }}>⬤</span>
+                  </span>
+
+                  {/* Tied count (only if > 0) */}
+                  {stats.totalJaettu > 0 && (
+                    <span className="text-[14px] font-medium text-gray-500 tabular-nums shrink-0">
+                      {stats.totalJaettu} ≈
+                    </span>
+                  )}
+
+                  {/* Chevron */}
+                  <span
+                    className="text-[12px] text-gray-600 shrink-0"
+                    style={{
+                      display: 'inline-block',
+                      transform: isOpen ? 'rotate(-90deg)' : 'rotate(90deg)',
+                      transition: 'transform 150ms ease',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ›
+                  </span>
+                </div>
+
+                {/* Expandable panel */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateRows: isOpen ? '1fr' : '0fr',
+                    transition: 'grid-template-rows 150ms ease',
+                  }}
+                >
+                  <div style={{ overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        paddingLeft: 40,
+                        paddingRight: 16,
+                        paddingTop: 8,
+                        paddingBottom: 12,
+                        borderTop: '1px solid rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      {COURSE_SLUG_ORDER.map(slug => {
+                        const course = coursesBySlug.get(slug)
+                        if (!course) return null
+                        const holes = stats.mestariHolesPerCourse[course.id]
+                        if (!holes || holes.length === 0) return null
+                        const sortedHoles = [...holes].sort((a, b) => a - b)
+                        const count = sortedHoles.length
+                        return (
+                          <div key={slug} className="flex items-center gap-2 py-[3px]">
+                            <div
+                              className="shrink-0"
+                              style={{ width: 8, height: 8, borderRadius: '50%', background: course.color_hex ?? '#555' }}
+                            />
+                            <span
+                              className="shrink-0"
+                              style={{ fontSize: 13, fontWeight: 600, color: course.color_hex ?? '#9ca3af', minWidth: 56 }}
+                            >
+                              {course.name.toUpperCase()}
+                            </span>
+                            <span className="flex-1 text-gray-500" style={{ fontSize: 13, fontWeight: 400 }}>
+                              Reikä {sortedHoles.join(', ')}
+                            </span>
+                            <span className="shrink-0 text-gray-500 text-right" style={{ fontSize: 13, fontWeight: 600 }}>
+                              {count === 1 ? '1 skin' : `${count} skiniä`}
+                            </span>
+                          </div>
+                        )
+                      })}
+                      {stats.totalJaettu > 0 && (
+                        <div className="text-gray-600 mt-1" style={{ fontSize: 12 }}>
+                          + {stats.totalJaettu} jaettua tulosta
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+    </section>
+  )
+}
+
 function FeedSeparator() {
   return (
     <div className="relative flex items-center justify-center" style={{ margin: '32px 0' }}>
@@ -19,6 +178,7 @@ function FeedSeparator() {
   )
 }
 const COURSE_SLUG_ORDER = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
+const COURSE_ABBR: Record<string, string> = { kajaani: 'KAJ', nuas: 'NUA', tenetti: 'TEN', paltamo: 'PAL' }
 
 function useCountdownDays(deadline: string): number {
   const [days, setDays] = useState(0)
@@ -35,6 +195,91 @@ function useCountdownDays(deadline: string): number {
 
 interface CourseInfo { id: string; name: string; slug: string; color_hex: string | null }
 
+interface PlayerVaylamestariStats {
+  player: Player
+  totalMestari: number
+  totalJaettu: number
+  mestariPerCourse: Record<string, number>
+  mestariHolesPerCourse: Record<string, number[]>
+}
+
+function computeVaylamestariRanking(
+  allRounds: RoundWithDetails[],
+  allHoleResults: HoleResult[],
+  courses: CourseInfo[],
+): PlayerVaylamestariStats[] {
+  const HOLES = Array.from({ length: 18 }, (_, i) => i + 1)
+  const roundById = new Map(allRounds.map(r => [r.id, r]))
+
+  const statsMap = new Map<string, PlayerVaylamestariStats>()
+
+  for (const course of courses) {
+    const courseRoundIds = new Set(
+      allRounds.filter(r => r.course_id === course.id).map(r => r.id)
+    )
+    const courseHoleResults = allHoleResults.filter(hr => courseRoundIds.has(hr.round_id))
+
+    for (const holeNum of HOLES) {
+      const allForHole = courseHoleResults.filter(
+        hr => hr.hole_number === holeNum && hr.strokes_played != null
+      )
+      if (allForHole.length === 0) continue
+
+      const minStrokes = Math.min(...allForHole.map(hr => hr.strokes_played!))
+      const candidates = allForHole.filter(hr => hr.strokes_played === minStrokes)
+
+      candidates.sort((a, b) => {
+        const ra = roundById.get(a.round_id)
+        const rb = roundById.get(b.round_id)
+        const pd = (rb?.total_points ?? 0) - (ra?.total_points ?? 0)
+        if (pd !== 0) return pd
+        const hd = (rb?.hcp_at_time ?? 0) - (ra?.hcp_at_time ?? 0)
+        if (hd !== 0) return hd
+        return (ra?.submitted_at ?? '') < (rb?.submitted_at ?? '') ? -1 : 1
+      })
+
+      // Deduplicate by player_id (keep best per player after sort)
+      const seenPlayers = new Set<string>()
+      const deduped = candidates.filter(hr => {
+        const pid = roundById.get(hr.round_id)?.player_id
+        if (!pid || seenPlayers.has(pid)) return false
+        seenPlayers.add(pid)
+        return true
+      })
+
+      const winnerId = roundById.get(deduped[0]?.round_id ?? '')?.player_id ?? null
+
+      for (const hr of deduped) {
+        const round = roundById.get(hr.round_id)
+        if (!round) continue
+        const player = round.player as Player | undefined
+        if (!player?.id) continue
+
+        if (!statsMap.has(player.id)) {
+          statsMap.set(player.id, { player, totalMestari: 0, totalJaettu: 0, mestariPerCourse: {}, mestariHolesPerCourse: {} })
+        }
+        const s = statsMap.get(player.id)!
+
+        if (round.player_id === winnerId) {
+          s.mestariPerCourse[course.id] = (s.mestariPerCourse[course.id] ?? 0) + 1
+          s.mestariHolesPerCourse[course.id] = [...(s.mestariHolesPerCourse[course.id] ?? []), holeNum]
+          s.totalMestari += 1
+        } else {
+          s.totalJaettu += 1
+        }
+      }
+    }
+  }
+
+  return [...statsMap.values()]
+    .filter(s => s.totalMestari > 0)
+    .sort((a, b) =>
+      b.totalMestari !== a.totalMestari
+        ? b.totalMestari - a.totalMestari
+        : b.totalJaettu - a.totalJaettu
+    )
+}
+
 export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [courses, setCourses] = useState<CourseInfo[]>([])
@@ -42,6 +287,7 @@ export default function HomePage() {
   const [activePlayers, setActivePlayers] = useState<Player[]>([])
   const [allRounds, setAllRounds] = useState<RoundWithDetails[]>([])
   const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
+  const [vaylamestariRanking, setVaylamestariRanking] = useState<PlayerVaylamestariStats[]>([])
   const [deadline, setDeadline] = useState('2026-08-31')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -60,21 +306,25 @@ export default function HomePage() {
         getActivePlayers(),
       ])
       const recentRounds = rounds.slice(0, 5)
-      const holeResults = await getHoleResultsForRounds(recentRounds.map(r => r.id))
-      setLeaderboard(lb)
-      setCourses(sc.map(c => {
+      const allHoleResults = await getHoleResultsForRounds(rounds.map(r => r.id))
+      const coursesData: CourseInfo[] = sc.map(c => {
         const course = c.course as unknown as Course
         return { id: c.course_id, name: course?.name ?? c.course_id, slug: course?.slug ?? '', color_hex: course?.color_hex ?? null }
-      }))
+      })
+      setLeaderboard(lb)
+      setCourses(coursesData)
       setSeasonCoursesFull(sc.map(c => c.course as unknown as Course))
       setActivePlayers(players)
       setAllRounds(rounds)
+      const recentIds = new Set(recentRounds.map(r => r.id))
       const hrMap: Record<string, HoleResult[]> = {}
-      for (const hr of holeResults) {
+      for (const hr of allHoleResults) {
+        if (!recentIds.has(hr.round_id)) continue
         hrMap[hr.round_id] = hrMap[hr.round_id] ?? []
         hrMap[hr.round_id].push(hr)
       }
       setHoleResultsByRound(hrMap)
+      setVaylamestariRanking(computeVaylamestariRanking(rounds, allHoleResults, coursesData))
     }
     load().catch(() => setError('Tietoja ei voitu ladata')).finally(() => setLoading(false))
   }, [])
@@ -253,6 +503,11 @@ export default function HomePage() {
             })}
           </div>
         </section>
+      )}
+
+      {/* ── VÄYLÄMESTARI RANKING ── */}
+      {vaylamestariRanking.length > 0 && (
+        <VaylamestariRankingSection ranking={vaylamestariRanking} coursesBySlug={coursesBySlug} />
       )}
 
       {/* ── VIIMEISIMMÄT KIERROKSET ── */}
