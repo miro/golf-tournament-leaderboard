@@ -4,6 +4,13 @@ import type { Player, Course, LeaderboardEntry, RoundWithDetails } from '../lib/
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 const BG = '#1a1a18'
 
+const COURSE_HERO: Record<string, string> = {
+  kajaani: '/course-hero-kag.jpg',
+  nuas:    '/course-hero-nuas.jpg',
+  tenetti: '/course-hero-tenetti.jpg',
+  paltamo: '/course-hero-paltamo.jpg',
+}
+
 const COURSE_LOCATIVE: Record<string, string> = {
   kajaani: 'Kajaanille',
   nuas: 'Nuasille',
@@ -130,27 +137,29 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
   const courseTop3 = courseRounds.slice(0, 3)
   const caption = generateCaption(selectedPlayers, course, leaderboard, courseRounds)
 
+  const coverPhotoUrl = COURSE_HERO[course.slug] ?? course.cover_photo_url
+
   function renderPlayerNames() {
     if (selectedPlayers.length === 1) {
       return (
-        <div style={{ color: 'white', fontWeight: 800, fontSize: 30, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.1 }}>
+        <div style={{ color: 'white', fontWeight: 900, fontSize: 36, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.1 }}>
           {selectedPlayers[0].full_name}
         </div>
       )
     }
     if (selectedPlayers.length === 2) {
       return (
-        <div style={{ color: 'white', fontWeight: 800, fontSize: 24, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.2 }}>
+        <div style={{ color: 'white', fontWeight: 900, fontSize: 36, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.15 }}>
           {selectedPlayers[0].full_name}
           {' '}
-          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 18, fontWeight: 600 }}>vs</span>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 20, fontWeight: 500 }}>vs</span>
           {' '}
           {selectedPlayers[1].full_name}
         </div>
       )
     }
     return (
-      <div style={{ color: 'white', fontWeight: 800, fontSize: 22, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.3 }}>
+      <div style={{ color: 'white', fontWeight: 800, fontSize: 28, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.3 }}>
         {selectedPlayers.map(p => p.full_name).join(' · ')}
       </div>
     )
@@ -169,32 +178,32 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
       const rival = leaderboard[1]?.player.full_name ?? '?'
       content = (
         <>
-          <span style={{ color }}>{player.full_name}</span>
-          {' johtaa sarjaa — '}
-          <span style={{ color }}>{rival}</span>
-          {' tarvitsee '}
-          <strong>{gap + 1}p</strong>
-          {' enemmän ohittaakseen'}
+          <span style={{ color, fontWeight: 700 }}>{player.full_name}</span>
+          <span style={{ fontWeight: 400 }}>{' johtaa sarjaa — '}</span>
+          <span style={{ color, fontWeight: 700 }}>{rival}</span>
+          <span style={{ fontWeight: 400 }}>{' tarvitsee '}</span>
+          <span style={{ fontWeight: 800, fontSize: 18 }}>{gap + 1}p</span>
+          <span style={{ fontWeight: 400 }}>{' enemmän ohittaakseen'}</span>
         </>
       )
     } else {
       const gap = (leader?.total_points ?? 0) - playerPoints
       content = (
         <>
-          <span style={{ color }}>{player.full_name}</span>
-          {' → kärkeen: '}
-          <strong>{gap + 1}p</strong>
-          {' enemmän kuin '}
-          <span style={{ color }}>{leader?.player.full_name ?? '?'}</span>
+          <span style={{ color, fontWeight: 700 }}>{player.full_name}</span>
+          <span style={{ fontWeight: 400 }}>{' → kärkeen: '}</span>
+          <span style={{ fontWeight: 800, fontSize: 18 }}>{gap + 1}p</span>
+          <span style={{ fontWeight: 400 }}>{' enemmän kuin '}</span>
+          <span style={{ color, fontWeight: 700 }}>{leader?.player.full_name ?? '?'}</span>
         </>
       )
     }
 
     return (
-      <div key={player.id} style={{ fontSize: 14, color: 'white', lineHeight: 1.6, padding: '2px 0' }}>
+      <div key={player.id} style={{ fontSize: 16, color: 'white', lineHeight: 1.6, padding: '2px 0' }}>
         {content}
         {hasPlayedCourse && (
-          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}> (kenttä pelattu)</span>
+          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, fontWeight: 400 }}> (kenttä pelattu)</span>
         )}
       </div>
     )
@@ -210,20 +219,37 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
       >
         {/* Header band */}
         <div style={{ background: color, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ lineHeight: 1.1 }}>
-            <div style={{ color: 'white', fontWeight: 800, fontSize: 22 }}>GC</div>
-            <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>Liekkipoika Kesäkisa 2026</div>
+          <div style={{ lineHeight: 1.15 }}>
+            <div style={{ color: 'white', fontWeight: 800, fontSize: 18 }}>GC</div>
+            <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 400 }}>Liekkipoika Kesäkisa 2026</div>
           </div>
-          <div style={{ color: 'white', fontWeight: 800, fontSize: 26, textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'right', lineHeight: 1 }}>
+          <div style={{ color: 'white', fontWeight: 900, fontSize: 28, textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'right', lineHeight: 1 }}>
             {course.name}
           </div>
         </div>
 
-        {/* Player section */}
-        <div style={{ padding: '20px 24px', textAlign: 'center' }}>
-          {renderPlayerNames()}
-          <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, marginTop: 8 }}>
-            {fmtDate(date)}
+        {/* Player section — course photo background */}
+        <div style={{
+          position: 'relative',
+          minHeight: 140,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          backgroundImage: `url(${coverPhotoUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}>
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 100%)',
+          }} />
+          <div style={{ position: 'relative', zIndex: 1, padding: '20px 24px' }}>
+            {renderPlayerNames()}
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: 400, marginTop: 8 }}>
+              {fmtDate(date)}
+            </div>
           </div>
         </div>
 
@@ -236,7 +262,7 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
                 <span style={{ width: 16, textAlign: 'right', fontSize: 15, fontWeight: 600, flexShrink: 0, color: groupIds.has(e.player.id) ? color : '#6b7280' }}>
                   {e.rank}
                 </span>
-                <span style={{ flex: 1, fontSize: 16, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: groupIds.has(e.player.id) ? color : '#9ca3af' }}>
+                <span style={{ flex: 1, fontSize: 17, fontWeight: groupIds.has(e.player.id) ? 700 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: groupIds.has(e.player.id) ? color : '#9ca3af' }}>
                   {e.player.full_name}
                 </span>
                 <div style={{ width: 56, height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.06)', flexShrink: 0, overflow: 'hidden' }}>
@@ -250,7 +276,7 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
                     )
                   })}
                 </div>
-                <span style={{ width: 40, textAlign: 'right', fontSize: 16, fontWeight: 700, flexShrink: 0, color: groupIds.has(e.player.id) ? color : '#6b7280' }}>
+                <span style={{ width: 40, textAlign: 'right', fontSize: 17, fontWeight: 700, flexShrink: 0, color: groupIds.has(e.player.id) ? color : '#6b7280' }}>
                   {e.total_points}p
                 </span>
               </div>
@@ -262,7 +288,7 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
         <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <SectionLabel text={`${course.name.toUpperCase()} TILANNE`} />
           {courseTop3.length === 0 ? (
-            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginBottom: 6 }}>Ei vielä tuloksia</div>
+            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontWeight: 400, marginBottom: 6 }}>Ei vielä tuloksia</div>
           ) : (
             courseTop3.map((r, i) => (
               <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
@@ -280,24 +306,24 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
             {selectedPlayers.map(player => {
               const round = courseRounds.find(r => r.player_id === player.id)
               return (
-                <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', fontSize: 14 }}>
-                  <span style={{ color, fontWeight: 700 }}>{player.full_name}:</span>
+                <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
+                  <span style={{ color, fontWeight: 700, fontSize: 15 }}>{player.full_name}:</span>
                   {round ? (
                     <>
-                      <span style={{ color: 'white', fontWeight: 600 }}>
+                      <span style={{ color: 'white', fontWeight: 400, fontSize: 15 }}>
                         {round.total_points}p{round.to_par != null ? ` (${round.to_par > 0 ? '+' : ''}${round.to_par})` : ''}
                       </span>
                       <span style={{ color: '#4ade80', fontSize: 12 }}>✓</span>
                     </>
                   ) : (
-                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>ei pelattu</span>
+                    <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 400, fontSize: 15 }}>ei pelattu</span>
                   )}
                 </div>
               )
             })}
           </div>
           {/* Tikkari text */}
-          <div style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>
+          <div style={{ marginTop: 8, fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>
             {courseRounds.length > 0
               ? `Johtaa: ${courseRounds[0].player?.full_name} ${courseRounds[0].total_points}p — tikkarit jaossa 🍭`
               : 'Ei tuloksia vielä — ensimmäinen tulos voittaa tikkarin 🍭'
@@ -313,7 +339,7 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
 
         {/* Footer */}
         <div style={{ padding: '8px 24px', borderTop: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
-          <span className="font-sans" style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>
+          <span className="font-sans" style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12, fontWeight: 400 }}>
             liekkipoika.com · Liekkipoika Kesäkisa 2026
           </span>
         </div>
