@@ -15,6 +15,7 @@ import AdminSubmit from './pages/admin/AdminSubmit'
 import AdminPlayers from './pages/admin/AdminPlayers'
 import AdminRounds from './pages/admin/AdminRounds'
 import AdminCards from './pages/admin/AdminCards'
+import AdminHype from './pages/admin/AdminHype'
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="players" element={<AdminPlayers />} />
           <Route path="rounds" element={<AdminRounds />} />
           <Route path="cards" element={<AdminCards />} />
+          <Route path="hype" element={<AdminHype />} />
         </Route>
       </Route>
     </Routes>

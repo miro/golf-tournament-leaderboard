@@ -8,6 +8,7 @@ const links = [
   { to: '/admin/players', label: 'Pelaajat' },
   { to: '/admin/rounds', label: 'Kierrokset' },
   { to: '/admin/cards', label: 'Kortit' },
+  { to: '/admin/hype', label: 'Hype Tools' },
 ]
 
 export default function AdminLayout() {
