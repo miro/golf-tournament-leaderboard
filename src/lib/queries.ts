@@ -41,6 +41,7 @@ export async function getLeaderboard(seasonId: string): Promise<LeaderboardEntry
       existing.total_points += r.total_points
       existing.rounds_played += 1
       existing.courses_played.push(r.course_id)
+      existing.points_by_course[r.course_id] = (existing.points_by_course[r.course_id] ?? 0) + r.total_points
     } else {
       map.set(r.player_id, {
         player,
@@ -48,6 +49,7 @@ export async function getLeaderboard(seasonId: string): Promise<LeaderboardEntry
         rounds_played: 1,
         rank: 0,
         courses_played: [r.course_id],
+        points_by_course: { [r.course_id]: r.total_points },
       })
     }
   }

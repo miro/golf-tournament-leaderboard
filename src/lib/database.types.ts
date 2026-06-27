@@ -143,6 +143,7 @@ export interface LeaderboardEntry {
   rounds_played: number
   rank: number
   courses_played: string[]
+  points_by_course: Record<string, number>
 }
 
 export interface RoundWithDetails extends Round {

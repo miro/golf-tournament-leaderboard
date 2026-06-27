@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import type { Player, Course, LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
 import HoleOwnerGrid from './shared/HoleOwnerGrid'
+import PointsBar, { type SegmentData } from './shared/PointsBar'
 
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 const BG = '#1a1a18'
@@ -267,9 +268,15 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
                 <span style={{ flex: 1, fontSize: 17, fontWeight: groupIds.has(e.player.id) ? 700 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: groupIds.has(e.player.id) ? color : '#9ca3af' }}>
                   {e.player.full_name}
                 </span>
-                <div style={{ width: 56, height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.06)', flexShrink: 0, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', borderRadius: 4, background: color, width: `${(e.total_points / maxPoints) * 100}%` }} />
-                </div>
+                <PointsBar
+                  segments={dotCourses.flatMap((c): SegmentData[] => {
+                    if (!c) return []
+                    const pts = e.points_by_course[c.id] ?? 0
+                    return pts > 0 ? [{ courseSlug: c.slug, points: pts, color: c.color_hex ?? undefined }] : []
+                  })}
+                  maxPoints={maxPoints}
+                  className="w-14"
+                />
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                   {dotCourses.map((c, di) => {
                     const played = c ? e.courses_played.includes(c.id) : false

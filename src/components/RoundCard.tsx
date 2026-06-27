@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { LeaderboardEntry, Player, RoundWithDetails, Course, HoleResult } from '../lib/database.types'
+import PointsBar, { type SegmentData } from './shared/PointsBar'
 
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 
@@ -32,6 +33,7 @@ function computeLeaderboardFromRounds(rounds: RoundWithDetails[]): LeaderboardEn
       existing.total_points += r.total_points
       existing.rounds_played += 1
       existing.courses_played.push(r.course_id)
+      existing.points_by_course[r.course_id] = (existing.points_by_course[r.course_id] ?? 0) + r.total_points
     } else {
       map.set(r.player_id, {
         player,
@@ -39,6 +41,7 @@ function computeLeaderboardFromRounds(rounds: RoundWithDetails[]): LeaderboardEn
         rounds_played: 1,
         rank: 0,
         courses_played: [r.course_id],
+        points_by_course: { [r.course_id]: r.total_points },
       })
     }
   }
@@ -280,11 +283,15 @@ export default function RoundCard({
                         }}>
                     {e.player.full_name}
                   </span>
-                  <div className="w-16 h-1.5 rounded-full overflow-hidden shrink-0"
-                       style={{ background: 'rgba(255,255,255,0.06)' }}>
-                    <div className="h-full rounded-full"
-                         style={{ width: `${(e.total_points / maxOverall) * 100}%`, background: color }} />
-                  </div>
+                  <PointsBar
+                    segments={dotCourses.flatMap((c): SegmentData[] => {
+                      if (!c) return []
+                      const pts = e.points_by_course[c.id] ?? 0
+                      return pts > 0 ? [{ courseSlug: c.slug, points: pts, color: c.color_hex ?? undefined }] : []
+                    })}
+                    maxPoints={maxOverall}
+                    className="w-16"
+                  />
                   <div className="flex items-center gap-1 shrink-0">
                     {dotCourses.map((c, di) => {
                       const played = c ? e.courses_played.includes(c.id) : false
