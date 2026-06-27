@@ -6,16 +6,12 @@ import {
 } from '../lib/queries'
 import type { Course, RoundWithDetails, HoleResult } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
+import HoleOwnerGrid from '../components/shared/HoleOwnerGrid'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 const CARD_BG = '#1a1a18'
 
-
-function abbrevName(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/)
-  return (parts[parts.length - 1] ?? parts[0]).substring(0, 4).toUpperCase()
-}
 
 function fmtStbl(net: number): { text: string; color: string } {
   if (net < 0) return { text: `${net}`, color: '#E8453C' }
@@ -133,176 +129,6 @@ function CourseRankings({ rounds, course }: { rounds: RoundWithDetails[]; course
   )
 }
 
-// ── VaylamestariGrid ─────────────────────────────────────────────────────────
-
-const HOLES = Array.from({ length: 18 }, (_, i) => i + 1)
-const RED = '#E8453C'
-const BLUE = '#5B9BD5'
-
-function holeStrokeStyle(strokes: number, par: number): {
-  outer: string | null; inner: string | null; radius: number | string; color: string
-} {
-  const diff = strokes - par
-  if (diff <= -2) return { outer: RED,  inner: RED,  radius: '50%', color: '#ffffff' }
-  if (diff === -1) return { outer: RED,  inner: null, radius: '50%', color: '#ffffff' }
-  if (diff === 0)  return { outer: null, inner: null, radius: 0,     color: '#ffffff' }
-  if (diff === 1)  return { outer: BLUE, inner: null, radius: 2,     color: '#ffffff' }
-  if (diff === 2)  return { outer: BLUE, inner: BLUE, radius: 2,     color: '#ffffff' }
-  return               { outer: null, inner: null, radius: 0,     color: '#6b7280' }
-}
-
-function VaylamestariGrid({
-  rounds,
-  holeResultsByRound,
-  course,
-}: {
-  rounds: RoundWithDetails[]
-  holeResultsByRound: Record<string, HoleResult[]>
-  course: Course
-}) {
-  const color = course.color_hex ?? '#2D6A4F'
-
-  const roundById = new Map(rounds.map(r => [r.id, r]))
-  const flatHole = Object.entries(holeResultsByRound).flatMap(([rid, hrs]) =>
-    hrs.map(hr => ({ hr, round: roundById.get(rid) ?? null }))
-  )
-
-  // PB leader player_id for Mestari row highlight
-  const pbLeaderPlayerId: string | null = (() => {
-    const pbMap = new Map<string, number>()
-    for (const r of rounds) {
-      const ex = pbMap.get(r.player_id)
-      if (!ex || r.total_points > ex) pbMap.set(r.player_id, r.total_points)
-    }
-    if (pbMap.size === 0) return null
-    return [...pbMap.entries()].sort((a, b) => b[1] - a[1])[0][0]
-  })()
-
-  const holeChampions = HOLES.map(holeNum => {
-    const holeData = flatHole.filter(x => x.hr.hole_number === holeNum && x.hr.strokes_played != null)
-    if (holeData.length === 0) {
-      return { holeNumber: holeNum, par: null as number | null, bestStrokes: null as number | null, playerName: null as string | null, isLeader: false }
-    }
-    const par = holeData[0].hr.par
-    const minStrokes = Math.min(...holeData.map(x => x.hr.strokes_played!))
-    const candidates = [...holeData.filter(x => x.hr.strokes_played === minStrokes)]
-    candidates.sort((a, b) => {
-      const pd = (b.round?.total_points ?? 0) - (a.round?.total_points ?? 0)
-      if (pd !== 0) return pd
-      const hd = (b.round?.hcp_at_time ?? 0) - (a.round?.hcp_at_time ?? 0)
-      if (hd !== 0) return hd
-      return (a.round?.submitted_at ?? '') < (b.round?.submitted_at ?? '') ? -1 : 1
-    })
-    const winner = candidates[0]
-    const winnerPlayerId = winner.round?.player_id ?? null
-    return {
-      holeNumber: holeNum,
-      par,
-      bestStrokes: minStrokes,
-      playerName: winner.round?.player?.full_name ?? null,
-      isLeader: winnerPlayerId !== null && winnerPlayerId === pbLeaderPlayerId,
-    }
-  })
-
-  const hasAnyData = flatHole.length > 0
-
-  return (
-    <div className="mb-8">
-      <div className="text-gray-600 text-[13px] uppercase mb-3 font-display font-semibold" style={{ letterSpacing: '0.12em' }}>Väylämestari</div>
-      <div style={{ background: CARD_BG, borderRadius: 12, overflow: 'hidden' }}>
-        {!hasAnyData ? (
-          <div className="text-center text-gray-600 text-sm py-8 px-4">
-            Ei vielä reikätuloksia — tulokset näkyvät kun ensimmäinen kierros on syötetty
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <div style={{ minWidth: 64 + 18 * 44, padding: 16, paddingBottom: 12 }}>
-              {/* Row 1: Hole numbers */}
-              <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ width: 64, minWidth: 64, height: 32, letterSpacing: '0.08em' }} className="text-[12px] uppercase text-gray-600 font-semibold flex items-center">
-                  Reikä
-                </div>
-                {HOLES.map(h => (
-                  <div key={h} style={{ width: 44, minWidth: 44, height: 32 }} className="flex items-center justify-center text-[13px] font-semibold text-gray-600">
-                    {h}
-                  </div>
-                ))}
-              </div>
-
-              {/* Row 2: Par */}
-              <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ width: 64, minWidth: 64, height: 32, letterSpacing: '0.08em' }} className="text-[12px] uppercase text-gray-600 font-semibold flex items-center">
-                  Par
-                </div>
-                {holeChampions.map(({ holeNumber, par }) => (
-                  <div key={holeNumber} style={{ width: 44, minWidth: 44, height: 32 }} className="flex items-center justify-center text-[14px] font-medium text-gray-500">
-                    {par ?? '–'}
-                  </div>
-                ))}
-              </div>
-
-              {/* Row 3: Lyönnit (min strokes) with scorecard color coding */}
-              <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ width: 64, minWidth: 64, height: 44, letterSpacing: '0.08em' }} className="text-[12px] uppercase text-gray-600 font-semibold flex items-center">
-                  Lyönnit
-                </div>
-                {holeChampions.map(({ holeNumber, par, bestStrokes }) => {
-                  if (bestStrokes === null || par === null) {
-                    return (
-                      <div key={holeNumber} style={{ width: 44, minWidth: 44, height: 44 }} className="flex items-center justify-center">
-                        <span className="text-[15px] font-bold" style={{ color: '#374151' }}>—</span>
-                      </div>
-                    )
-                  }
-                  const s = holeStrokeStyle(bestStrokes, par)
-                  return (
-                    <div key={holeNumber} style={{ width: 44, minWidth: 44, height: 44 }} className="flex items-center justify-center">
-                      <div style={{
-                        width: 30, height: 30,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: s.outer ? `1.5px solid ${s.outer}` : 'none',
-                        borderRadius: s.radius,
-                        position: 'relative',
-                      }}>
-                        {s.inner && (
-                          <div style={{
-                            position: 'absolute',
-                            inset: 4,
-                            border: `1.5px solid ${s.inner}`,
-                            borderRadius: s.radius,
-                          }} />
-                        )}
-                        <span className="text-[15px] font-bold" style={{ color: s.color, position: 'relative' }}>
-                          {bestStrokes}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Row 4: Mestari */}
-              <div className="flex">
-                <div style={{ width: 64, minWidth: 64, height: 32, letterSpacing: '0.08em' }} className="text-[12px] uppercase text-gray-600 font-semibold flex items-center">
-                  Mestari
-                </div>
-                {holeChampions.map(({ holeNumber, playerName, isLeader }) => (
-                  <div key={holeNumber} style={{ width: 44, minWidth: 44, height: 32 }} className="flex items-center justify-center">
-                    <span className="text-[12px] font-bold"
-                          style={{ color: playerName ? (isLeader ? color : 'rgba(255,255,255,0.35)') : '#374151' }}>
-                      {playerName ? abbrevName(playerName) : '—'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 const COURSE_HERO: Record<string, string> = {
@@ -315,6 +141,7 @@ const COURSE_HERO: Record<string, string> = {
 export default function CourseDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const [course, setCourse] = useState<Course | null>(null)
+  const [seasonId, setSeasonId] = useState<string>('')
   const [rounds, setRounds] = useState<RoundWithDetails[]>([])
   const [allSeasonRounds, setAllSeasonRounds] = useState<RoundWithDetails[]>([])
   const [allCourses, setAllCourses] = useState<Course[]>([])
@@ -339,6 +166,7 @@ export default function CourseDetailPage() {
         getSeasonRoundAverages(season.id),
       ])
       setCourse(c)
+      setSeasonId(season.id)
       setRounds(courseRounds)
       setAllSeasonRounds(allRounds)
       setAllCourses(ac)
@@ -475,7 +303,18 @@ export default function CourseDetailPage() {
         <p className="text-gray-600 text-[14px] mb-8 leading-relaxed">{avgContextText}</p>
       )}
 
-      <VaylamestariGrid rounds={rounds} holeResultsByRound={holeResultsByRound} course={course} />
+      <div className="mb-8">
+        <div className="text-gray-600 text-[13px] uppercase mb-3 font-display font-semibold" style={{ letterSpacing: '0.12em' }}>Väylämestari</div>
+        {seasonId && (
+          <HoleOwnerGrid
+            courseId={course.id}
+            seasonId={seasonId}
+            courseColor={color}
+            highlightPlayerIds={[]}
+            emptyStateText="Ei vielä reikätuloksia — tulokset näkyvät kun ensimmäinen kierros on syötetty"
+          />
+        )}
+      </div>
 
       <h2 className="text-[24px] font-bold text-white mb-4 mt-8 font-display">Kierrokset</h2>
       {rounds.length === 0 ? (

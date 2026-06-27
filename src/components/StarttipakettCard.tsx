@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import type { Player, Course, LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
+import HoleOwnerGrid from './shared/HoleOwnerGrid'
 
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 const BG = '#1a1a18'
@@ -20,6 +21,7 @@ const COURSE_LOCATIVE: Record<string, string> = {
 
 interface Props {
   course: Course
+  seasonId: string
   selectedPlayers: Player[]
   date: string
   leaderboard: LeaderboardEntry[]
@@ -122,8 +124,9 @@ function generateCaption(
   return [intro, standingsContext, courseContext, 'Seuraa tilannetta: liekkipoika.com'].filter(Boolean).join('\n')
 }
 
-export default function StarttipakettCard({ course, selectedPlayers, date, leaderboard, seasonCourses, courseRounds }: Props) {
+export default function StarttipakettCard({ course, seasonId, selectedPlayers, date, leaderboard, seasonCourses, courseRounds }: Props) {
   const [captionCopied, setCaptionCopied] = useState(false)
+  const [skinCounts, setSkinCounts] = useState<{ ownedCount: number; emptyCount: number } | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
 
   const color = course.color_hex ?? '#2D6A4F'
@@ -329,6 +332,24 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
               : 'Ei tuloksia vielä — ensimmäinen tulos voittaa tikkarin 🍭'
             }
           </div>
+        </div>
+
+        {/* Skins */}
+        <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <SectionLabel text={`${course.name.toUpperCase()} SKINS`} />
+          <HoleOwnerGrid
+            courseId={course.id}
+            seasonId={seasonId}
+            courseColor={color}
+            highlightPlayerIds={selectedPlayers.map(p => p.id)}
+            emptyStateText="18 skiniä jakamatta 🍭"
+            onDataLoaded={setSkinCounts}
+          />
+          {skinCounts !== null && (
+            <div style={{ marginTop: 8, fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.4)' }}>
+              {skinCounts.ownedCount} skiniä jaettu · {skinCounts.emptyCount} jakamatta
+            </div>
+          )}
         </div>
 
         {/* Mitä tarvitaan? */}

@@ -235,6 +235,7 @@ export default function AdminHype() {
             </button>
             <StarttipakettCard
               course={preview.course}
+              seasonId={seasonId}
               selectedPlayers={selectedPlayers}
               date={date}
               leaderboard={leaderboard}
