@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import type { Player, Course, LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
 import HoleOwnerGrid from './shared/HoleOwnerGrid'
 import PointsBar, { type SegmentData } from './shared/PointsBar'
@@ -142,27 +142,33 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
 
   const coverPhotoUrl = COURSE_HERO[course.slug] ?? course.cover_photo_url
 
+  const NAME_STYLE: React.CSSProperties = {
+    color: 'white',
+    fontWeight: 900,
+    fontSize: 32,
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+    lineHeight: 1.15,
+    textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+  }
+
   function renderPlayerNames() {
     if (selectedPlayers.length === 1) {
-      return (
-        <div style={{ color: 'white', fontWeight: 900, fontSize: 36, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.1 }}>
-          {selectedPlayers[0].full_name}
-        </div>
-      )
+      return <div style={NAME_STYLE}>{selectedPlayers[0].full_name}</div>
     }
     if (selectedPlayers.length === 2) {
       return (
-        <div style={{ color: 'white', fontWeight: 900, fontSize: 36, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.15 }}>
+        <div style={NAME_STYLE}>
           {selectedPlayers[0].full_name}
           {' '}
-          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 20, fontWeight: 500 }}>vs</span>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18, fontWeight: 500 }}>vs</span>
           {' '}
           {selectedPlayers[1].full_name}
         </div>
       )
     }
     return (
-      <div style={{ color: 'white', fontWeight: 800, fontSize: 28, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1.3 }}>
+      <div style={{ ...NAME_STYLE, fontWeight: 800 }}>
         {selectedPlayers.map(p => p.full_name).join(' · ')}
       </div>
     )
@@ -221,24 +227,16 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
         style={{ background: BG, border: `2px solid ${color}`, borderRadius: 12, maxWidth: 480, margin: '0 auto' }}
       >
         {/* Header band */}
-        <div style={{ background: color, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ lineHeight: 1.15 }}>
-            <div style={{ color: 'white', fontWeight: 800, fontSize: 18 }}>GC</div>
-            <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 400 }}>Liekkipoika Kesäkisa 2026</div>
-          </div>
-          <div style={{ color: 'white', fontWeight: 900, fontSize: 28, textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'right', lineHeight: 1 }}>
-            {course.name}
-          </div>
+        <div style={{ background: color, padding: '0 20px', height: 40, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: 'white', fontWeight: 800, fontSize: 16 }}>GC</span>
+          <span style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
+          <span style={{ color: 'rgba(255,255,255,0.80)', fontSize: 13, fontWeight: 400 }}>Liekkipoika Kesäkisa 2026</span>
         </div>
 
-        {/* Player section — course photo background */}
+        {/* Photo hero */}
         <div style={{
           position: 'relative',
-          minHeight: 140,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
+          height: 200,
           backgroundImage: `url(${coverPhotoUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -246,13 +244,20 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
           <div style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.75) 100%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.70) 100%)',
           }} />
-          <div style={{ position: 'relative', zIndex: 1, padding: '20px 24px' }}>
-            {renderPlayerNames()}
-            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: 400, marginTop: 8 }}>
+          {/* Top row: course name + date */}
+          <div style={{ position: 'absolute', top: 16, left: 20, right: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ color: color, fontWeight: 900, fontSize: 28, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1, fontFamily: 'var(--font-display)' }}>
+              {course.name}
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.80)', fontSize: 14, fontWeight: 500, lineHeight: 1, paddingTop: 4 }}>
               {fmtDate(date)}
             </div>
+          </div>
+          {/* Player names — vertically centered */}
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 20px' }}>
+            {renderPlayerNames()}
           </div>
         </div>
 
