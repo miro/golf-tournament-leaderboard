@@ -137,7 +137,6 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
   const slugToCourse = new Map(seasonCourses.map(c => [c.slug, c]))
   const dotCourses = DOT_SLUGS.map(slug => slugToCourse.get(slug) ?? null)
 
-  const courseTop3 = courseRounds.slice(0, 3)
   const caption = generateCaption(selectedPlayers, course, leaderboard, courseRounds)
 
   const coverPhotoUrl = COURSE_HERO[course.slug] ?? course.cover_photo_url
@@ -287,51 +286,10 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
           )}
         </div>
 
-        {/* Kenttätilanne */}
+        {/* Mitä tarvitaan? */}
         <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <SectionLabel text={`${course.name.toUpperCase()} TILANNE`} />
-          {courseTop3.length === 0 ? (
-            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontWeight: 400, marginBottom: 6 }}>Ei vielä tuloksia</div>
-          ) : (
-            courseTop3.map((r, i) => (
-              <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
-                <span style={{ color: '#6b7280', fontSize: 13, fontWeight: 600, width: 16, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
-                <span style={{ color: '#9ca3af', fontSize: 15, fontWeight: 600, flex: 1 }}>{r.player?.full_name}</span>
-                <span style={{ color: '#6b7280', fontSize: 14, fontWeight: 700 }}>{r.total_points}p</span>
-                {r.to_par != null && (
-                  <span style={{ color: '#6b7280', fontSize: 12 }}>({r.to_par > 0 ? '+' : ''}{r.to_par})</span>
-                )}
-              </div>
-            ))
-          )}
-          {/* Group player results */}
-          <div style={{ marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 8 }}>
-            {selectedPlayers.map(player => {
-              const round = courseRounds.find(r => r.player_id === player.id)
-              return (
-                <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0' }}>
-                  <span style={{ color, fontWeight: 700, fontSize: 15 }}>{player.full_name}:</span>
-                  {round ? (
-                    <>
-                      <span style={{ color: 'white', fontWeight: 400, fontSize: 15 }}>
-                        {round.total_points}p{round.to_par != null ? ` (${round.to_par > 0 ? '+' : ''}${round.to_par})` : ''}
-                      </span>
-                      <span style={{ color: '#4ade80', fontSize: 12 }}>✓</span>
-                    </>
-                  ) : (
-                    <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 400, fontSize: 15 }}>ei pelattu</span>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-          {/* Tikkari text */}
-          <div style={{ marginTop: 8, fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>
-            {courseRounds.length > 0
-              ? `Johtaa: ${courseRounds[0].player?.full_name} ${courseRounds[0].total_points}p — tikkarit jaossa 🍭`
-              : 'Ei tuloksia vielä — ensimmäinen tulos voittaa tikkarin 🍭'
-            }
-          </div>
+          <SectionLabel text="MITÄ TARVITAAN?" />
+          {selectedPlayers.map(player => renderMitaTarvitaan(player))}
         </div>
 
         {/* Skins */}
@@ -350,12 +308,6 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
               {skinCounts.ownedCount} skiniä jaettu · {skinCounts.emptyCount} jakamatta
             </div>
           )}
-        </div>
-
-        {/* Mitä tarvitaan? */}
-        <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <SectionLabel text="MITÄ TARVITAAN?" />
-          {selectedPlayers.map(player => renderMitaTarvitaan(player))}
         </div>
 
         {/* Footer */}
