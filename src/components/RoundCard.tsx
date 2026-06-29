@@ -5,6 +5,13 @@ import PointsBar, { type SegmentData } from './shared/PointsBar'
 
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 
+const COURSE_HERO: Record<string, string> = {
+  kajaani: '/course-hero-kag.jpg',
+  nuas:    '/course-hero-nuas.jpg',
+  tenetti: '/course-hero-tenetti.jpg',
+  paltamo: '/course-hero-paltamo.jpg',
+}
+
 const COURSE_GENITIVE: Record<string, string> = {
   kajaani: 'KAJAANIA',
   nuas: 'NUASTA',
@@ -206,29 +213,71 @@ export default function RoundCard({
           </div>
         </div>
 
-        {/* Course name — 16px top, 8px bottom */}
-        <div className="px-6 pt-4 pb-2">
-          <div className="font-bold uppercase" style={{ color, fontSize: 34, letterSpacing: '0.06em' }}>
+        {/* Course photo hero */}
+        <div style={{
+          position: 'relative',
+          minHeight: 220,
+          backgroundImage: COURSE_HERO[round.course?.slug ?? ''] ? `url(${COURSE_HERO[round.course?.slug ?? '']})` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundColor: BG,
+        }}>
+          {/* 3-stop gradient overlay */}
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.80) 100%)',
+          }} />
+
+          {/* Course name — top-left */}
+          <div className="font-display uppercase" style={{
+            position: 'absolute', top: 16, left: 16,
+            color: 'white', fontWeight: 900, fontSize: 32,
+            letterSpacing: '0.06em', lineHeight: 1,
+            textShadow: '0 2px 12px rgba(0,0,0,0.8)',
+          }}>
             {round.course?.name}
           </div>
-        </div>
 
-        {/* Hero STBL — 16px top, 8px bottom */}
-        <div className="text-center pt-4 pb-2">
-          <div className="font-black leading-none tabular-nums" style={{ color: stblColor, fontSize: 88, letterSpacing: '-0.02em' }}>
-            {stblDisplay}
+          {/* Date — top-right */}
+          <div className="font-display" style={{
+            position: 'absolute', top: 16, right: 16,
+            color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 500, lineHeight: 1,
+            textShadow: '0 1px 6px rgba(0,0,0,0.8)',
+          }}>
+            {date}
           </div>
-        </div>
 
-        {/* Gap stat — 8px top, 16px bottom */}
-        {gapStat && (
-          <div className="pt-2 pb-4 text-center">
-            <span className="text-[13px] uppercase text-gray-600 font-semibold" style={{ letterSpacing: '0.1em' }}>{gapStat.label} </span>
-            <span className="text-[28px] font-extrabold" style={{ color: gapStat.positive ? color : '#E05218' }}>
-              {gapStat.value}
-            </span>
+          {/* Hero STBL — bottom-center */}
+          <div className="font-display" style={{
+            position: 'absolute', bottom: gapStat ? 48 : 16,
+            left: '50%', transform: 'translateX(-50%)',
+            textAlign: 'center', whiteSpace: 'nowrap',
+          }}>
+            <div className="font-black tabular-nums" style={{
+              color: stblColor, fontSize: 88, letterSpacing: '-0.02em', lineHeight: 1,
+              textShadow: '0 2px 16px rgba(0,0,0,0.6)',
+            }}>
+              {stblDisplay}
+            </div>
           </div>
-        )}
+
+          {/* Gap stat — bottom-center */}
+          {gapStat && (
+            <div className="font-display" style={{
+              position: 'absolute', bottom: 16,
+              left: '50%', transform: 'translateX(-50%)',
+              textAlign: 'center', whiteSpace: 'nowrap',
+            }}>
+              <span style={{ fontSize: 13, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+                {gapStat.label}{' '}
+              </span>
+              <span style={{ fontSize: 28, fontWeight: 800, color: gapStat.positive ? color : '#E05218', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+                {gapStat.value}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Marquee banner */}
         {marquee && (
