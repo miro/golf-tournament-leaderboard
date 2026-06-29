@@ -248,10 +248,11 @@ export default function RoundCard({
             {date}
           </div>
 
-          {/* Hero STBL — bottom-center */}
+          {/* STBL + gap stat — vertically centered */}
           <div className="font-display" style={{
-            position: 'absolute', bottom: gapStat ? 48 : 16,
-            left: '50%', transform: 'translateX(-50%)',
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
             textAlign: 'center', whiteSpace: 'nowrap',
           }}>
             <div className="font-black tabular-nums" style={{
@@ -260,23 +261,17 @@ export default function RoundCard({
             }}>
               {stblDisplay}
             </div>
+            {gapStat && (
+              <div style={{ marginTop: 8 }}>
+                <span style={{ fontSize: 13, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+                  {gapStat.label}{' '}
+                </span>
+                <span style={{ fontSize: 28, fontWeight: 800, color: gapStat.positive ? color : '#E05218', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+                  {gapStat.value}
+                </span>
+              </div>
+            )}
           </div>
-
-          {/* Gap stat — bottom-center */}
-          {gapStat && (
-            <div className="font-display" style={{
-              position: 'absolute', bottom: 16,
-              left: '50%', transform: 'translateX(-50%)',
-              textAlign: 'center', whiteSpace: 'nowrap',
-            }}>
-              <span style={{ fontSize: 13, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
-                {gapStat.label}{' '}
-              </span>
-              <span style={{ fontSize: 28, fontWeight: 800, color: gapStat.positive ? color : '#E05218', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
-                {gapStat.value}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Marquee banner */}
