@@ -96,14 +96,9 @@ const sections: Section[] = [
     title: '🔥👦 Liekkipaita',
     gold: true,
     body: (
-      <>
-        <p className="text-gray-300 text-sm leading-relaxed mb-3">
-          Liekkipaita on Golf Companyn korkein kunnianosoitus. Se ei ole täällä.
-        </p>
-        <p className="text-gray-300 text-sm leading-relaxed">
-          Liekkipaita on jaossa ainoastaan vuosittaisessa Golf Company Invitationalissa syyskuussa. Kesäkisa on kesäkisa. Invitational on Invitational. Älä sekoita näitä.
-        </p>
-      </>
+      <p className="text-gray-300 text-sm leading-relaxed">
+        Golf Companyn arvostetuin palkinto ratkaistaan vuosittaisessa Invitationalissa syyskuussa — erillisessä turnauksessa, jolla on oma historiansa. Kesäkisan voittaja kruunataan Tahkolla.
+      </p>
     ),
   },
 ]
