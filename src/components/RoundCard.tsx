@@ -239,15 +239,6 @@ export default function RoundCard({
             {round.course?.name}
           </div>
 
-          {/* Date — top-right */}
-          <div className="font-display" style={{
-            position: 'absolute', top: 16, right: 16,
-            color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 500, lineHeight: 1,
-            textShadow: '0 1px 6px rgba(0,0,0,0.8)',
-          }}>
-            {date}
-          </div>
-
           {/* STBL + gap stat — vertically centered */}
           <div className="font-display" style={{
             position: 'absolute', top: '50%', left: '50%',
