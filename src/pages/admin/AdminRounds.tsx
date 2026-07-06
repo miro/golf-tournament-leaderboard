@@ -97,32 +97,36 @@ export default function AdminRounds() {
             </div>
 
             {editingId === r.id && (
-              <div className="mt-3 flex items-end gap-3">
-                <div>
-                  <label className="label block mb-1 text-xs">Uudet pisteet</label>
-                  <input
-                    type="number"
-                    value={editPoints}
-                    onChange={e => setEditPoints(e.target.value)}
-                    className="w-24 bg-gc-dark border border-white/10 rounded px-2 py-1 text-white text-sm"
-                    autoFocus
-                  />
+              <div className="mt-3 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="label block mb-1 text-xs">Uudet pisteet</label>
+                    <input
+                      type="number"
+                      value={editPoints}
+                      onChange={e => setEditPoints(e.target.value)}
+                      className="w-full bg-gc-dark border border-white/10 rounded px-2 py-2 text-white text-sm"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="label block mb-1 text-xs">Korjaushuomio</label>
+                    <input
+                      type="text"
+                      value={correctionNote}
+                      onChange={e => setCorrectionNote(e.target.value)}
+                      className="w-full bg-gc-dark border border-white/10 rounded px-2 py-2 text-white text-sm"
+                    />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <label className="label block mb-1 text-xs">Korjaushuomio</label>
-                  <input
-                    type="text"
-                    value={correctionNote}
-                    onChange={e => setCorrectionNote(e.target.value)}
-                    className="w-full bg-gc-dark border border-white/10 rounded px-2 py-1 text-white text-sm"
-                  />
+                <div className="flex gap-2">
+                  <button onClick={() => handleCorrect(r.id)} className="btn-primary text-sm px-4 py-2">
+                    OK
+                  </button>
+                  <button onClick={() => setEditingId(null)} className="btn-ghost text-sm px-4 py-2">
+                    ✕
+                  </button>
                 </div>
-                <button onClick={() => handleCorrect(r.id)} className="btn-primary text-sm px-3 py-1.5">
-                  OK
-                </button>
-                <button onClick={() => setEditingId(null)} className="btn-ghost text-sm px-3 py-1.5">
-                  ✕
-                </button>
               </div>
             )}
           </div>

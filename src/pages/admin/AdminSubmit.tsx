@@ -285,7 +285,7 @@ export default function AdminSubmit() {
       <form onSubmit={handleSubmit} className="space-y-5">
 
         {/* ── STAGE 1: Manual selection ── */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label block mb-1">Pelaaja *</label>
             <select value={playerId} onChange={e => setPlayerId(e.target.value)} required className={base}>
@@ -397,7 +397,7 @@ export default function AdminSubmit() {
         )}
 
         {/* ── STAGE 3: Auto-populated editable fields ── */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label block mb-1">HCP pelaushetkellä</label>
             <input
@@ -418,7 +418,7 @@ export default function AdminSubmit() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label block mb-1">Lyönnit</label>
             <input
