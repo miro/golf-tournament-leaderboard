@@ -153,7 +153,7 @@ export default function AdminSubmit() {
   // Stage 1 — manual
   const [playerId, setPlayerId] = useState('')
   const [courseId, setCourseId] = useState('')
-  const [playedDate, setPlayedDate] = useState('')
+  const [playedDate, setPlayedDate] = useState(() => new Date().toLocaleDateString('sv'))
 
   // Stage 2 — LLM paste
   const [llmPaste, setLlmPaste] = useState('')
