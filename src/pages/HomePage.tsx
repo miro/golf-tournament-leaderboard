@@ -6,6 +6,7 @@ import {
 } from '../lib/queries'
 import type { LeaderboardEntry, RoundWithDetails, HoleResult, Player, Course } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
+import ProgressionChart from '../components/shared/ProgressionChart'
 
 const GOLD = '#FBBF24'
 const PAGE_BG = '#17130F'
@@ -287,6 +288,7 @@ export default function HomePage() {
   const [activePlayers, setActivePlayers] = useState<Player[]>([])
   const [allRounds, setAllRounds] = useState<RoundWithDetails[]>([])
   const [holeResultsByRound, setHoleResultsByRound] = useState<Record<string, HoleResult[]>>({})
+  const [allHoleResults, setAllHoleResults] = useState<HoleResult[]>([])
   const [vaylamestariRanking, setVaylamestariRanking] = useState<PlayerVaylamestariStats[]>([])
   const [deadline, setDeadline] = useState('2026-08-31')
   const [loading, setLoading] = useState(true)
@@ -316,6 +318,7 @@ export default function HomePage() {
       setSeasonCoursesFull(sc.map(c => c.course as unknown as Course))
       setActivePlayers(players)
       setAllRounds(rounds)
+      setAllHoleResults(allHoleResults)
       const recentIds = new Set(recentRounds.map(r => r.id))
       const hrMap: Record<string, HoleResult[]> = {}
       for (const hr of allHoleResults) {
@@ -459,6 +462,13 @@ export default function HomePage() {
           </p>
         )}
       </section>
+
+      {/* ── ETENEMINEN ── */}
+      <ProgressionChart
+        allRounds={allRounds}
+        allHoleResults={allHoleResults}
+        courses={courses}
+      />
 
       {/* ── KENTTÄTILANNE ── */}
       {courses.length > 0 && (
