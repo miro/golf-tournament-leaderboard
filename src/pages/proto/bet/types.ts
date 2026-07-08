@@ -45,3 +45,8 @@ export function compositionTotal(c: CompositionAnswer): number {
 export function compositionPoints(c: CompositionAnswer): number {
   return c.birdie * 3 + c.par * 2 + c.bogey * 1
 }
+
+// Net strokes relative to each hole's handicap-adjusted par (negative = better than net par)
+export function compositionNetToPar(c: CompositionAnswer): number {
+  return c.birdie * -1 + c.par * 0 + c.bogey * 1 + c.double * 2 + c.triple * 3 + c.worse * 4
+}

@@ -139,6 +139,8 @@ export default function BetPage() {
             <CompositionQuestion
               value={answers.q2Composition}
               onChange={v => setAnswers(a => ({ ...a, q2Composition: v }))}
+              coursePar={course.par_total}
+              hcp={playerB.hcp_current}
             />
           </QuestionShell>
         )}

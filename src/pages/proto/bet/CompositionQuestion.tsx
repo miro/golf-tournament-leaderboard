@@ -1,4 +1,4 @@
-import { type CompositionAnswer, compositionPoints, compositionTotal } from './types'
+import { type CompositionAnswer, compositionNetToPar, compositionPoints, compositionTotal } from './types'
 
 const TARGET = 18
 
@@ -14,13 +14,19 @@ const CATEGORIES: Array<{ key: keyof CompositionAnswer; emoji: string; label: st
 interface Props {
   value: CompositionAnswer
   onChange: (value: CompositionAnswer) => void
+  coursePar: number
+  hcp: number | null
 }
 
-export default function CompositionQuestion({ value, onChange }: Props) {
+export default function CompositionQuestion({ value, onChange, coursePar, hcp }: Props) {
   const total = compositionTotal(value)
   const points = compositionPoints(value)
   const fillPct = Math.min(100, (total / TARGET) * 100)
   const barColor = total === TARGET ? 'bg-green-500' : total > TARGET ? 'bg-gc-red' : 'bg-gc-green'
+
+  const hcpRounded = Math.round(hcp ?? 0)
+  const evenStrokes = coursePar + hcpRounded
+  const estimatedStrokes = coursePar + compositionNetToPar(value) + hcpRounded
 
   function bump(key: keyof CompositionAnswer, delta: number) {
     const next = Math.max(0, value[key] + delta)
@@ -29,6 +35,22 @@ export default function CompositionQuestion({ value, onChange }: Props) {
 
   return (
     <div>
+      <div className="flex items-end justify-between gap-3 mb-5">
+        <div>
+          <div className="label mb-1">Arvioitu lyöntimäärä</div>
+          <span className="font-display font-black text-gc-green" style={{ fontSize: 64, lineHeight: 1 }}>
+            {estimatedStrokes}
+          </span>
+        </div>
+        <div className="text-right">
+          <div className="label mb-1">Sinun tasoitettu par</div>
+          <div className="font-display font-bold text-white" style={{ fontSize: 28, lineHeight: 1 }}>
+            {evenStrokes}
+          </div>
+          <div className="text-xs text-gc-muted mt-1">Par {coursePar} + HCP {hcpRounded}</div>
+        </div>
+      </div>
+
       <div className="space-y-2">
         {CATEGORIES.map(cat => {
           const count = value[cat.key]
