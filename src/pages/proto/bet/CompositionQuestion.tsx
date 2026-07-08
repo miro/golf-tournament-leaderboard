@@ -72,6 +72,56 @@ function CellSymbol({ shape, sizePx, color }: { shape: CellSymbolShape; sizePx: 
   )
 }
 
+// Brush-button version: fixed 28x28 canvas with the exact pixel sizes/strokes specified for the selector
+function BrushSymbol({ shape, color }: { shape: CellSymbolShape; color: string }) {
+  const c = 14 // canvas center (28x28)
+  const centered = (size: number) => c - size / 2
+  if (shape === 'circle') {
+    return (
+      <svg width={28} height={28} viewBox="0 0 28 28">
+        <circle cx={c} cy={c} r={13} fill="none" stroke={color} strokeWidth={2.5} />
+      </svg>
+    )
+  }
+  if (shape === 'square') {
+    return (
+      <svg width={28} height={28} viewBox="0 0 28 28">
+        <rect x={centered(22)} y={centered(22)} width={22} height={22} fill="none" stroke={color} strokeWidth={2} />
+      </svg>
+    )
+  }
+  if (shape === 'double-square') {
+    return (
+      <svg width={28} height={28} viewBox="0 0 28 28">
+        <rect x={centered(26)} y={centered(26)} width={26} height={26} fill="none" stroke={color} strokeWidth={1.5} />
+        <rect x={centered(16)} y={centered(16)} width={16} height={16} fill="none" stroke={color} strokeWidth={1.5} />
+      </svg>
+    )
+  }
+  if (shape === 'triple-square') {
+    return (
+      <svg width={28} height={28} viewBox="0 0 28 28">
+        <rect x={centered(26)} y={centered(26)} width={26} height={26} fill="none" stroke={color} strokeWidth={1.5} />
+        <rect x={centered(18)} y={centered(18)} width={18} height={18} fill="none" stroke={color} strokeWidth={1.5} />
+        <rect x={centered(10)} y={centered(10)} width={10} height={10} fill="none" stroke={color} strokeWidth={1.5} />
+      </svg>
+    )
+  }
+  if (shape === 'filled-square') {
+    return (
+      <svg width={28} height={28} viewBox="0 0 28 28">
+        <rect x={centered(22)} y={centered(22)} width={22} height={22} fill={color} />
+      </svg>
+    )
+  }
+  // 'none' (par): rounded square outline signals "no marking / baseline"
+  return (
+    <svg width={28} height={28} viewBox="0 0 28 28">
+      <rect x={centered(22)} y={centered(22)} width={22} height={22} rx={2} fill="none" stroke={color} strokeWidth={1.5} />
+    </svg>
+  )
+}
+
 export default function CompositionQuestion({ value, onChange }: Props) {
   const [brush, setBrush] = useState<HoleCategory>('par')
   const [canUndo, setCanUndo] = useState(false)
@@ -159,18 +209,18 @@ export default function CompositionQuestion({ value, onChange }: Props) {
                 borderRadius: 8,
                 borderWidth: active ? 2 : 1,
                 borderStyle: 'solid',
-                borderColor: active ? meta.cellColor : 'rgba(255,255,255,0.12)',
-                background: active ? hexToRgba(meta.cellColor, 0.2) : EMPTY_CELL_BG,
+                borderColor: active ? meta.brushColor : 'rgba(255,255,255,0.12)',
+                background: active ? hexToRgba(meta.brushColor, 0.2) : EMPTY_CELL_BG,
               }}
             >
-              <span style={{ fontSize: 20 }}>{meta.emoji}</span>
+              <BrushSymbol shape={meta.symbol} color={meta.brushSymbolColor} />
               <span
                 className="absolute flex items-center justify-center font-bold text-white"
                 style={{
                   width: 18,
                   height: 18,
                   borderRadius: '50%',
-                  background: meta.cellColor,
+                  background: meta.brushColor,
                   fontSize: 10,
                   bottom: 2,
                   right: 2,
@@ -184,7 +234,7 @@ export default function CompositionQuestion({ value, onChange }: Props) {
         })}
       </div>
       <p className="text-gc-muted italic mb-3" style={{ fontSize: 13 }}>
-        {CATEGORY_META[brush].fullLabel} — {POINTS_PER_HOLE[brush]}p/väylä
+        {CATEGORY_META[brush].fullLabel} — {POINTS_PER_HOLE[brush]}p{POINTS_PER_HOLE[brush] > 0 ? '/väylä' : ''}
       </p>
 
       <div className="flex justify-end gap-3 mb-2">

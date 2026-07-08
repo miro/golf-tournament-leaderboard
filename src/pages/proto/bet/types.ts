@@ -9,10 +9,14 @@ export type CellSymbolShape = 'none' | 'circle' | 'square' | 'double-square' | '
 export const CATEGORY_META: Record<
   HoleCategory,
   {
-    emoji: string
+    emoji: string // used in the completion-screen summary line only, not the brush selector
     label: string
     fullLabel: string
     cellColor: string
+    // Brush-selector colors differ from cellColor for par/worse — those cell colors
+    // are too close to the empty/dark background to read as button symbols
+    brushColor: string
+    brushSymbolColor: string
     strokeOffset: number
     symbol: CellSymbolShape
     symbolSizePct: number
@@ -22,26 +26,32 @@ export const CATEGORY_META: Record<
 > = {
   birdie: {
     emoji: '🔴', label: 'Birdie+', fullLabel: 'Birdie tai parempi', cellColor: '#C0392B',
+    brushColor: '#C0392B', brushSymbolColor: '#C0392B',
     strokeOffset: -1, symbol: 'circle', symbolSizePct: 80, cellBgOpacity: 0.2, numberColor: 'white',
   },
   par: {
     emoji: '⬜', label: 'Par', fullLabel: 'Par', cellColor: '#3D3530',
+    brushColor: '#888888', brushSymbolColor: '#888888',
     strokeOffset: 0, symbol: 'none', symbolSizePct: 0, cellBgOpacity: 0.2, numberColor: 'rgba(255,255,255,0.7)',
   },
   bogey: {
     emoji: '🟦', label: 'Bogey', fullLabel: 'Bogey', cellColor: '#2E5F8A',
+    brushColor: '#2E5F8A', brushSymbolColor: '#2E5F8A',
     strokeOffset: 1, symbol: 'square', symbolSizePct: 75, cellBgOpacity: 0.2, numberColor: 'white',
   },
   double: {
     emoji: '🟪', label: 'Tupla', fullLabel: 'Tuplabogey', cellColor: '#4A2D6F',
+    brushColor: '#4A2D6F', brushSymbolColor: '#4A2D6F',
     strokeOffset: 2, symbol: 'double-square', symbolSizePct: 85, cellBgOpacity: 0.2, numberColor: 'white',
   },
   triple: {
     emoji: '🟫', label: 'Tripla', fullLabel: 'Triplabogey', cellColor: '#3D2010',
+    brushColor: '#3D2010', brushSymbolColor: '#3D2010',
     strokeOffset: 3, symbol: 'triple-square', symbolSizePct: 88, cellBgOpacity: 0.2, numberColor: 'white',
   },
   worse: {
     emoji: '⬛', label: 'Worse', fullLabel: 'Worse', cellColor: '#111111',
+    brushColor: '#555555', brushSymbolColor: '#888888',
     strokeOffset: 4, symbol: 'filled-square', symbolSizePct: 75, cellBgOpacity: 0.6, numberColor: 'white',
   },
 }
