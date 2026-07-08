@@ -9,6 +9,9 @@ interface Props {
 
 export default function SliderQuestion({ value, onChange }: Props) {
   const current = value ?? START
+  const diff = START - current
+  const diffLabel = diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`
+  const diffColor = diff === 0 ? 'text-white' : diff < 0 ? 'text-green-500' : 'text-gc-red'
 
   return (
     <div>
@@ -16,6 +19,9 @@ export default function SliderQuestion({ value, onChange }: Props) {
         <span className="font-display font-black text-gc-green" style={{ fontSize: 72, lineHeight: 1 }}>
           {current}
         </span>
+        <div className={`font-display font-bold ${diffColor}`} style={{ fontSize: 22 }}>
+          {diffLabel}
+        </div>
       </div>
 
       <input

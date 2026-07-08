@@ -116,7 +116,7 @@ export default function BetPage() {
         {stage === 'questions' && currentQuestion === 0 && (
           <QuestionShell
             index={0}
-            questionText={`Paljonko pistettä ${playerA.full_name} tekee?`}
+            questionText={`Kuinka monta bogeypistettä ${playerA.full_name} tekee?`}
             context={`HCP ${playerA.hcp_current ?? '–'} · Kajaani Par ${course.par_total}`}
             lockDisabled={answers.q1Score === null}
             onLock={commit}
