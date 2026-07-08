@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react'
-import { CATEGORY_META, CATEGORY_ORDER, type CellSymbolShape, type CompositionAnswer, type HoleCategory, compositionCounts, compositionPoints, compositionTotal, strokeCountForHole } from './types'
+import { CATEGORY_META, CATEGORY_ORDER, POINTS_PER_HOLE, type CellSymbolShape, type CompositionAnswer, type HoleCategory, compositionCounts, compositionPoints, compositionTotal, strokeCountForHole } from './types'
+
+const STBL_PAR = 36
 
 const TARGET = 18
 const MAX_UNDO = 10
@@ -73,17 +75,29 @@ function CellSymbol({ shape, sizePx, color }: { shape: CellSymbolShape; sizePx: 
 export default function CompositionQuestion({ value, onChange }: Props) {
   const [brush, setBrush] = useState<HoleCategory>('par')
   const [canUndo, setCanUndo] = useState(false)
+  const [justCleared, setJustCleared] = useState(false)
   const historyRef = useRef<(HoleCategory | null)[][]>([])
 
   const total = compositionTotal(value)
   const counts = compositionCounts(value)
   const points = compositionPoints(value)
   const fillPct = Math.min(100, (total / TARGET) * 100)
+  const stblDelta = STBL_PAR - points
+  const deltaLabel = stblDelta === 0 ? 'E' : stblDelta > 0 ? `+${stblDelta}` : `${stblDelta}`
+  const deltaColor = stblDelta < 0 ? '#E8453C' : 'white'
 
   function undo() {
     const prev = historyRef.current.pop()
     setCanUndo(historyRef.current.length > 0)
     if (prev) onChange({ holes: prev })
+  }
+
+  function reset() {
+    historyRef.current = []
+    setCanUndo(false)
+    onChange({ holes: Array(18).fill(null) })
+    setJustCleared(true)
+    setTimeout(() => setJustCleared(false), 1500)
   }
 
   function handlePointerDown(e: React.PointerEvent, startHole: number) {
@@ -130,35 +144,57 @@ export default function CompositionQuestion({ value, onChange }: Props) {
     <div>
       <p className="text-gc-muted text-sm italic mb-4">Valitse tulos ja maalaa väylät</p>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-3 -mx-1 px-1">
+      <div className="grid grid-cols-6 gap-[6px] mb-2">
         {CATEGORY_ORDER.map(key => {
           const meta = CATEGORY_META[key]
           const active = brush === key
+          const count = counts[key]
           return (
             <button
               key={key}
               onClick={() => setBrush(key)}
-              className="shrink-0 flex items-center gap-1.5 rounded-full transition-transform"
+              className="relative flex items-center justify-center transition-transform"
               style={{
                 height: 44,
-                padding: '8px 14px',
-                borderRadius: 22,
+                borderRadius: 8,
                 borderWidth: active ? 2 : 1,
                 borderStyle: 'solid',
-                borderColor: active ? meta.activeBorder : 'rgba(255,255,255,0.12)',
-                background: active ? meta.activeBg : EMPTY_CELL_BG,
-                color: active ? 'white' : '#9A8870',
-                transform: active ? 'scale(1.05)' : 'scale(1)',
+                borderColor: active ? meta.cellColor : 'rgba(255,255,255,0.12)',
+                background: active ? hexToRgba(meta.cellColor, 0.2) : EMPTY_CELL_BG,
               }}
             >
-              <span>{meta.emoji}</span>
-              <span className="font-display font-semibold text-sm whitespace-nowrap">{meta.label}</span>
+              <span style={{ fontSize: 20 }}>{meta.emoji}</span>
+              <span
+                className="absolute flex items-center justify-center font-bold text-white"
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: meta.cellColor,
+                  fontSize: 10,
+                  bottom: 2,
+                  right: 2,
+                  display: count > 0 ? 'flex' : 'none',
+                }}
+              >
+                {count}
+              </span>
             </button>
           )
         })}
       </div>
+      <p className="text-gc-muted italic mb-3" style={{ fontSize: 13 }}>
+        {CATEGORY_META[brush].fullLabel} — {POINTS_PER_HOLE[brush]}p/väylä
+      </p>
 
-      <div className="flex justify-end mb-2">
+      <div className="flex justify-end gap-3 mb-2">
+        {justCleared ? (
+          <span className="text-sm text-green-500 font-semibold px-1">Tyhjennetty ✓</span>
+        ) : (
+          <button onClick={reset} className="text-sm text-gc-muted px-1">
+            ✕ Tyhjennä
+          </button>
+        )}
         <button
           onClick={undo}
           disabled={!canUndo}
@@ -231,12 +267,18 @@ export default function CompositionQuestion({ value, onChange }: Props) {
         </div>
       </div>
 
-      <div className="mt-3">
-        <div className="font-display font-bold text-gc-green" style={{ fontSize: 20 }}>
-          Ennustettu tulos: {points}p
+      <div className="mt-3 text-center">
+        <div
+          className="text-gc-muted font-semibold"
+          style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase' }}
+        >
+          Ennustettu tulos
         </div>
-        <div className="text-gc-muted mt-1" style={{ fontSize: 13 }}>
-          {CATEGORY_ORDER.map(key => `${CATEGORY_META[key].emoji} ${counts[key]}`).join('  ')}
+        <div className="font-display font-black" style={{ fontSize: 48, color: deltaColor }}>
+          {deltaLabel}
+        </div>
+        <div className="text-gc-muted" style={{ fontSize: 13 }}>
+          {points}p stableford
         </div>
       </div>
     </div>

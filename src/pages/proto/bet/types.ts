@@ -11,9 +11,8 @@ export const CATEGORY_META: Record<
   {
     emoji: string
     label: string
+    fullLabel: string
     cellColor: string
-    activeBorder: string
-    activeBg: string
     strokeOffset: number
     symbol: CellSymbolShape
     symbolSizePct: number
@@ -22,29 +21,33 @@ export const CATEGORY_META: Record<
   }
 > = {
   birdie: {
-    emoji: '🔴', label: 'Birdie+', cellColor: '#C0392B', activeBorder: '#C0392B', activeBg: 'rgba(192,57,43,0.25)',
+    emoji: '🔴', label: 'Birdie+', fullLabel: 'Birdie tai parempi', cellColor: '#C0392B',
     strokeOffset: -1, symbol: 'circle', symbolSizePct: 80, cellBgOpacity: 0.2, numberColor: 'white',
   },
   par: {
-    emoji: '⬜', label: 'Par', cellColor: '#3D3530', activeBorder: '#888', activeBg: 'rgba(255,255,255,0.08)',
+    emoji: '⬜', label: 'Par', fullLabel: 'Par', cellColor: '#3D3530',
     strokeOffset: 0, symbol: 'none', symbolSizePct: 0, cellBgOpacity: 0.2, numberColor: 'rgba(255,255,255,0.7)',
   },
   bogey: {
-    emoji: '🟦', label: 'Bogey', cellColor: '#2E5F8A', activeBorder: '#2E5F8A', activeBg: 'rgba(46,95,138,0.25)',
+    emoji: '🟦', label: 'Bogey', fullLabel: 'Bogey', cellColor: '#2E5F8A',
     strokeOffset: 1, symbol: 'square', symbolSizePct: 75, cellBgOpacity: 0.2, numberColor: 'white',
   },
   double: {
-    emoji: '🟪', label: 'Tupla', cellColor: '#4A2D6F', activeBorder: '#4A2D6F', activeBg: 'rgba(74,45,111,0.25)',
+    emoji: '🟪', label: 'Tupla', fullLabel: 'Tuplabogey', cellColor: '#4A2D6F',
     strokeOffset: 2, symbol: 'double-square', symbolSizePct: 85, cellBgOpacity: 0.2, numberColor: 'white',
   },
   triple: {
-    emoji: '🟫', label: 'Tripla', cellColor: '#3D2010', activeBorder: '#3D2010', activeBg: 'rgba(61,32,16,0.25)',
+    emoji: '🟫', label: 'Tripla', fullLabel: 'Triplabogey', cellColor: '#3D2010',
     strokeOffset: 3, symbol: 'triple-square', symbolSizePct: 88, cellBgOpacity: 0.2, numberColor: 'white',
   },
   worse: {
-    emoji: '⬛', label: 'Worse', cellColor: '#111111', activeBorder: '#444', activeBg: 'rgba(17,17,17,0.4)',
+    emoji: '⬛', label: 'Worse', fullLabel: 'Worse', cellColor: '#111111',
     strokeOffset: 4, symbol: 'filled-square', symbolSizePct: 75, cellBgOpacity: 0.6, numberColor: 'white',
   },
+}
+
+export const POINTS_PER_HOLE: Record<HoleCategory, number> = {
+  birdie: 3, par: 2, bogey: 1, double: 0, triple: 0, worse: 0,
 }
 
 export function strokeCountForHole(holePar: number, category: HoleCategory): number {
@@ -89,5 +92,5 @@ export function compositionCounts(c: CompositionAnswer): Record<HoleCategory, nu
 
 export function compositionPoints(c: CompositionAnswer): number {
   const counts = compositionCounts(c)
-  return counts.birdie * 3 + counts.par * 2 + counts.bogey * 1
+  return CATEGORY_ORDER.reduce((sum, key) => sum + counts[key] * POINTS_PER_HOLE[key], 0)
 }
