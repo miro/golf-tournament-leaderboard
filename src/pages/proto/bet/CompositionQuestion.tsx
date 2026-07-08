@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
-import { CATEGORY_META, CATEGORY_ORDER, type CompositionAnswer, type HoleCategory, compositionCounts, compositionPoints, compositionTotal } from './types'
+import { CATEGORY_META, CATEGORY_ORDER, type CellSymbolShape, type CompositionAnswer, type HoleCategory, compositionCounts, compositionPoints, compositionTotal, strokeCountForHole } from './types'
 
 const TARGET = 18
 const MAX_UNDO = 10
 const EMPTY_CELL_BG = '#2a2520'
+const CELL_SIZE = 48
 
 // Standard 4-4-3-5 layout per nine, summing to par 72
 const HOLE_PARS: number[] = [4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4]
@@ -19,6 +20,54 @@ function holeIndexFromPoint(x: number, y: number): number | null {
   if (!cell) return null
   const idx = Number(cell.dataset.hole)
   return Number.isNaN(idx) ? null : idx
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+// Traditional scorecard notation: circle=birdie+, square=bogey, nested squares=double/triple, filled=worse
+function CellSymbol({ shape, sizePx, color }: { shape: CellSymbolShape; sizePx: number; color: string }) {
+  if (shape === 'none') return null
+  if (shape === 'circle') {
+    return (
+      <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="none" stroke={color} strokeWidth="8" />
+      </svg>
+    )
+  }
+  if (shape === 'square') {
+    return (
+      <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
+        <rect x="8" y="8" width="84" height="84" fill="none" stroke={color} strokeWidth="8" />
+      </svg>
+    )
+  }
+  if (shape === 'double-square') {
+    return (
+      <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
+        <rect x="4" y="4" width="92" height="92" fill="none" stroke={color} strokeWidth="7" />
+        <rect x="22" y="22" width="56" height="56" fill="none" stroke={color} strokeWidth="7" />
+      </svg>
+    )
+  }
+  if (shape === 'triple-square') {
+    return (
+      <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
+        <rect x="2" y="2" width="96" height="96" fill="none" stroke={color} strokeWidth="6" />
+        <rect x="18" y="18" width="64" height="64" fill="none" stroke={color} strokeWidth="6" />
+        <rect x="34" y="34" width="32" height="32" fill="none" stroke={color} strokeWidth="6" />
+      </svg>
+    )
+  }
+  return (
+    <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
+      <rect x="4" y="4" width="92" height="92" fill={color} />
+    </svg>
+  )
 }
 
 export default function CompositionQuestion({ value, onChange }: Props) {
@@ -133,20 +182,35 @@ export default function CompositionQuestion({ value, onChange }: Props) {
               {Array.from({ length: 9 }).map((_, i) => {
                 const holeIndex = rowIdx * 9 + i
                 const category = value.holes[holeIndex]
-                const color = category ? CATEGORY_META[category].cellColor : undefined
+                const meta = category ? CATEGORY_META[category] : null
+                const strokeCount = category ? strokeCountForHole(HOLE_PARS[holeIndex], category) : null
                 return (
                   <div
                     key={holeIndex}
                     data-hole={holeIndex}
                     onPointerDown={e => handlePointerDown(e, holeIndex)}
-                    className="touch-none cursor-pointer"
+                    className="touch-none cursor-pointer relative"
                     style={{
-                      height: 48,
+                      height: CELL_SIZE,
                       borderRadius: 6,
-                      background: color ?? EMPTY_CELL_BG,
-                      border: color ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                      background: meta ? hexToRgba(meta.cellColor, meta.cellBgOpacity) : EMPTY_CELL_BG,
+                      border: meta ? 'none' : '1px solid rgba(255,255,255,0.08)',
                     }}
-                  />
+                  >
+                    {meta && meta.symbol !== 'none' && (
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ opacity: 0.6 }}>
+                        <CellSymbol shape={meta.symbol} sizePx={Math.round((CELL_SIZE * meta.symbolSizePct) / 100)} color={meta.cellColor} />
+                      </div>
+                    )}
+                    {meta && (
+                      <div
+                        className="absolute inset-0 flex items-center justify-center font-display font-extrabold"
+                        style={{ fontSize: 18, color: meta.numberColor }}
+                      >
+                        {strokeCount}
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>
