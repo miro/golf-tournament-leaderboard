@@ -16,6 +16,7 @@ import AdminPlayers from './pages/admin/AdminPlayers'
 import AdminRounds from './pages/admin/AdminRounds'
 import AdminCards from './pages/admin/AdminCards'
 import AdminHype from './pages/admin/AdminHype'
+import BetPage from './pages/proto/BetPage'
 
 export default function App() {
   return (
@@ -31,6 +32,9 @@ export default function App() {
         <Route path="/rules" element={<RulesPage />} />
         <Route path="/me/:token" element={<PersonalDashboard />} />
       </Route>
+
+      {/* Prototypes — no chrome, no auth, not linked from nav */}
+      <Route path="/proto/bet" element={<BetPage />} />
 
       {/* Admin */}
       <Route path="/admin">
