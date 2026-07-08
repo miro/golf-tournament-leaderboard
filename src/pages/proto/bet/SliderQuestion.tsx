@@ -11,7 +11,8 @@ export default function SliderQuestion({ value, onChange }: Props) {
   const current = value ?? START
   const diff = START - current
   const diffLabel = diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`
-  const diffColor = diff === 0 ? 'text-white' : diff < 0 ? 'text-green-500' : 'text-gc-red'
+  // Golf leaderboard convention: under par (good) is red, over par (bad) is black/neutral
+  const diffColor = diff < 0 ? 'text-gc-red' : 'text-white'
 
   return (
     <div>
