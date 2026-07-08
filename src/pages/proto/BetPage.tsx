@@ -1,16 +1,26 @@
 import { useEffect, useState } from 'react'
-import { getActivePlayers, getCourseBySlug } from '../../lib/queries'
+import { getActivePlayers, getCourseBySlug, getCurrentSeason, getLeaderboard } from '../../lib/queries'
 import type { Course, Player } from '../../lib/database.types'
 import IdentityScreen from './bet/IdentityScreen'
 import QuestionShell from './bet/QuestionShell'
 import SliderQuestion from './bet/SliderQuestion'
 import CompositionQuestion from './bet/CompositionQuestion'
-import PlayerPickQuestion from './bet/PlayerPickQuestion'
+import PlayerPickQuestion, { type SeasonStanding } from './bet/PlayerPickQuestion'
 import HeadToHeadQuestion from './bet/HeadToHeadQuestion'
 import YesNoQuestion from './bet/YesNoQuestion'
 import PodiumQuestion from './bet/PodiumQuestion'
 import CompletionScreen from './bet/CompletionScreen'
 import { EMPTY_COMPOSITION, type BetAnswers, type RandomAssignment, compositionTotal } from './bet/types'
+
+async function loadStandings(): Promise<Map<string, SeasonStanding>> {
+  try {
+    const season = await getCurrentSeason()
+    const entries = await getLeaderboard(season.id)
+    return new Map(entries.map(e => [e.player.id, { rank: e.rank, points: e.total_points }]))
+  } catch {
+    return new Map()
+  }
+}
 
 const TOTAL_QUESTIONS = 9
 
@@ -49,6 +59,7 @@ export default function BetPage() {
   const [loading, setLoading] = useState(true)
   const [course, setCourse] = useState<Course | null>(null)
   const [assignment, setAssignment] = useState<RandomAssignment | null>(null)
+  const [standingsByPlayer, setStandingsByPlayer] = useState<Map<string, SeasonStanding>>(new Map())
 
   const [stage, setStage] = useState<'identity' | 'questions' | 'complete'>('identity')
   const [name, setName] = useState('')
@@ -59,9 +70,14 @@ export default function BetPage() {
 
   useEffect(() => {
     async function load() {
-      const [players, kajaani] = await Promise.all([getActivePlayers(), getCourseBySlug('kajaani')])
+      const [players, kajaani, standings] = await Promise.all([
+        getActivePlayers(),
+        getCourseBySlug('kajaani'),
+        loadStandings(),
+      ])
       setCourse(kajaani)
       setAssignment(randomizeAssignment(players))
+      setStandingsByPlayer(standings)
     }
     load().catch(console.error).finally(() => setLoading(false))
   }, [])
@@ -149,6 +165,7 @@ export default function BetPage() {
             questionText="Kuka tekee ryhmän parhaan tuloksen?"
             context="Eniten stableford-pisteitä"
             lockDisabled={!answers.q3BestGroup}
+            lockLabel={answers.q3BestGroup ? undefined : 'Valitse pelaaja'}
             onLock={commit}
             transitioningOut={transitioningOut}
           >
@@ -156,6 +173,7 @@ export default function BetPage() {
               players={roster}
               selectedId={answers.q3BestGroup}
               onSelect={id => setAnswers(a => ({ ...a, q3BestGroup: id }))}
+              standingsByPlayer={standingsByPlayer}
             />
           </QuestionShell>
         )}
@@ -166,6 +184,7 @@ export default function BetPage() {
             questionText="Kuka tekee parhaan etuyhdeksän?"
             context="Reijät 1-9, eniten pisteitä"
             lockDisabled={!answers.q4BestFront9}
+            lockLabel={answers.q4BestFront9 ? undefined : 'Valitse pelaaja'}
             onLock={commit}
             transitioningOut={transitioningOut}
           >
@@ -173,6 +192,7 @@ export default function BetPage() {
               players={roster}
               selectedId={answers.q4BestFront9}
               onSelect={id => setAnswers(a => ({ ...a, q4BestFront9: id }))}
+              standingsByPlayer={standingsByPlayer}
             />
           </QuestionShell>
         )}
@@ -183,6 +203,7 @@ export default function BetPage() {
             questionText="Kuka tekee parhaan takayhdeksän?"
             context="Reijät 10-18, eniten pisteitä"
             lockDisabled={!answers.q5BestBack9}
+            lockLabel={answers.q5BestBack9 ? undefined : 'Valitse pelaaja'}
             onLock={commit}
             transitioningOut={transitioningOut}
           >
@@ -190,6 +211,7 @@ export default function BetPage() {
               players={roster}
               selectedId={answers.q5BestBack9}
               onSelect={id => setAnswers(a => ({ ...a, q5BestBack9: id }))}
+              standingsByPlayer={standingsByPlayer}
             />
           </QuestionShell>
         )}
@@ -200,6 +222,7 @@ export default function BetPage() {
             questionText="Kuka pelaa scratch-tuloksella parhaiten?"
             context="Vähiten lyöntejä yhteensä (brutto)"
             lockDisabled={!answers.q6BestScratch}
+            lockLabel={answers.q6BestScratch ? undefined : 'Valitse pelaaja'}
             onLock={commit}
             transitioningOut={transitioningOut}
           >
@@ -207,6 +230,7 @@ export default function BetPage() {
               players={roster}
               selectedId={answers.q6BestScratch}
               onSelect={id => setAnswers(a => ({ ...a, q6BestScratch: id }))}
+              standingsByPlayer={standingsByPlayer}
             />
           </QuestionShell>
         )}

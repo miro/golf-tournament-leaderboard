@@ -57,3 +57,11 @@
 .animate-bet-reveal {
   animation: bet-reveal 400ms ease-out both;
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
