@@ -96,8 +96,8 @@ export default function CompositionQuestion({ value, onChange }: Props) {
                 borderRadius: 22,
                 borderWidth: active ? 2 : 1,
                 borderStyle: 'solid',
-                borderColor: active ? meta.color : 'rgba(255,255,255,0.12)',
-                background: active ? `${meta.color}4D` : EMPTY_CELL_BG,
+                borderColor: active ? meta.activeBorder : 'rgba(255,255,255,0.12)',
+                background: active ? meta.activeBg : EMPTY_CELL_BG,
                 color: active ? 'white' : '#9A8870',
                 transform: active ? 'scale(1.05)' : 'scale(1)',
               }}
@@ -133,7 +133,7 @@ export default function CompositionQuestion({ value, onChange }: Props) {
               {Array.from({ length: 9 }).map((_, i) => {
                 const holeIndex = rowIdx * 9 + i
                 const category = value.holes[holeIndex]
-                const color = category ? CATEGORY_META[category].color : undefined
+                const color = category ? CATEGORY_META[category].cellColor : undefined
                 return (
                   <div
                     key={holeIndex}

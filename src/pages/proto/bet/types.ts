@@ -4,13 +4,16 @@ export type HoleCategory = 'birdie' | 'par' | 'bogey' | 'double' | 'triple' | 'w
 
 export const CATEGORY_ORDER: HoleCategory[] = ['birdie', 'par', 'bogey', 'double', 'triple', 'worse']
 
-export const CATEGORY_META: Record<HoleCategory, { emoji: string; label: string; color: string }> = {
-  birdie: { emoji: '🐦', label: 'Birdie+', color: '#2D6A4F' },
-  par: { emoji: '⭕', label: 'Par', color: '#3A5A8A' },
-  bogey: { emoji: '📊', label: 'Bogey', color: '#8A7A3A' },
-  double: { emoji: '🟦', label: 'Tupla', color: '#7A3A2A' },
-  triple: { emoji: '🟥', label: 'Tripla', color: '#8A2A2A' },
-  worse: { emoji: '💀', label: 'Worse', color: '#3A2A3A' },
+export const CATEGORY_META: Record<
+  HoleCategory,
+  { emoji: string; label: string; cellColor: string; activeBorder: string; activeBg: string }
+> = {
+  birdie: { emoji: '🔴', label: 'Birdie+', cellColor: '#C0392B', activeBorder: '#C0392B', activeBg: 'rgba(192,57,43,0.25)' },
+  par: { emoji: '⬜', label: 'Par', cellColor: '#3D3530', activeBorder: '#888', activeBg: 'rgba(255,255,255,0.08)' },
+  bogey: { emoji: '🟦', label: 'Bogey', cellColor: '#2E5F8A', activeBorder: '#2E5F8A', activeBg: 'rgba(46,95,138,0.25)' },
+  double: { emoji: '🟪', label: 'Tupla', cellColor: '#4A2D6F', activeBorder: '#4A2D6F', activeBg: 'rgba(74,45,111,0.25)' },
+  triple: { emoji: '🟫', label: 'Tripla', cellColor: '#3D2010', activeBorder: '#3D2010', activeBg: 'rgba(61,32,16,0.25)' },
+  worse: { emoji: '⬛', label: 'Worse', cellColor: '#111111', activeBorder: '#444', activeBg: 'rgba(17,17,17,0.4)' },
 }
 
 export interface CompositionAnswer {
