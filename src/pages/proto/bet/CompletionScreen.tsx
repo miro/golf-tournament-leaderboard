@@ -1,27 +1,33 @@
 import { useState } from 'react'
 import type { Player } from '../../../lib/database.types'
-import { type BetAnswers, compositionPoints } from './types'
+import { CATEGORY_META, CATEGORY_ORDER, type BetAnswers, compositionCounts, compositionPoints } from './types'
 
 interface Props {
   name: string
   emojis: string[]
   answers: BetAnswers
   playerA: Player
-  playerB: Player
   pairA: Player
   pairB: Player
   playerById: Map<string, Player>
 }
 
-export default function CompletionScreen({ name, emojis, answers, playerA, playerB, pairA, pairB, playerById }: Props) {
+export default function CompletionScreen({ name, emojis, answers, playerA, pairA, pairB, playerById }: Props) {
   const [copied, setCopied] = useState(false)
 
   const h2hWinner = answers.q7HeadToHead ? playerById.get(answers.q7HeadToHead) : null
   const podiumNames = answers.q9Podium.map(id => (id ? playerById.get(id)?.full_name ?? '?' : '?'))
 
+  const q2Counts = compositionCounts(answers.q2Composition)
+  const q2Top3 = [...CATEGORY_ORDER]
+    .sort((a, b) => q2Counts[b] - q2Counts[a])
+    .slice(0, 3)
+    .map(key => `${CATEGORY_META[key].emoji}${q2Counts[key]}`)
+    .join(' ')
+
   const summary = [
     `${playerA.full_name} pisteet → ${answers.q1Score}p`,
-    `${playerB.full_name} kierros → ${compositionPoints(answers.q2Composition)}p (ennustettu)`,
+    `Kierroksen kokoonpano → ${compositionPoints(answers.q2Composition)}p (${q2Top3})`,
     `Paras tulos → ${answers.q3BestGroup ? playerById.get(answers.q3BestGroup)?.full_name : '–'}`,
     `Paras etuyhdeksän → ${answers.q4BestFront9 ? playerById.get(answers.q4BestFront9)?.full_name : '–'}`,
     `Paras takayhdeksän → ${answers.q5BestBack9 ? playerById.get(answers.q5BestBack9)?.full_name : '–'}`,

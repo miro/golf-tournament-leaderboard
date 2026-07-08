@@ -130,17 +130,15 @@ export default function BetPage() {
           <QuestionShell
             index={1}
             questionText={`Miten ${playerB.full_name}:n kierros menee?`}
-            context={`HCP ${playerB.hcp_current ?? '–'} · Kajaani Par ${course.par_total} · Muokkaa lukuja — yhteensä oltava 18`}
+            context={`HCP ${playerB.hcp_current ?? '–'} · Kajaani Par ${course.par_total}`}
             lockDisabled={q2Total !== 18}
-            lockLabel={q2Total === 18 ? undefined : `Lisää ${Math.abs(18 - q2Total)} väylää`}
+            lockLabel={q2Total === 18 ? undefined : `Maalaa vielä ${Math.abs(18 - q2Total)} väylää`}
             onLock={commit}
             transitioningOut={transitioningOut}
           >
             <CompositionQuestion
               value={answers.q2Composition}
               onChange={v => setAnswers(a => ({ ...a, q2Composition: v }))}
-              coursePar={course.par_total}
-              hcp={playerB.hcp_current}
             />
           </QuestionShell>
         )}
@@ -267,7 +265,6 @@ export default function BetPage() {
             emojis={emojis}
             answers={answers}
             playerA={playerA}
-            playerB={playerB}
             pairA={pairA}
             pairB={pairB}
             playerById={playerById}

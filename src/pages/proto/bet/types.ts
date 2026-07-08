@@ -1,22 +1,23 @@
 import type { Player } from '../../../lib/database.types'
 
-export interface CompositionAnswer {
-  birdie: number
-  par: number
-  bogey: number
-  double: number
-  triple: number
-  worse: number
+export type HoleCategory = 'birdie' | 'par' | 'bogey' | 'double' | 'triple' | 'worse'
+
+export const CATEGORY_ORDER: HoleCategory[] = ['birdie', 'par', 'bogey', 'double', 'triple', 'worse']
+
+export const CATEGORY_META: Record<HoleCategory, { emoji: string; label: string; color: string }> = {
+  birdie: { emoji: '🐦', label: 'Birdie+', color: '#2D6A4F' },
+  par: { emoji: '⭕', label: 'Par', color: '#3A5A8A' },
+  bogey: { emoji: '📊', label: 'Bogey', color: '#8A7A3A' },
+  double: { emoji: '🟦', label: 'Tupla', color: '#7A3A2A' },
+  triple: { emoji: '🟥', label: 'Tripla', color: '#8A2A2A' },
+  worse: { emoji: '💀', label: 'Worse', color: '#3A2A3A' },
 }
 
-export const EMPTY_COMPOSITION: CompositionAnswer = {
-  birdie: 0,
-  par: 0,
-  bogey: 0,
-  double: 0,
-  triple: 0,
-  worse: 0,
+export interface CompositionAnswer {
+  holes: (HoleCategory | null)[] // 18 entries
 }
+
+export const EMPTY_COMPOSITION: CompositionAnswer = { holes: Array(18).fill(null) }
 
 export interface BetAnswers {
   q1Score: number | null
@@ -39,14 +40,16 @@ export interface RandomAssignment {
 }
 
 export function compositionTotal(c: CompositionAnswer): number {
-  return c.birdie + c.par + c.bogey + c.double + c.triple + c.worse
+  return c.holes.filter(h => h !== null).length
+}
+
+export function compositionCounts(c: CompositionAnswer): Record<HoleCategory, number> {
+  const counts: Record<HoleCategory, number> = { birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, worse: 0 }
+  for (const h of c.holes) if (h) counts[h]++
+  return counts
 }
 
 export function compositionPoints(c: CompositionAnswer): number {
-  return c.birdie * 3 + c.par * 2 + c.bogey * 1
-}
-
-// Net strokes relative to each hole's handicap-adjusted par (negative = better than net par)
-export function compositionNetToPar(c: CompositionAnswer): number {
-  return c.birdie * -1 + c.par * 0 + c.bogey * 1 + c.double * 2 + c.triple * 3 + c.worse * 4
+  const counts = compositionCounts(c)
+  return counts.birdie * 3 + counts.par * 2 + counts.bogey * 1
 }
