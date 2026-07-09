@@ -77,7 +77,7 @@ export interface BetAnswers {
   q4BestFront9: string | null
   q5BestBack9: string | null
   q6BestScratch: string | null
-  q7HeadToHead: string | null
+  q7BeatLeader: string | null
   q8Birdie: 'yes' | 'no' | null
   q9Podium: (string | null)[]
 }
@@ -85,8 +85,7 @@ export interface BetAnswers {
 export interface RandomAssignment {
   playerA: Player
   playerB: Player
-  pairA: Player
-  pairB: Player
+  targetPlayer: Player
   roster: Player[]
 }
 

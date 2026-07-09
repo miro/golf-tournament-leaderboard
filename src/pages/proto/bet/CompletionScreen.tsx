@@ -7,15 +7,14 @@ interface Props {
   emojis: string[]
   answers: BetAnswers
   playerA: Player
-  pairA: Player
-  pairB: Player
+  targetPlayer: Player
   playerById: Map<string, Player>
 }
 
-export default function CompletionScreen({ name, emojis, answers, playerA, pairA, pairB, playerById }: Props) {
+export default function CompletionScreen({ name, emojis, answers, playerA, targetPlayer, playerById }: Props) {
   const [copied, setCopied] = useState(false)
 
-  const h2hWinner = answers.q7HeadToHead ? playerById.get(answers.q7HeadToHead) : null
+  const beatLeaderPick = answers.q7BeatLeader ? playerById.get(answers.q7BeatLeader) : null
   const podiumNames = answers.q9Podium.map(id => (id ? playerById.get(id)?.full_name ?? '?' : '?'))
 
   const q2Counts = compositionCounts(answers.q2Composition)
@@ -32,7 +31,7 @@ export default function CompletionScreen({ name, emojis, answers, playerA, pairA
     `Paras etuyhdeksän → ${answers.q4BestFront9 ? playerById.get(answers.q4BestFront9)?.full_name : '–'}`,
     `Paras takayhdeksän → ${answers.q5BestBack9 ? playerById.get(answers.q5BestBack9)?.full_name : '–'}`,
     `Paras scratch → ${answers.q6BestScratch ? playerById.get(answers.q6BestScratch)?.full_name : '–'}`,
-    `${pairA.full_name} vs ${pairB.full_name} → ${h2hWinner?.full_name ?? '–'}`,
+    `Kuka päihittää ${targetPlayer.full_name}? → ${beatLeaderPick?.full_name ?? '–'}`,
     `Birdie kierroksella → ${answers.q8Birdie === 'yes' ? 'Kyllä' : 'Ei'}`,
     `Podium → 1. ${podiumNames[0]}, 2. ${podiumNames[1]}, 3. ${podiumNames[2]}`,
   ]

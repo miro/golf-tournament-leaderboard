@@ -6,7 +6,7 @@ import QuestionShell from './bet/QuestionShell'
 import SliderQuestion from './bet/SliderQuestion'
 import CompositionQuestion from './bet/CompositionQuestion'
 import CombinedPlayerPickScreen, { type BetKey, type CombinedAssignments } from './bet/CombinedPlayerPickScreen'
-import HeadToHeadQuestion from './bet/HeadToHeadQuestion'
+import BeatTheLeaderQuestion from './bet/BeatTheLeaderQuestion'
 import YesNoQuestion from './bet/YesNoQuestion'
 import PodiumQuestion from './bet/PodiumQuestion'
 import CompletionScreen from './bet/CompletionScreen'
@@ -33,17 +33,21 @@ function pickRandom(players: Player[], exclude: Set<string>): Player | undefined
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
-function randomizeAssignment(players: Player[]): RandomAssignment | null {
+// TODO: admin can override target_player_id before opening betting
+function pickTargetPlayer(players: Player[], standings: Map<string, SeasonStanding>): Player {
+  const top3 = players.filter(p => (standings.get(p.id)?.rank ?? Infinity) <= 3)
+  const pool = top3.length > 0 ? top3 : players
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
+function randomizeAssignment(players: Player[], standings: Map<string, SeasonStanding>): RandomAssignment | null {
   if (players.length === 0) return null
   const used = new Set<string>()
   const playerA = pickRandom(players, used) ?? players[0]
   used.add(playerA.id)
   const playerB = pickRandom(players, used) ?? playerA
-  used.add(playerB.id)
-  const pairA = pickRandom(players, used) ?? playerA
-  used.add(pairA.id)
-  const pairB = pickRandom(players, used) ?? playerB
-  return { playerA, playerB, pairA, pairB, roster: players }
+  const targetPlayer = pickTargetPlayer(players, standings)
+  return { playerA, playerB, targetPlayer, roster: players }
 }
 
 const EMPTY_ANSWERS: BetAnswers = {
@@ -53,7 +57,7 @@ const EMPTY_ANSWERS: BetAnswers = {
   q4BestFront9: null,
   q5BestBack9: null,
   q6BestScratch: null,
-  q7HeadToHead: null,
+  q7BeatLeader: null,
   q8Birdie: null,
   q9Podium: [null, null, null],
 }
@@ -79,7 +83,7 @@ export default function BetPage() {
         loadStandings(),
       ])
       setCourse(kajaani)
-      setAssignment(randomizeAssignment(players))
+      setAssignment(randomizeAssignment(players, standings))
       setStandingsByPlayer(standings)
     }
     load().catch(console.error).finally(() => setLoading(false))
@@ -138,7 +142,7 @@ export default function BetPage() {
     )
   }
 
-  const { playerA, playerB, pairA, pairB, roster } = assignment
+  const { playerA, playerB, targetPlayer, roster } = assignment
   const playerById = new Map(roster.map(p => [p.id, p]))
   const q2Total = compositionTotal(answers.q2Composition)
 
@@ -202,21 +206,16 @@ export default function BetPage() {
         )}
 
         {stage === 'questions' && currentQuestion === 6 && (
-          <QuestionShell
-            index={6}
-            questionText="Kumpi tekee enemmän pisteitä?"
-            context="Stableford-pisteet yhteensä"
-            lockDisabled={!answers.q7HeadToHead}
+          <BeatTheLeaderQuestion
+            players={roster}
+            targetPlayer={targetPlayer}
+            standingsByPlayer={standingsByPlayer}
+            selectedId={answers.q7BeatLeader}
+            onSelect={id => setAnswers(a => ({ ...a, q7BeatLeader: id }))}
+            lockDisabled={!answers.q7BeatLeader}
             onLock={commit}
             transitioningOut={transitioningOut}
-          >
-            <HeadToHeadQuestion
-              playerA={pairA}
-              playerB={pairB}
-              selectedId={answers.q7HeadToHead}
-              onSelect={id => setAnswers(a => ({ ...a, q7HeadToHead: id }))}
-            />
-          </QuestionShell>
+          />
         )}
 
         {stage === 'questions' && currentQuestion === 7 && (
@@ -255,8 +254,7 @@ export default function BetPage() {
             emojis={emojis}
             answers={answers}
             playerA={playerA}
-            pairA={pairA}
-            pairB={pairB}
+            targetPlayer={targetPlayer}
             playerById={playerById}
           />
         )}
