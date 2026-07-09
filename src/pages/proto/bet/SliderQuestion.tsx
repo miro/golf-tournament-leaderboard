@@ -1,4 +1,4 @@
-const MIN = 18
+const MIN = 0
 const MAX = 54
 const START = 36
 
