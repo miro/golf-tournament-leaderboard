@@ -176,34 +176,59 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
 
   function renderMitaTarvitaan(player: Player) {
     const entry = leaderboard.find(e => e.player.id === player.id)
-    const leader = leaderboard[0]
-    const isLeader = !!leader && leader.player.id === player.id
-    const hasPlayedCourse = courseRounds.some(r => r.player_id === player.id)
-    const playerPoints = entry?.total_points ?? 0
+    const playerCurrentTotal = entry?.total_points ?? 0
+    const coursesAfterToday = (entry?.rounds_played ?? 0) + 1
+
+    const poolForBracket = (bracket: number) =>
+      leaderboard.filter(e => e.player.active && !groupIds.has(e.player.id) && e.rounds_played === bracket)
+
+    let pool = poolForBracket(coursesAfterToday)
+    let bracketUsed = coursesAfterToday
+    let usedFallback = false
+
+    if (pool.length === 0) {
+      const lower = poolForBracket(coursesAfterToday - 1)
+      if (lower.length > 0) {
+        pool = lower
+        bracketUsed = coursesAfterToday - 1
+        usedFallback = true
+      } else {
+        const higher = poolForBracket(coursesAfterToday + 1)
+        if (higher.length > 0) {
+          pool = higher
+          bracketUsed = coursesAfterToday + 1
+          usedFallback = true
+        }
+      }
+    }
+
+    const comparisonEntry = pool.reduce<LeaderboardEntry | null>(
+      (best, e) => (!best || e.total_points > best.total_points ? e : best),
+      null,
+    )
+    const gap = comparisonEntry ? comparisonEntry.total_points - playerCurrentTotal : 0
 
     let content
-    if (isLeader) {
-      const gap = leader.total_points - (leaderboard[1]?.total_points ?? 0)
-      const rival = leaderboard[1]?.player.full_name ?? '?'
+    if (comparisonEntry && gap > 0) {
       content = (
         <>
           <span style={{ color, fontWeight: 700 }}>{player.full_name}</span>
-          <span style={{ fontWeight: 400 }}>{' johtaa sarjaa — '}</span>
-          <span style={{ color, fontWeight: 700 }}>{rival}</span>
-          <span style={{ fontWeight: 400 }}>{' tarvitsee '}</span>
-          <span style={{ fontWeight: 800, fontSize: 18 }}>{gap + 1}p</span>
-          <span style={{ fontWeight: 400 }}>{' enemmän ohittaakseen'}</span>
+          <span style={{ fontWeight: 400 }}>{' → '}</span>
+          <span style={{ fontWeight: 400 }}>{`${coursesAfterToday} kierroksen kärkeen: `}</span>
+          <span style={{ fontWeight: 800, fontSize: 18 }}>{`${gap}p`}</span>
+          <span style={{ fontWeight: 400 }}>{' enemmän kuin '}</span>
+          <span style={{ color, fontWeight: 700 }}>{comparisonEntry.player.full_name}</span>
         </>
       )
     } else {
-      const gap = (leader?.total_points ?? 0) - playerPoints
       content = (
         <>
           <span style={{ color, fontWeight: 700 }}>{player.full_name}</span>
-          <span style={{ fontWeight: 400 }}>{' → kärkeen: '}</span>
-          <span style={{ fontWeight: 800, fontSize: 18 }}>{gap + 1}p</span>
-          <span style={{ fontWeight: 400 }}>{' enemmän kuin '}</span>
-          <span style={{ color, fontWeight: 700 }}>{leader?.player.full_name ?? '?'}</span>
+          <span style={{ fontWeight: 400 }}>{' johtaa '}</span>
+          <span style={{ fontWeight: 400 }}>{`${coursesAfterToday} kierroksen sarjaa`}</span>
+          {gap < 0 && (
+            <span style={{ color: '#2D6A4F', fontWeight: 700 }}>{` — ${Math.abs(gap)}p etumatka`}</span>
+          )}
         </>
       )
     }
@@ -211,8 +236,10 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
     return (
       <div key={player.id} style={{ fontSize: 16, color: 'white', lineHeight: 1.6, padding: '2px 0' }}>
         {content}
-        {hasPlayedCourse && (
-          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, fontWeight: 400 }}> (kenttä pelattu)</span>
+        {usedFallback && (
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+            {`(vertailu: ${bracketUsed} kierroksen pelaajiin)`}
+          </div>
         )}
       </div>
     )
