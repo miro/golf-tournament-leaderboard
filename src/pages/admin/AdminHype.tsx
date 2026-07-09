@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { getCurrentSeason, getActivePlayers, getLeaderboard, getSeasonCourses, getCourseRounds } from '../../lib/queries'
+import { getCurrentSeason, getActivePlayers, getLeaderboard, getSeasonCourses, getCourseRounds, getHoleResultsForRounds } from '../../lib/queries'
+import { computeSkinsKing, generateCaption } from '../../lib/caption'
 import StarttipakettCard from '../../components/StarttipakettCard'
-import type { Player, Course, LeaderboardEntry, RoundWithDetails } from '../../lib/database.types'
+import SkinsCard from '../../components/SkinsCard'
+import CaptionBlock from '../../components/CaptionBlock'
+import type { Player, Course, LeaderboardEntry, RoundWithDetails, HoleResult } from '../../lib/database.types'
 
 const COURSE_OPTIONS = [
   { label: 'Kajaani', slug: 'kajaani' },
@@ -9,6 +12,37 @@ const COURSE_OPTIONS = [
   { label: 'Tenetti', slug: 'tenetti' },
   { label: 'Paltamo', slug: 'paltamo' },
 ]
+
+const CARD_WRAP_STYLE = {
+  margin: '0 8px',
+  width: 'calc(100vw - 16px)',
+  maxWidth: 480,
+  boxSizing: 'border-box',
+} as const
+
+const STORAGE_KEY = 'gc_hype_starttipaketti'
+
+interface StoredForm {
+  course_id: string | null
+  player_ids: string[]
+  date: string
+}
+
+function loadStoredForm(): StoredForm | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) return null
+    return {
+      course_id: typeof parsed.course_id === 'string' ? parsed.course_id : null,
+      player_ids: Array.isArray(parsed.player_ids) ? parsed.player_ids.filter((id: unknown) => typeof id === 'string') : [],
+      date: typeof parsed.date === 'string' ? parsed.date : '',
+    }
+  } catch {
+    return null
+  }
+}
 
 function todayStr(): string {
   const now = new Date()
@@ -36,25 +70,63 @@ export default function AdminHype() {
   // Preview
   const [preview, setPreview] = useState<{ course: Course; courseRounds: RoundWithDetails[] } | null>(null)
   const [generating, setGenerating] = useState(false)
+  const [courseHoleResults, setCourseHoleResults] = useState<HoleResult[]>([])
+
+  const hydratedRef = useRef(false)
+
+  // Fetch hole results for the generated course's rounds, used to compute the caption's skins king line
+  useEffect(() => {
+    let cancelled = false
+    if (!preview || preview.courseRounds.length === 0) {
+      setCourseHoleResults([])
+      return
+    }
+    getHoleResultsForRounds(preview.courseRounds.map(r => r.id)).then(hr => {
+      if (!cancelled) setCourseHoleResults(hr)
+    })
+    return () => { cancelled = true }
+  }, [preview])
 
   useEffect(() => {
     async function load() {
       try {
         const [players, season] = await Promise.all([getActivePlayers(), getCurrentSeason()])
         const [lb, sc] = await Promise.all([getLeaderboard(season.id), getSeasonCourses(season.id)])
+        const courses = sc.map(item => item.course)
         setActivePlayers(players)
         setLeaderboard(lb)
-        setSeasonCourses(sc.map(item => item.course))
+        setSeasonCourses(courses)
         setSeasonId(season.id)
+
+        const stored = loadStoredForm()
+        if (stored) {
+          setSelectedPlayerIds(stored.player_ids.filter(id => players.some(p => p.id === id)))
+          const course = stored.course_id ? courses.find(c => c.id === stored.course_id) : undefined
+          setSelectedCourseSlug(course ? course.slug : '')
+          if (stored.date) setDate(stored.date)
+        }
       } catch (e) {
         console.error(e)
         setLoadError('Virhe ladattaessa tietoja')
       } finally {
         setLoading(false)
+        hydratedRef.current = true
       }
     }
     load()
   }, [])
+
+  // Persist form values to localStorage on every change, once initial hydration is done
+  useEffect(() => {
+    if (!hydratedRef.current) return
+    const course = seasonCourses.find(c => c.slug === selectedCourseSlug)
+    const payload: StoredForm = {
+      course_id: course?.id ?? null,
+      player_ids: selectedPlayerIds,
+      date,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  }, [selectedCourseSlug, selectedPlayerIds, date, seasonCourses])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -72,6 +144,10 @@ export default function AdminHype() {
     .filter((p): p is Player => !!p)
   const selectedCourse = seasonCourses.find(c => c.slug === selectedCourseSlug)
   const canGenerate = selectedCourseSlug !== '' && selectedPlayerIds.length >= 1
+
+  const previewColor = preview?.course.color_hex ?? '#2D6A4F'
+  const skinsKing = preview ? computeSkinsKing(preview.courseRounds, courseHoleResults) : null
+  const caption = preview ? generateCaption(selectedPlayers, preview.course, leaderboard, preview.courseRounds, skinsKing) : ''
 
   function togglePlayer(playerId: string) {
     setSelectedPlayerIds(prev => {
@@ -96,6 +172,15 @@ export default function AdminHype() {
   }
 
   function handleReset() {
+    setPreview(null)
+    setSelectedCourseSlug('')
+    setSelectedPlayerIds([])
+    setDate(todayStr())
+    setDropdownOpen(false)
+  }
+
+  function handleClear() {
+    localStorage.removeItem(STORAGE_KEY)
     setPreview(null)
     setSelectedCourseSlug('')
     setSelectedPlayerIds([])
@@ -220,28 +305,50 @@ export default function AdminHype() {
               />
             </div>
 
-            <button
-              onClick={handleGenerate}
-              disabled={!canGenerate || generating}
-              className="btn-primary font-sans disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {generating ? 'Luodaan...' : 'Luo starttipaketti'}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleGenerate}
+                disabled={!canGenerate || generating}
+                className="btn-primary font-sans disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {generating ? 'Luodaan...' : 'Luo starttipaketti'}
+              </button>
+              <button
+                type="button"
+                onClick={handleClear}
+                className="font-sans text-sm text-gray-500 hover:text-gray-300 border border-white/10 hover:border-white/20 px-3 py-2 rounded-lg transition-colors"
+              >
+                ✕ Tyhjennä
+              </button>
+            </div>
           </div>
         ) : (
           <div>
             <button onClick={handleReset} className="btn-ghost font-sans text-sm mb-6">
               ← Luo uusi
             </button>
-            <StarttipakettCard
-              course={preview.course}
-              seasonId={seasonId}
-              selectedPlayers={selectedPlayers}
-              date={date}
-              leaderboard={leaderboard}
-              seasonCourses={seasonCourses}
-              courseRounds={preview.courseRounds}
-            />
+            {/* -mx-10/md:-mx-12 cancels the ancestor padding (AdminLayout's <main> p-4/md:p-6
+                plus this .card's own p-6) so the vw-based card width below is measured from
+                the true viewport edge, not from inside two layers of unrelated padding. */}
+            <div className="flex flex-col gap-4 -mx-10 md:-mx-12">
+              <div style={CARD_WRAP_STYLE}>
+                <StarttipakettCard
+                  course={preview.course}
+                  selectedPlayers={selectedPlayers}
+                  date={date}
+                  leaderboard={leaderboard}
+                  seasonCourses={seasonCourses}
+                />
+              </div>
+              <div style={CARD_WRAP_STYLE}>
+                <SkinsCard
+                  course={preview.course}
+                  seasonId={seasonId}
+                  courseRounds={preview.courseRounds}
+                />
+              </div>
+            </div>
+            <CaptionBlock caption={caption} color={previewColor} />
           </div>
         )}
       </div>
