@@ -55,7 +55,7 @@ function TwoRowGroup({
   return (
     <div>
       {/* Par */}
-      <div className="flex items-center gap-[3px]" style={{ height: 40, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="flex items-center gap-[3px]" style={{ height: 36, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ width: 56, minWidth: 56, letterSpacing: '0.08em' }} className="text-[11px] uppercase text-gray-600 font-semibold">
           Par
         </div>
@@ -67,7 +67,7 @@ function TwoRowGroup({
       </div>
 
       {/* Lyönnit */}
-      <div className="flex items-center gap-[3px]" style={{ height: 40, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="flex items-center gap-[3px]" style={{ height: 36, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ width: 56, minWidth: 56, letterSpacing: '0.08em' }} className="text-[11px] uppercase text-gray-600 font-semibold">
           Lyönnit
         </div>
@@ -106,7 +106,7 @@ function TwoRowGroup({
       </div>
 
       {/* Mestari */}
-      <div className="flex items-center gap-[3px]" style={{ height: 40 }}>
+      <div className="flex items-center gap-[3px]" style={{ height: 36 }}>
         <div style={{ width: 56, minWidth: 56, letterSpacing: '0.08em' }} className="text-[11px] uppercase text-gray-600 font-semibold">
           Mestari
         </div>
@@ -122,7 +122,7 @@ function TwoRowGroup({
           return (
             <div key={holeNumber} style={{ flex: 1, minWidth: 0 }} className="flex items-center justify-center">
               <span
-                className="text-[11px]"
+                className="text-[9px]"
                 style={{
                   color: nameColor,
                   fontWeight: isLeader || isHighlighted ? 700 : 600,
@@ -234,10 +234,10 @@ export default function HoleOwnerGrid({
           {[0, 1].map(group => (
             <div key={group} style={{ marginBottom: group === 0 ? 12 : 0 }}>
               {[0, 1, 2].map(i => (
-                <div key={i} className="flex items-center gap-[3px]" style={{ height: 40, marginBottom: 2 }}>
-                  <div className="animate-pulse rounded" style={{ width: 56, minWidth: 56, height: 32, background: 'rgba(255,255,255,0.04)' }} />
+                <div key={i} className="flex items-center gap-[3px]" style={{ height: 36, marginBottom: 2 }}>
+                  <div className="animate-pulse rounded" style={{ width: 56, minWidth: 56, height: 28, background: 'rgba(255,255,255,0.04)' }} />
                   {NINE.map(n => (
-                    <div key={n} className="animate-pulse rounded" style={{ flex: 1, minWidth: 0, height: 32, background: 'rgba(255,255,255,0.04)' }} />
+                    <div key={n} className="animate-pulse rounded" style={{ flex: 1, minWidth: 0, height: 28, background: 'rgba(255,255,255,0.04)' }} />
                   ))}
                 </div>
               ))}

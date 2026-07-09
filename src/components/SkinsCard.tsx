@@ -46,15 +46,15 @@ export default function SkinsCard({ course, seasonId, courseRounds }: Props) {
       style={{ background: BG, border: `2px solid ${color}`, borderRadius: 12, maxWidth: 480, margin: '0 auto' }}
     >
       {/* Header band */}
-      <div style={{ background: color, padding: '0 20px', height: 40, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
+      <div style={{ background: color, height: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 12px', width: '100%', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           <span style={{ color: 'white', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>GC</span>
           <span style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
           <span style={{ color: 'rgba(255,255,255,0.80)', fontSize: 13, fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             Liekkipoika Kesäkisa 2026
           </span>
         </div>
-        <div style={{ color: 'white', fontWeight: 800, fontSize: 18, textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0 }}>
+        <div style={{ color: 'white', fontWeight: 800, fontSize: 'clamp(18px, 5vw, 28px)', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', flexShrink: 0 }}>
           {course.name}
         </div>
       </div>

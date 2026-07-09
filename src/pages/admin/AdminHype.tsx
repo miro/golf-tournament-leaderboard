@@ -13,6 +13,13 @@ const COURSE_OPTIONS = [
   { label: 'Paltamo', slug: 'paltamo' },
 ]
 
+const CARD_WRAP_STYLE = {
+  margin: '0 8px',
+  width: 'calc(100vw - 16px)',
+  maxWidth: 480,
+  boxSizing: 'border-box',
+} as const
+
 const STORAGE_KEY = 'gc_hype_starttipaketti'
 
 interface StoredForm {
@@ -320,19 +327,26 @@ export default function AdminHype() {
             <button onClick={handleReset} className="btn-ghost font-sans text-sm mb-6">
               ← Luo uusi
             </button>
-            <div className="flex flex-col gap-6">
-              <StarttipakettCard
-                course={preview.course}
-                selectedPlayers={selectedPlayers}
-                date={date}
-                leaderboard={leaderboard}
-                seasonCourses={seasonCourses}
-              />
-              <SkinsCard
-                course={preview.course}
-                seasonId={seasonId}
-                courseRounds={preview.courseRounds}
-              />
+            {/* -mx-10/md:-mx-12 cancels the ancestor padding (AdminLayout's <main> p-4/md:p-6
+                plus this .card's own p-6) so the vw-based card width below is measured from
+                the true viewport edge, not from inside two layers of unrelated padding. */}
+            <div className="flex flex-col gap-4 -mx-10 md:-mx-12">
+              <div style={CARD_WRAP_STYLE}>
+                <StarttipakettCard
+                  course={preview.course}
+                  selectedPlayers={selectedPlayers}
+                  date={date}
+                  leaderboard={leaderboard}
+                  seasonCourses={seasonCourses}
+                />
+              </div>
+              <div style={CARD_WRAP_STYLE}>
+                <SkinsCard
+                  course={preview.course}
+                  seasonId={seasonId}
+                  courseRounds={preview.courseRounds}
+                />
+              </div>
             </div>
             <CaptionBlock caption={caption} color={previewColor} />
           </div>
