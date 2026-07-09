@@ -67,11 +67,19 @@
 }
 
 @keyframes totem-chip-in {
-  from { opacity: 0; transform: translateY(-20px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-totem-chip-in {
   animation: totem-chip-in 150ms ease-out both;
+}
+
+@keyframes totem-divider-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-totem-divider-in {
+  animation: totem-divider-in 100ms ease-out both;
 }
 
 @keyframes totem-chip-out {
