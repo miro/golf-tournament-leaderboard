@@ -10,6 +10,30 @@ const COURSE_OPTIONS = [
   { label: 'Paltamo', slug: 'paltamo' },
 ]
 
+const STORAGE_KEY = 'gc_hype_starttipaketti'
+
+interface StoredForm {
+  course_id: string | null
+  player_ids: string[]
+  date: string
+}
+
+function loadStoredForm(): StoredForm | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) return null
+    return {
+      course_id: typeof parsed.course_id === 'string' ? parsed.course_id : null,
+      player_ids: Array.isArray(parsed.player_ids) ? parsed.player_ids.filter((id: unknown) => typeof id === 'string') : [],
+      date: typeof parsed.date === 'string' ? parsed.date : '',
+    }
+  } catch {
+    return null
+  }
+}
+
 function todayStr(): string {
   const now = new Date()
   const yyyy = now.getFullYear()
@@ -37,24 +61,48 @@ export default function AdminHype() {
   const [preview, setPreview] = useState<{ course: Course; courseRounds: RoundWithDetails[] } | null>(null)
   const [generating, setGenerating] = useState(false)
 
+  const hydratedRef = useRef(false)
+
   useEffect(() => {
     async function load() {
       try {
         const [players, season] = await Promise.all([getActivePlayers(), getCurrentSeason()])
         const [lb, sc] = await Promise.all([getLeaderboard(season.id), getSeasonCourses(season.id)])
+        const courses = sc.map(item => item.course)
         setActivePlayers(players)
         setLeaderboard(lb)
-        setSeasonCourses(sc.map(item => item.course))
+        setSeasonCourses(courses)
         setSeasonId(season.id)
+
+        const stored = loadStoredForm()
+        if (stored) {
+          setSelectedPlayerIds(stored.player_ids.filter(id => players.some(p => p.id === id)))
+          const course = stored.course_id ? courses.find(c => c.id === stored.course_id) : undefined
+          setSelectedCourseSlug(course ? course.slug : '')
+          if (stored.date) setDate(stored.date)
+        }
       } catch (e) {
         console.error(e)
         setLoadError('Virhe ladattaessa tietoja')
       } finally {
         setLoading(false)
+        hydratedRef.current = true
       }
     }
     load()
   }, [])
+
+  // Persist form values to localStorage on every change, once initial hydration is done
+  useEffect(() => {
+    if (!hydratedRef.current) return
+    const course = seasonCourses.find(c => c.slug === selectedCourseSlug)
+    const payload: StoredForm = {
+      course_id: course?.id ?? null,
+      player_ids: selectedPlayerIds,
+      date,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  }, [selectedCourseSlug, selectedPlayerIds, date, seasonCourses])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -96,6 +144,15 @@ export default function AdminHype() {
   }
 
   function handleReset() {
+    setPreview(null)
+    setSelectedCourseSlug('')
+    setSelectedPlayerIds([])
+    setDate(todayStr())
+    setDropdownOpen(false)
+  }
+
+  function handleClear() {
+    localStorage.removeItem(STORAGE_KEY)
     setPreview(null)
     setSelectedCourseSlug('')
     setSelectedPlayerIds([])
@@ -220,13 +277,22 @@ export default function AdminHype() {
               />
             </div>
 
-            <button
-              onClick={handleGenerate}
-              disabled={!canGenerate || generating}
-              className="btn-primary font-sans disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {generating ? 'Luodaan...' : 'Luo starttipaketti'}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleGenerate}
+                disabled={!canGenerate || generating}
+                className="btn-primary font-sans disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {generating ? 'Luodaan...' : 'Luo starttipaketti'}
+              </button>
+              <button
+                type="button"
+                onClick={handleClear}
+                className="font-sans text-sm text-gray-500 hover:text-gray-300 border border-white/10 hover:border-white/20 px-3 py-2 rounded-lg transition-colors"
+              >
+                ✕ Tyhjennä
+              </button>
+            </div>
           </div>
         ) : (
           <div>
