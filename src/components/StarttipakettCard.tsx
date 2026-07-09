@@ -243,14 +243,19 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
 
     let content
     if (comparisonEntry && gap > 0) {
+      const stblDelta = 36 - gap
+      const stblText = stblDelta < 0 ? `${stblDelta}` : stblDelta === 0 ? 'E' : `+${stblDelta}`
+      const stblColor = stblDelta < 0 ? '#E8453C' : 'white'
       content = (
         <>
           <span style={{ color, fontWeight: 700 }}>{player.full_name}</span>
           <span style={{ fontWeight: 400 }}>{' → '}</span>
-          <span style={{ fontWeight: 400 }}>{`${coursesAfterToday} kierroksen kärkeen: `}</span>
-          <span style={{ fontWeight: 800, fontSize: 18 }}>{`${gap}p`}</span>
-          <span style={{ fontWeight: 400 }}>{' enemmän kuin '}</span>
-          <span style={{ color, fontWeight: 700 }}>{comparisonEntry.player.full_name}</span>
+          <span style={{ fontWeight: 400 }}>{`${coursesAfterToday}. kierroksen kärkeen: `}</span>
+          <span style={{ color: stblColor, fontWeight: 800, fontSize: 18 }}>{stblText}</span>
+          <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.7)' }}>{' tai parempi '}</span>
+          <span style={{ fontWeight: 400, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+            {`(${comparisonEntry.player.full_name} ${comparisonEntry.total_points}p)`}
+          </span>
         </>
       )
     } else {
@@ -258,7 +263,7 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
         <>
           <span style={{ color, fontWeight: 700 }}>{player.full_name}</span>
           <span style={{ fontWeight: 400 }}>{' johtaa '}</span>
-          <span style={{ fontWeight: 400 }}>{`${coursesAfterToday} kierroksen sarjaa`}</span>
+          <span style={{ fontWeight: 400 }}>{`${coursesAfterToday}. kierroksen sarjaa`}</span>
           {gap < 0 && (
             <span style={{ color: '#2D6A4F', fontWeight: 700 }}>{` — ${Math.abs(gap)}p etumatka`}</span>
           )}
