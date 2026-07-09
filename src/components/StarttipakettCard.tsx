@@ -60,12 +60,65 @@ function SectionLabel({ text }: { text: string }) {
   )
 }
 
-function buildGroupList(all: LeaderboardEntry[], groupIds: Set<string>, limit = 5): (LeaderboardEntry | 'gap')[] {
-  if (all.length === 0) return []
-  const top = all.slice(0, limit)
-  const outside = all.slice(limit).filter(e => groupIds.has(e.player.id))
-  if (outside.length === 0) return top
-  return [...top, 'gap' as const, ...outside]
+function computeBracketTarget(
+  entry: LeaderboardEntry | undefined,
+  leaderboard: LeaderboardEntry[],
+  groupIds: Set<string>,
+): { comparisonEntry: LeaderboardEntry | null; bracketUsed: number; usedFallback: boolean; coursesAfterToday: number } {
+  const coursesAfterToday = (entry?.rounds_played ?? 0) + 1
+
+  const poolForBracket = (bracket: number) =>
+    leaderboard.filter(e => e.player.active && !groupIds.has(e.player.id) && e.rounds_played === bracket)
+
+  let pool = poolForBracket(coursesAfterToday)
+  let bracketUsed = coursesAfterToday
+  let usedFallback = false
+
+  if (pool.length === 0) {
+    const lower = poolForBracket(coursesAfterToday - 1)
+    if (lower.length > 0) {
+      pool = lower
+      bracketUsed = coursesAfterToday - 1
+      usedFallback = true
+    } else {
+      const higher = poolForBracket(coursesAfterToday + 1)
+      if (higher.length > 0) {
+        pool = higher
+        bracketUsed = coursesAfterToday + 1
+        usedFallback = true
+      }
+    }
+  }
+
+  const comparisonEntry = pool.reduce<LeaderboardEntry | null>(
+    (best, e) => (!best || e.total_points > best.total_points ? e : best),
+    null,
+  )
+
+  return { comparisonEntry, bracketUsed, usedFallback, coursesAfterToday }
+}
+
+function buildRelevantList(
+  leaderboard: LeaderboardEntry[],
+  groupIds: Set<string>,
+  chasingTargetIds: Set<string>,
+): (LeaderboardEntry | 'gap')[] {
+  if (leaderboard.length === 0) return []
+
+  const requiredIds = new Set<string>(groupIds)
+  requiredIds.add(leaderboard[0].player.id)
+  chasingTargetIds.forEach(id => requiredIds.add(id))
+
+  const relevant = leaderboard
+    .filter(e => requiredIds.has(e.player.id))
+    .sort((a, b) => a.rank - b.rank)
+
+  const result: (LeaderboardEntry | 'gap')[] = []
+  relevant.forEach((e, i) => {
+    if (i > 0 && e.rank - relevant[i - 1].rank > 1) result.push('gap')
+    result.push(e)
+  })
+  return result
 }
 
 function computeSkinsKing(
@@ -164,7 +217,15 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
 
   const color = course.color_hex ?? '#2D6A4F'
   const groupIds = new Set(selectedPlayers.map(p => p.id))
-  const overallRows = buildGroupList(leaderboard, groupIds)
+
+  const chasingTargetIds = new Set<string>()
+  selectedPlayers.forEach(p => {
+    const entry = leaderboard.find(e => e.player.id === p.id)
+    const { comparisonEntry } = computeBracketTarget(entry, leaderboard, groupIds)
+    if (comparisonEntry) chasingTargetIds.add(comparisonEntry.player.id)
+  })
+
+  const overallRows = buildRelevantList(leaderboard, groupIds, chasingTargetIds)
   const maxPoints = leaderboard[0]?.total_points || 1
 
   const slugToCourse = new Map(seasonCourses.map(c => [c.slug, c]))
@@ -210,35 +271,7 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
   function renderMitaTarvitaan(player: Player) {
     const entry = leaderboard.find(e => e.player.id === player.id)
     const playerCurrentTotal = entry?.total_points ?? 0
-    const coursesAfterToday = (entry?.rounds_played ?? 0) + 1
-
-    const poolForBracket = (bracket: number) =>
-      leaderboard.filter(e => e.player.active && !groupIds.has(e.player.id) && e.rounds_played === bracket)
-
-    let pool = poolForBracket(coursesAfterToday)
-    let bracketUsed = coursesAfterToday
-    let usedFallback = false
-
-    if (pool.length === 0) {
-      const lower = poolForBracket(coursesAfterToday - 1)
-      if (lower.length > 0) {
-        pool = lower
-        bracketUsed = coursesAfterToday - 1
-        usedFallback = true
-      } else {
-        const higher = poolForBracket(coursesAfterToday + 1)
-        if (higher.length > 0) {
-          pool = higher
-          bracketUsed = coursesAfterToday + 1
-          usedFallback = true
-        }
-      }
-    }
-
-    const comparisonEntry = pool.reduce<LeaderboardEntry | null>(
-      (best, e) => (!best || e.total_points > best.total_points ? e : best),
-      null,
-    )
+    const { comparisonEntry, bracketUsed, usedFallback, coursesAfterToday } = computeBracketTarget(entry, leaderboard, groupIds)
     const gap = comparisonEntry ? comparisonEntry.total_points - playerCurrentTotal : 0
 
     let content
@@ -329,15 +362,22 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
         {/* Sarjatilanne */}
         <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <SectionLabel text="SARJATILANNE" />
-          {overallRows.map((e, _i) =>
-            e === 'gap' ? <GapRow key="gap" /> : (
-              <div key={e.player.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
-                <span style={{ width: 16, textAlign: 'right', fontSize: 15, fontWeight: 600, flexShrink: 0, color: groupIds.has(e.player.id) ? color : '#6b7280' }}>
+          {overallRows.map((e, i) => {
+            if (e === 'gap') return <GapRow key={`gap-${i}`} />
+            const isGroup = groupIds.has(e.player.id)
+            const isTarget = !isGroup && chasingTargetIds.has(e.player.id)
+            const rowColor = isGroup ? color : 'white'
+            return (
+              <div key={e.player.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0 6px 8px', borderLeft: isGroup ? `2px solid ${color}` : '2px solid transparent' }}>
+                <span style={{ width: 16, textAlign: 'right', fontSize: 15, fontWeight: 600, flexShrink: 0, color: rowColor }}>
                   {e.rank}
                 </span>
-                <span style={{ flex: 1, fontSize: 17, fontWeight: groupIds.has(e.player.id) ? 700 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: groupIds.has(e.player.id) ? color : '#9ca3af' }}>
+                <span style={{ flex: 1, fontSize: 17, fontWeight: isGroup ? 700 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: rowColor }}>
                   {e.player.full_name}
                 </span>
+                {isTarget && (
+                  <span style={{ fontSize: 11, color: '#6b7280', flexShrink: 0 }}>← tavoite</span>
+                )}
                 <PointsBar
                   segments={dotCourses.flatMap((c): SegmentData[] => {
                     if (!c) return []
@@ -355,12 +395,12 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
                     )
                   })}
                 </div>
-                <span style={{ width: 40, textAlign: 'right', fontSize: 17, fontWeight: 700, flexShrink: 0, color: groupIds.has(e.player.id) ? color : '#6b7280' }}>
+                <span style={{ width: 40, textAlign: 'right', fontSize: 17, fontWeight: 700, flexShrink: 0, color: rowColor }}>
                   {e.total_points}p
                 </span>
               </div>
             )
-          )}
+          })}
         </div>
 
         {/* Mitä tarvitaan? */}
