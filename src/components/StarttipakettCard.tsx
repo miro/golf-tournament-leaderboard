@@ -376,7 +376,7 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
                   {e.player.full_name}
                 </span>
                 {isTarget && (
-                  <span style={{ fontSize: 11, color: '#6b7280', flexShrink: 0 }}>← tavoite</span>
+                  <span className="hidden min-[480px]:inline" style={{ fontSize: 11, color: '#6b7280', flexShrink: 0 }}>← tavoite</span>
                 )}
                 <PointsBar
                   segments={dotCourses.flatMap((c): SegmentData[] => {
