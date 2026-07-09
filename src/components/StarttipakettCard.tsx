@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react'
-import type { Player, Course, LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
+import React, { useState, useRef, useEffect } from 'react'
+import type { Player, Course, LeaderboardEntry, RoundWithDetails, HoleResult } from '../lib/database.types'
+import { getHoleResultsForRounds } from '../lib/queries'
 import HoleOwnerGrid from './shared/HoleOwnerGrid'
 import PointsBar, { type SegmentData } from './shared/PointsBar'
 
@@ -18,6 +19,13 @@ const COURSE_LOCATIVE: Record<string, string> = {
   nuas: 'Nuasille',
   tenetti: 'Tenetille',
   paltamo: 'Paltamolle',
+}
+
+const COURSE_GENITIVE: Record<string, string> = {
+  kajaani: 'Kajaanin',
+  nuas: 'Nuasin',
+  tenetti: 'Tenetin',
+  paltamo: 'Paltamon',
 }
 
 interface Props {
@@ -60,14 +68,54 @@ function buildGroupList(all: LeaderboardEntry[], groupIds: Set<string>, limit = 
   return [...top, 'gap' as const, ...outside]
 }
 
+function computeSkinsKing(
+  courseRounds: RoundWithDetails[],
+  holeResults: HoleResult[],
+): { name: string; count: number } | null {
+  if (courseRounds.length === 0) return null
+
+  const roundById = new Map(courseRounds.map(r => [r.id, r]))
+  const counts = new Map<string, number>()
+
+  for (let holeNum = 1; holeNum <= 18; holeNum++) {
+    const holeData = holeResults.filter(hr => hr.hole_number === holeNum && hr.strokes_played != null && roundById.has(hr.round_id))
+    if (holeData.length === 0) continue
+
+    const minStrokes = Math.min(...holeData.map(hr => hr.strokes_played!))
+    const candidates = holeData.filter(hr => hr.strokes_played === minStrokes)
+    candidates.sort((a, b) => {
+      const ra = roundById.get(a.round_id)
+      const rb = roundById.get(b.round_id)
+      const pd = (rb?.total_points ?? 0) - (ra?.total_points ?? 0)
+      if (pd !== 0) return pd
+      const hd = (rb?.hcp_at_time ?? 0) - (ra?.hcp_at_time ?? 0)
+      if (hd !== 0) return hd
+      return (ra?.submitted_at ?? '') < (rb?.submitted_at ?? '') ? -1 : 1
+    })
+
+    const winnerId = roundById.get(candidates[0].round_id)?.player_id
+    if (winnerId) counts.set(winnerId, (counts.get(winnerId) ?? 0) + 1)
+  }
+
+  if (counts.size === 0) return null
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1])
+  const [topId, topCount] = sorted[0]
+  if (sorted.length > 1 && sorted[1][1] === topCount) return null
+
+  const name = courseRounds.find(r => r.player_id === topId)?.player?.full_name
+  return name ? { name, count: topCount } : null
+}
+
 function generateCaption(
   selectedPlayers: Player[],
   course: Course,
   leaderboard: LeaderboardEntry[],
   courseRounds: RoundWithDetails[],
+  skinsKing: { name: string; count: number } | null,
 ): string {
   const names = selectedPlayers.map(p => p.full_name)
   const locative = COURSE_LOCATIVE[course.slug] ?? `${course.name}lle`
+  const genitive = COURSE_GENITIVE[course.slug] ?? course.name
 
   let intro: string
   if (names.length === 1) {
@@ -78,57 +126,41 @@ function generateCaption(
     intro = `⛳ ${names.slice(0, -1).join(', ')} ja ${names[names.length - 1]} lähtevät ${locative}.`
   }
 
-  let standingsContext: string
-  if (names.length === 1) {
-    const entry = leaderboard.find(e => e.player.id === selectedPlayers[0].id)
-    const leader = leaderboard[0]
-    if (!entry) {
-      standingsContext = 'Ei vielä tuloksia sarjassa.'
-    } else if (entry.rank === 1) {
-      const gap = entry.total_points - (leaderboard[1]?.total_points ?? 0)
-      const rival = leaderboard[1]?.player.full_name
-      standingsContext = rival
-        ? `Johtaa sarjaa ${entry.total_points}p:llä — ${rival} ${gap}p perässä.`
-        : `Johtaa sarjaa ${entry.total_points}p:llä.`
-    } else {
-      const gap = (leader?.total_points ?? 0) - entry.total_points
-      standingsContext = `Sarjassa ${entry.rank}. sijalla ${entry.total_points}p — ${leader?.player.full_name ?? '?'} johtaa ${gap}p:n erolla.`
-    }
-  } else if (names.length === 2) {
-    const leader = leaderboard[0]
-    const parts = selectedPlayers.map(p => {
-      const e = leaderboard.find(le => le.player.id === p.id)
-      if (!e) return `${p.full_name} ei vielä tuloksia`
-      if (e.rank === 1) return `${p.full_name} johtaa ${e.total_points}p:llä`
-      const gap = (leader?.total_points ?? 0) - e.total_points
-      return `${p.full_name} on ${e.rank}. (${e.total_points}p, ${gap}p eroa kärkeen)`
+  const standingsLines = selectedPlayers
+    .map(p => leaderboard.find(e => e.player.id === p.id))
+    .filter((e): e is LeaderboardEntry => !!e && e.rounds_played > 0)
+    .map(e => {
+      const coursesPlayed = new Set(e.courses_played).size
+      const holesPlayed = e.rounds_played * 18
+      const avg = (e.total_points / holesPlayed).toFixed(1)
+      return `${e.player.full_name} ${e.rank}. (${e.total_points}p, ${coursesPlayed}/4 kenttää, ${avg}p/väylä)`
     })
-    standingsContext = parts.join(' — ') + '.'
-  } else {
-    const parts = selectedPlayers.map(p => {
-      const e = leaderboard.find(le => le.player.id === p.id)
-      if (!e) return `${p.full_name} (ei tuloksia)`
-      return `${p.full_name} ${e.rank}. (${e.total_points}p)`
-    })
-    standingsContext = parts.join(', ') + '.'
-  }
 
   const anyNotPlayed = selectedPlayers.some(p => !courseRounds.find(r => r.player_id === p.id))
-  const courseLeader = courseRounds[0]
-  let courseContext = ''
-  if (anyNotPlayed) {
-    courseContext = 'Tikkarit jaossa 🍭'
-  } else if (courseLeader) {
-    courseContext = `Kenttäjohtaja: ${courseLeader.player?.full_name} ${courseLeader.total_points}p.`
-  }
+  const tikkariLine = anyNotPlayed ? 'Tikkarit jaossa 🍭' : ''
 
-  return [intro, standingsContext, courseContext, 'Seuraa tilannetta: liekkipoika.com'].filter(Boolean).join('\n')
+  const skinsLine = skinsKing ? `${skinsKing.name} hallitsee ${genitive} skinejä — ${skinsKing.count} skiniä 👑` : ''
+
+  return [intro, ...standingsLines, tikkariLine, skinsLine, 'Seuraa tilannetta: liekkipoika.com'].filter(Boolean).join('\n')
 }
 
 export default function StarttipakettCard({ course, seasonId, selectedPlayers, date, leaderboard, seasonCourses, courseRounds }: Props) {
   const [captionCopied, setCaptionCopied] = useState(false)
   const [skinCounts, setSkinCounts] = useState<{ ownedCount: number; emptyCount: number } | null>(null)
+  const [courseHoleResults, setCourseHoleResults] = useState<HoleResult[]>([])
   const cardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (courseRounds.length === 0) {
+      setCourseHoleResults([])
+      return
+    }
+    getHoleResultsForRounds(courseRounds.map(r => r.id)).then(hr => {
+      if (!cancelled) setCourseHoleResults(hr)
+    })
+    return () => { cancelled = true }
+  }, [courseRounds])
 
   const color = course.color_hex ?? '#2D6A4F'
   const groupIds = new Set(selectedPlayers.map(p => p.id))
@@ -138,7 +170,8 @@ export default function StarttipakettCard({ course, seasonId, selectedPlayers, d
   const slugToCourse = new Map(seasonCourses.map(c => [c.slug, c]))
   const dotCourses = DOT_SLUGS.map(slug => slugToCourse.get(slug) ?? null)
 
-  const caption = generateCaption(selectedPlayers, course, leaderboard, courseRounds)
+  const skinsKing = computeSkinsKing(courseRounds, courseHoleResults)
+  const caption = generateCaption(selectedPlayers, course, leaderboard, courseRounds, skinsKing)
 
   const coverPhotoUrl = COURSE_HERO[course.slug] ?? course.cover_photo_url
 
