@@ -90,6 +90,11 @@ export interface RandomAssignment {
   roster: Player[]
 }
 
+export interface SeasonStanding {
+  rank: number
+  points: number
+}
+
 export function compositionTotal(c: CompositionAnswer): number {
   return c.holes.filter(h => h !== null).length
 }

@@ -5,12 +5,15 @@ import IdentityScreen from './bet/IdentityScreen'
 import QuestionShell from './bet/QuestionShell'
 import SliderQuestion from './bet/SliderQuestion'
 import CompositionQuestion from './bet/CompositionQuestion'
-import PlayerPickQuestion, { type SeasonStanding } from './bet/PlayerPickQuestion'
+import CombinedPlayerPickScreen, { type BetKey, type CombinedAssignments } from './bet/CombinedPlayerPickScreen'
 import HeadToHeadQuestion from './bet/HeadToHeadQuestion'
 import YesNoQuestion from './bet/YesNoQuestion'
 import PodiumQuestion from './bet/PodiumQuestion'
 import CompletionScreen from './bet/CompletionScreen'
-import { EMPTY_COMPOSITION, type BetAnswers, type RandomAssignment, compositionTotal } from './bet/types'
+import { EMPTY_COMPOSITION, type BetAnswers, type RandomAssignment, type SeasonStanding, compositionTotal } from './bet/types'
+
+const COMBINED_QUESTION_INDEX = 2
+const AFTER_COMBINED_INDEX = 6
 
 async function loadStandings(): Promise<Map<string, SeasonStanding>> {
   try {
@@ -96,6 +99,29 @@ export default function BetPage() {
     }, 200)
   }
 
+  function commitCombined() {
+    setTransitioningOut(true)
+    setTimeout(() => {
+      setTransitioningOut(false)
+      setCurrentQuestion(AFTER_COMBINED_INDEX)
+    }, 200)
+  }
+
+  function assignCombined(key: BetKey, playerId: string | null) {
+    setAnswers(a => {
+      switch (key) {
+        case 'best_total':
+          return { ...a, q3BestGroup: playerId }
+        case 'best_front':
+          return { ...a, q4BestFront9: playerId }
+        case 'best_back':
+          return { ...a, q5BestBack9: playerId }
+        case 'best_scratch':
+          return { ...a, q6BestScratch: playerId }
+      }
+    })
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gc-dark flex items-center justify-center">
@@ -159,80 +185,20 @@ export default function BetPage() {
           </QuestionShell>
         )}
 
-        {stage === 'questions' && currentQuestion === 2 && (
-          <QuestionShell
-            index={2}
-            questionText="Kuka tekee ryhmän parhaan tuloksen?"
-            context="Eniten stableford-pisteitä"
-            lockDisabled={!answers.q3BestGroup}
-            lockLabel={answers.q3BestGroup ? undefined : 'Valitse pelaaja'}
-            onLock={commit}
+        {stage === 'questions' && currentQuestion === COMBINED_QUESTION_INDEX && (
+          <CombinedPlayerPickScreen
+            players={roster}
+            standingsByPlayer={standingsByPlayer}
+            assignments={{
+              best_total: answers.q3BestGroup,
+              best_front: answers.q4BestFront9,
+              best_back: answers.q5BestBack9,
+              best_scratch: answers.q6BestScratch,
+            } as CombinedAssignments}
+            onAssign={assignCombined}
+            onLock={commitCombined}
             transitioningOut={transitioningOut}
-          >
-            <PlayerPickQuestion
-              players={roster}
-              selectedId={answers.q3BestGroup}
-              onSelect={id => setAnswers(a => ({ ...a, q3BestGroup: id }))}
-              standingsByPlayer={standingsByPlayer}
-            />
-          </QuestionShell>
-        )}
-
-        {stage === 'questions' && currentQuestion === 3 && (
-          <QuestionShell
-            index={3}
-            questionText="Kuka tekee parhaan etuyhdeksän?"
-            context="Reijät 1-9, eniten pisteitä"
-            lockDisabled={!answers.q4BestFront9}
-            lockLabel={answers.q4BestFront9 ? undefined : 'Valitse pelaaja'}
-            onLock={commit}
-            transitioningOut={transitioningOut}
-          >
-            <PlayerPickQuestion
-              players={roster}
-              selectedId={answers.q4BestFront9}
-              onSelect={id => setAnswers(a => ({ ...a, q4BestFront9: id }))}
-              standingsByPlayer={standingsByPlayer}
-            />
-          </QuestionShell>
-        )}
-
-        {stage === 'questions' && currentQuestion === 4 && (
-          <QuestionShell
-            index={4}
-            questionText="Kuka tekee parhaan takayhdeksän?"
-            context="Reijät 10-18, eniten pisteitä"
-            lockDisabled={!answers.q5BestBack9}
-            lockLabel={answers.q5BestBack9 ? undefined : 'Valitse pelaaja'}
-            onLock={commit}
-            transitioningOut={transitioningOut}
-          >
-            <PlayerPickQuestion
-              players={roster}
-              selectedId={answers.q5BestBack9}
-              onSelect={id => setAnswers(a => ({ ...a, q5BestBack9: id }))}
-              standingsByPlayer={standingsByPlayer}
-            />
-          </QuestionShell>
-        )}
-
-        {stage === 'questions' && currentQuestion === 5 && (
-          <QuestionShell
-            index={5}
-            questionText="Kuka pelaa scratch-tuloksella parhaiten?"
-            context="Vähiten lyöntejä yhteensä (brutto)"
-            lockDisabled={!answers.q6BestScratch}
-            lockLabel={answers.q6BestScratch ? undefined : 'Valitse pelaaja'}
-            onLock={commit}
-            transitioningOut={transitioningOut}
-          >
-            <PlayerPickQuestion
-              players={roster}
-              selectedId={answers.q6BestScratch}
-              onSelect={id => setAnswers(a => ({ ...a, q6BestScratch: id }))}
-              standingsByPlayer={standingsByPlayer}
-            />
-          </QuestionShell>
+          />
         )}
 
         {stage === 'questions' && currentQuestion === 6 && (

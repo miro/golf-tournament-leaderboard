@@ -65,3 +65,19 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes totem-chip-in {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-totem-chip-in {
+  animation: totem-chip-in 150ms ease-out both;
+}
+
+@keyframes totem-chip-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.7); }
+}
+.animate-totem-chip-out {
+  animation: totem-chip-out 100ms ease-in both;
+}
