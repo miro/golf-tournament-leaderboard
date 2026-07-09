@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getCourseRounds, getHoleResultsForRounds } from '../../lib/queries'
 
 const HOLES = Array.from({ length: 18 }, (_, i) => i + 1)
+const NINE = Array.from({ length: 9 }, (_, i) => i + 1)
 const CARD_BG = '#1a1a18'
 const RED = '#E8453C'
 const BLUE = '#5B9BD5'
@@ -22,6 +23,7 @@ interface Props {
   highlightPlayerIds?: string[]
   emptyStateText?: string
   onDataLoaded?: (data: { ownedCount: number; emptyCount: number }) => void
+  layout?: 'scroll' | 'two-row'
 }
 
 function abbrevName(fullName: string): string {
@@ -41,6 +43,103 @@ function holeStrokeStyle(strokes: number, par: number): {
   return               { outer: null, inner: null, radius: 0,     color: '#6b7280' }
 }
 
+function TwoRowGroup({
+  groupChampions,
+  courseColor,
+  highlightSet,
+}: {
+  groupChampions: HoleChampion[]
+  courseColor: string
+  highlightSet: Set<string>
+}) {
+  return (
+    <div>
+      {/* Par */}
+      <div className="flex items-center gap-[3px]" style={{ height: 40, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ width: 56, minWidth: 56, letterSpacing: '0.08em' }} className="text-[11px] uppercase text-gray-600 font-semibold">
+          Par
+        </div>
+        {groupChampions.map(({ holeNumber, par }) => (
+          <div key={holeNumber} style={{ flex: 1, minWidth: 0 }} className="flex items-center justify-center text-[13px] font-medium text-gray-500">
+            {par ?? '–'}
+          </div>
+        ))}
+      </div>
+
+      {/* Lyönnit */}
+      <div className="flex items-center gap-[3px]" style={{ height: 40, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ width: 56, minWidth: 56, letterSpacing: '0.08em' }} className="text-[11px] uppercase text-gray-600 font-semibold">
+          Lyönnit
+        </div>
+        {groupChampions.map(({ holeNumber, par, bestStrokes }) => {
+          if (bestStrokes === null || par === null) {
+            return (
+              <div key={holeNumber} style={{ flex: 1, minWidth: 0 }} className="flex items-center justify-center">
+                <span className="text-[13px] font-bold" style={{ color: '#374151' }}>—</span>
+              </div>
+            )
+          }
+          const s = holeStrokeStyle(bestStrokes, par)
+          return (
+            <div key={holeNumber} style={{ flex: 1, minWidth: 0 }} className="flex items-center justify-center">
+              <div style={{
+                width: 26, height: 26,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: s.outer ? `1.5px solid ${s.outer}` : 'none',
+                borderRadius: s.radius,
+                position: 'relative',
+              }}>
+                {s.inner && (
+                  <div style={{
+                    position: 'absolute', inset: 3,
+                    border: `1.5px solid ${s.inner}`,
+                    borderRadius: s.radius,
+                  }} />
+                )}
+                <span className="text-[13px] font-bold" style={{ color: s.color, position: 'relative' }}>
+                  {bestStrokes}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Mestari */}
+      <div className="flex items-center gap-[3px]" style={{ height: 40 }}>
+        <div style={{ width: 56, minWidth: 56, letterSpacing: '0.08em' }} className="text-[11px] uppercase text-gray-600 font-semibold">
+          Mestari
+        </div>
+        {groupChampions.map(({ holeNumber, playerName, playerId, isLeader }) => {
+          const isHighlighted = playerId !== null && highlightSet.has(playerId)
+          const nameColor = !playerName
+            ? '#374151'
+            : isLeader
+            ? courseColor
+            : isHighlighted
+            ? 'rgba(255,255,255,0.8)'
+            : 'rgba(255,255,255,0.35)'
+          return (
+            <div key={holeNumber} style={{ flex: 1, minWidth: 0 }} className="flex items-center justify-center">
+              <span
+                className="text-[11px]"
+                style={{
+                  color: nameColor,
+                  fontWeight: isLeader || isHighlighted ? 700 : 600,
+                  textDecoration: isHighlighted && !isLeader ? 'underline' : 'none',
+                  textDecorationColor: 'rgba(255,255,255,0.25)',
+                }}
+              >
+                {playerName ? abbrevName(playerName) : '—'}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function HoleOwnerGrid({
   courseId,
   seasonId,
@@ -48,6 +147,7 @@ export default function HoleOwnerGrid({
   highlightPlayerIds = [],
   emptyStateText = 'Ei vielä tuloksia',
   onDataLoaded,
+  layout = 'scroll',
 }: Props) {
   const [loading, setLoading] = useState(true)
   const [hasData, setHasData] = useState(false)
@@ -128,6 +228,24 @@ export default function HoleOwnerGrid({
   const highlightSet = new Set(highlightPlayerIds)
 
   if (loading) {
+    if (layout === 'two-row') {
+      return (
+        <div style={{ background: CARD_BG, borderRadius: 12, overflow: 'hidden', padding: 16, paddingBottom: 12 }}>
+          {[0, 1].map(group => (
+            <div key={group} style={{ marginBottom: group === 0 ? 12 : 0 }}>
+              {[0, 1, 2].map(i => (
+                <div key={i} className="flex items-center gap-[3px]" style={{ height: 40, marginBottom: 2 }}>
+                  <div className="animate-pulse rounded" style={{ width: 56, minWidth: 56, height: 32, background: 'rgba(255,255,255,0.04)' }} />
+                  {NINE.map(n => (
+                    <div key={n} className="animate-pulse rounded" style={{ flex: 1, minWidth: 0, height: 32, background: 'rgba(255,255,255,0.04)' }} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )
+    }
     return (
       <div style={{ background: CARD_BG, borderRadius: 12, overflow: 'hidden' }}>
         <div className="overflow-x-auto">
@@ -152,6 +270,18 @@ export default function HoleOwnerGrid({
         <div className="text-center text-gray-600 text-sm py-8 px-4">
           {emptyStateText}
         </div>
+      </div>
+    )
+  }
+
+  if (layout === 'two-row') {
+    return (
+      <div style={{ background: CARD_BG, borderRadius: 12, overflow: 'hidden', padding: 16, paddingBottom: 12 }}>
+        <TwoRowGroup groupChampions={champions.slice(0, 9)} courseColor={courseColor} highlightSet={highlightSet} />
+        <div style={{ height: 12, display: 'flex', alignItems: 'center' }}>
+          <div style={{ width: '100%', borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+        </div>
+        <TwoRowGroup groupChampions={champions.slice(9, 18)} courseColor={courseColor} highlightSet={highlightSet} />
       </div>
     )
   }

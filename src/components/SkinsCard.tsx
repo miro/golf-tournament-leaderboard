@@ -106,6 +106,7 @@ export default function SkinsCard({ course, seasonId, courseRounds }: Props) {
               highlightPlayerIds={[]}
               emptyStateText="18 skiniä jaossa 🍭"
               onDataLoaded={setSkinCounts}
+              layout="two-row"
             />
             {skinCounts !== null && (
               <div style={{ marginTop: 8, fontSize: 13, fontWeight: 400, color: MUTED }}>
