@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { getCurrentSeason, getActivePlayers, getLeaderboard, getSeasonCourses, getCourseRounds } from '../../lib/queries'
+import { getCurrentSeason, getActivePlayers, getLeaderboard, getSeasonCourses, getCourseRounds, getHoleResultsForRounds } from '../../lib/queries'
+import { computeSkinsKing, generateCaption } from '../../lib/caption'
 import StarttipakettCard from '../../components/StarttipakettCard'
-import type { Player, Course, LeaderboardEntry, RoundWithDetails } from '../../lib/database.types'
+import SkinsCard from '../../components/SkinsCard'
+import CaptionBlock from '../../components/CaptionBlock'
+import type { Player, Course, LeaderboardEntry, RoundWithDetails, HoleResult } from '../../lib/database.types'
 
 const COURSE_OPTIONS = [
   { label: 'Kajaani', slug: 'kajaani' },
@@ -60,8 +63,22 @@ export default function AdminHype() {
   // Preview
   const [preview, setPreview] = useState<{ course: Course; courseRounds: RoundWithDetails[] } | null>(null)
   const [generating, setGenerating] = useState(false)
+  const [courseHoleResults, setCourseHoleResults] = useState<HoleResult[]>([])
 
   const hydratedRef = useRef(false)
+
+  // Fetch hole results for the generated course's rounds, used to compute the caption's skins king line
+  useEffect(() => {
+    let cancelled = false
+    if (!preview || preview.courseRounds.length === 0) {
+      setCourseHoleResults([])
+      return
+    }
+    getHoleResultsForRounds(preview.courseRounds.map(r => r.id)).then(hr => {
+      if (!cancelled) setCourseHoleResults(hr)
+    })
+    return () => { cancelled = true }
+  }, [preview])
 
   useEffect(() => {
     async function load() {
@@ -120,6 +137,10 @@ export default function AdminHype() {
     .filter((p): p is Player => !!p)
   const selectedCourse = seasonCourses.find(c => c.slug === selectedCourseSlug)
   const canGenerate = selectedCourseSlug !== '' && selectedPlayerIds.length >= 1
+
+  const previewColor = preview?.course.color_hex ?? '#2D6A4F'
+  const skinsKing = preview ? computeSkinsKing(preview.courseRounds, courseHoleResults) : null
+  const caption = preview ? generateCaption(selectedPlayers, preview.course, leaderboard, preview.courseRounds, skinsKing) : ''
 
   function togglePlayer(playerId: string) {
     setSelectedPlayerIds(prev => {
@@ -299,15 +320,21 @@ export default function AdminHype() {
             <button onClick={handleReset} className="btn-ghost font-sans text-sm mb-6">
               ← Luo uusi
             </button>
-            <StarttipakettCard
-              course={preview.course}
-              seasonId={seasonId}
-              selectedPlayers={selectedPlayers}
-              date={date}
-              leaderboard={leaderboard}
-              seasonCourses={seasonCourses}
-              courseRounds={preview.courseRounds}
-            />
+            <div className="flex flex-col gap-6">
+              <StarttipakettCard
+                course={preview.course}
+                selectedPlayers={selectedPlayers}
+                date={date}
+                leaderboard={leaderboard}
+                seasonCourses={seasonCourses}
+              />
+              <SkinsCard
+                course={preview.course}
+                seasonId={seasonId}
+                courseRounds={preview.courseRounds}
+              />
+            </div>
+            <CaptionBlock caption={caption} color={previewColor} />
           </div>
         )}
       </div>
