@@ -14,6 +14,9 @@ const BET_TYPES: Array<{ key: BetKey; icon: string; label: string; totemLabel: s
   { key: 'best_scratch', icon: '📊', label: 'Paras scratch', totemLabel: 'Scratch' },
 ]
 
+// Reserved space above each card for the totem chip zone (absolutely positioned, max ~4 chips)
+const CHIP_ZONE_RESERVE_PX = 145
+
 function firstUnassigned(assignments: CombinedAssignments): BetKey | null {
   return BET_TYPES.find(b => !assignments[b.key])?.key ?? null
 }
@@ -41,6 +44,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
   const playersById = new Map(players.map(p => [p.id, p]))
   const containerRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const betChipRefs = useRef<(HTMLButtonElement | null)[]>([])
   const rafRef = useRef<number | null>(null)
   const [centeredIndex, setCenteredIndex] = useState(0)
   const [displayName, setDisplayName] = useState(sorted[0]?.full_name ?? '')
@@ -51,6 +55,8 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
   const prevAssignmentsRef = useRef(assignments)
   const [enteringChip, setEnteringChip] = useState<{ playerId: string; key: BetKey } | null>(null)
   const [exitingChip, setExitingChip] = useState<{ playerId: string; key: BetKey } | null>(null)
+  const assignCounterRef = useRef(0)
+  const [assignOrder, setAssignOrder] = useState<Partial<Record<BetKey, number>>>({})
 
   useEffect(() => {
     const prev = prevAssignmentsRef.current
@@ -65,6 +71,9 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
           const addedTo = assignments[bet.key] as string
           setEnteringChip({ playerId: addedTo, key: bet.key })
           setTimeout(() => setEnteringChip(null), 150)
+          assignCounterRef.current += 1
+          const order = assignCounterRef.current
+          setAssignOrder(o => ({ ...o, [bet.key]: order }))
         }
       }
     }
@@ -113,6 +122,12 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [centeredIndex])
 
+  useEffect(() => {
+    if (activeBet === null) return
+    const idx = BET_TYPES.findIndex(b => b.key === activeBet)
+    betChipRefs.current[idx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }, [activeBet])
+
   function handleChipClick(key: BetKey) {
     if (assignments[key]) {
       onAssign(key, null)
@@ -143,6 +158,11 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
     } else {
       cardRefs.current[i]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
     }
+  }
+
+  function removeViaTotem(key: BetKey) {
+    onAssign(key, null)
+    setActiveBet(key)
   }
 
   const assignedCount = BET_TYPES.filter(b => assignments[b.key]).length
@@ -185,7 +205,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
       </p>
 
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1 mb-3">
-        {BET_TYPES.map(bet => {
+        {BET_TYPES.map((bet, betIdx) => {
           const assignedPlayerId = assignments[bet.key]
           const assignedPlayer = assignedPlayerId ? playersById.get(assignedPlayerId) : null
           const isActive = activeBet === bet.key
@@ -193,6 +213,9 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
           return (
             <button
               key={bet.key}
+              ref={el => {
+                betChipRefs.current[betIdx] = el
+              }}
               onClick={() => handleChipClick(bet.key)}
               className="relative shrink-0 flex flex-col items-center justify-center transition-transform"
               style={{
@@ -213,7 +236,10 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
                 </span>
               </div>
               {isAssigned && assignedPlayer && (
-                <span className="text-gc-green font-semibold whitespace-nowrap" style={{ fontSize: 10 }}>
+                <span
+                  className="text-gc-green font-semibold whitespace-nowrap animate-chip-name-fade-in"
+                  style={{ fontSize: 10 }}
+                >
                   {assignedPlayer.full_name.split(' ')[0]}
                 </span>
               )}
@@ -246,7 +272,8 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
       <div
         ref={containerRef}
         onScroll={onScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-4 pl-[17.5%] pr-[17.5%]"
+        className="flex items-end overflow-x-auto snap-x snap-mandatory no-scrollbar gap-4 pl-[17.5%] pr-[17.5%]"
+        style={{ paddingTop: CHIP_ZONE_RESERVE_PX }}
       >
         {sorted.map((p, i) => {
           const diff = Math.abs(i - centeredIndex)
@@ -259,7 +286,12 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
           if (exitingChip && exitingChip.playerId === p.id && !chipKeys.includes(exitingChip.key)) {
             chipKeys.push(exitingChip.key)
           }
+          const orderedChips = BET_TYPES.filter(b => chipKeys.includes(b.key)).sort(
+            (a, b) => (assignOrder[b.key] ?? 0) - (assignOrder[a.key] ?? 0),
+          )
+          const hasChips = assignedKeys.length > 0
           const glow = assignedKeys.length === 4
+          const isCentered = diff === 0
 
           return (
             <div
@@ -270,36 +302,56 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
               onClick={() => handleCardTap(i)}
               className="shrink-0 snap-center relative flex flex-col items-center justify-center text-center w-[65%] aspect-[3/4] rounded-2xl p-6 cursor-pointer"
               style={{
-                background: '#221D17',
-                border: '1px solid rgba(255,255,255,0.10)',
+                background: hasChips ? '#281F14' : '#221D17',
+                border: `1px solid ${hasChips ? (isCentered ? 'rgba(232,168,32,0.40)' : 'rgba(232,168,32,0.20)') : 'rgba(255,255,255,0.10)'}`,
                 boxShadow: glow ? '0 0 14px rgba(232,168,32,0.6)' : undefined,
                 opacity,
                 transform: `scale(${scale})`,
                 transition: 'transform 200ms ease, opacity 200ms ease',
               }}
             >
-              {chipKeys.length > 0 && (
-                <div className="flex flex-col items-center gap-1 mb-2">
-                  {BET_TYPES.filter(b => chipKeys.includes(b.key)).map(bet => {
+              {orderedChips.length > 0 && (
+                <div
+                  className="absolute left-0 right-0 flex flex-col-reverse"
+                  style={{
+                    bottom: '100%',
+                    background: '#1a1612',
+                    borderTopLeftRadius: 16,
+                    borderTopRightRadius: 16,
+                    borderBottom: '1px solid rgba(255,255,255,0.08)',
+                    padding: '8px 12px',
+                    gap: 4,
+                  }}
+                >
+                  {orderedChips.map(bet => {
                     const isEntering = enteringChip?.key === bet.key && enteringChip.playerId === p.id
                     const isExiting = exitingChip?.key === bet.key && exitingChip.playerId === p.id && !assignedKeys.includes(bet.key)
                     return (
-                      <span
+                      <div
                         key={bet.key}
-                        className={`inline-flex items-center gap-1 rounded-full font-bold text-white whitespace-nowrap ${
-                          isEntering ? 'animate-totem-chip-in' : ''
-                        } ${isExiting ? 'animate-totem-chip-out' : ''}`}
+                        onClick={e => e.stopPropagation()}
+                        className={`flex items-center justify-between w-full ${isEntering ? 'animate-totem-chip-in' : ''} ${
+                          isExiting ? 'animate-totem-chip-out' : ''
+                        }`}
                         style={{
-                          height: 22,
-                          padding: '4px 8px',
-                          borderRadius: 11,
-                          background: 'rgba(232,168,32,0.25)',
-                          border: '1px solid #E8A820',
-                          fontSize: 10,
+                          height: 28,
+                          padding: '0 8px',
+                          borderRadius: 6,
+                          background: 'rgba(232,168,32,0.15)',
+                          border: '1px solid rgba(232,168,32,0.4)',
                         }}
                       >
-                        {bet.icon} {bet.totemLabel}
-                      </span>
+                        <span className="text-white font-bold truncate" style={{ fontSize: 12 }}>
+                          {bet.icon} {bet.totemLabel}
+                        </span>
+                        <button
+                          onClick={() => removeViaTotem(bet.key)}
+                          className="text-white/70 shrink-0"
+                          style={{ fontSize: 12, marginLeft: 6 }}
+                        >
+                          ✕
+                        </button>
+                      </div>
                     )
                   })}
                 </div>
@@ -345,23 +397,6 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
             }`}
           />
         ))}
-      </div>
-
-      <div className="space-y-1.5 mb-5">
-        {BET_TYPES.map(bet => {
-          const assignedPlayerId = assignments[bet.key]
-          const assignedPlayer = assignedPlayerId ? playersById.get(assignedPlayerId) : null
-          return (
-            <div key={bet.key} className="flex justify-between items-center" style={{ fontSize: 13 }}>
-              <span className="text-gc-muted">
-                {bet.icon} {bet.label}
-              </span>
-              <span className={assignedPlayer ? 'text-gc-green font-semibold' : 'text-gc-muted'}>
-                {assignedPlayer ? assignedPlayer.full_name : '—'}
-              </span>
-            </div>
-          )
-        })}
       </div>
 
       <button
