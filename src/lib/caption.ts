@@ -1,4 +1,5 @@
 import type { Player, Course, LeaderboardEntry, RoundWithDetails, HoleResult } from './database.types'
+import { buildStandingsFromRounds } from './standings'
 
 const COURSE_LOCATIVE: Record<string, string> = {
   kajaani: 'Kajaanille',
@@ -88,4 +89,75 @@ export function generateCaption(
   const skinsLine = skinsKing ? `${skinsKing.name} hallitsee ${genitive} skinejä — ${skinsKing.count} skiniä 👑` : ''
 
   return [intro, ...standingsLines, tikkariLine, skinsLine, 'Seuraa tilannetta: liekkipoika.com'].filter(Boolean).join('\n')
+}
+
+export function generatePostRoundCaption(
+  selectedRounds: RoundWithDetails[],
+  cutoffTimestamp: string | null,
+  allSeasonRounds: RoundWithDetails[],
+  leaderboard: LeaderboardEntry[],
+): string {
+  const playerMap = new Map<string, Player>()
+  selectedRounds.forEach(r => { if (r.player && !playerMap.has(r.player_id)) playerMap.set(r.player_id, r.player) })
+  const players = [...playerMap.values()]
+  const names = players.map(p => p.full_name)
+
+  const courseMap = new Map<string, Course>()
+  selectedRounds.forEach(r => { if (r.course && !courseMap.has(r.course_id)) courseMap.set(r.course_id, r.course) })
+  const courses = [...courseMap.values()]
+  const isMulti = courses.length > 1
+
+  const namesJoined = names.length === 1
+    ? names[0]
+    : names.length === 2
+    ? `${names[0]} ja ${names[1]}`
+    : `${names.slice(0, -1).join(', ')} ja ${names[names.length - 1]}`
+
+  let intro: string
+  if (isMulti) {
+    const courseNames = courses.map(c => c.name)
+    const coursesJoined = courseNames.length === 2
+      ? `${courseNames[0]} ja ${courseNames[1]}`
+      : `${courseNames.slice(0, -1).join(', ')} ja ${courseNames[courseNames.length - 1]}`
+    intro = `⛳ ${namesJoined} pelasivat — ${coursesJoined}.`
+  } else {
+    const genitive = COURSE_GENITIVE[courses[0]?.slug ?? ''] ?? courses[0]?.name ?? ''
+    intro = names.length === 1
+      ? `⛳ ${namesJoined} pelasi ${genitive}.`
+      : `⛳ ${namesJoined} pelasivat ${genitive}.`
+  }
+
+  const beforeRounds = cutoffTimestamp === null ? [] : allSeasonRounds.filter(r => r.submitted_at < cutoffTimestamp)
+  const beforeStandings = buildStandingsFromRounds(beforeRounds)
+  const afterStandings = leaderboard
+
+  const resultLines = players.map(p => {
+    const points = selectedRounds.filter(r => r.player_id === p.id).reduce((sum, r) => sum + r.total_points, 0)
+    const stblDelta = 36 - points
+    const stblText = stblDelta < 0 ? `${stblDelta}` : stblDelta === 0 ? 'E' : `+${stblDelta}`
+
+    const before = beforeStandings.find(e => e.player.id === p.id)
+    const afterRank = afterStandings.find(e => e.player.id === p.id)?.rank
+
+    let rankChangeText = ''
+    if (!before) {
+      rankChangeText = afterRank ? `debytoi sijalla ${afterRank}` : 'debytoi sarjassa'
+    } else if (afterRank !== undefined) {
+      if (afterRank < before.rank) rankChangeText = `nousi sijalle ${afterRank}`
+      else if (afterRank > before.rank) rankChangeText = `putosi sijalle ${afterRank}`
+      else rankChangeText = `pysyi sijalla ${afterRank}`
+    }
+
+    return `${p.full_name}: ${points}p (${stblText})${rankChangeText ? `, ${rankChangeText}` : ''}.`
+  })
+
+  const beforeLeaderId = beforeStandings[0]?.player.id
+  const afterLeader = afterStandings[0]
+  const standingsLine = afterLeader
+    ? (beforeLeaderId && beforeLeaderId !== afterLeader.player.id
+      ? `${afterLeader.player.full_name} nousi kärkeen!`
+      : `${afterLeader.player.full_name} johtaa ${afterLeader.total_points}p:llä.`)
+    : ''
+
+  return [intro, ...resultLines, standingsLine, 'Sarjataulukko: liekkipoika.com'].filter(Boolean).join('\n')
 }

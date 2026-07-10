@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { getCurrentSeason, getActivePlayers, getLeaderboard, getSeasonCourses, getCourseRounds, getHoleResultsForRounds } from '../../lib/queries'
-import { computeSkinsKing, generateCaption } from '../../lib/caption'
+import { getCurrentSeason, getActivePlayers, getLeaderboard, getSeasonCourses, getCourseRounds, getHoleResultsForRounds, getAllSeasonRounds } from '../../lib/queries'
+import { computeSkinsKing, generateCaption, generatePostRoundCaption } from '../../lib/caption'
 import StarttipakettCard from '../../components/StarttipakettCard'
 import SkinsCard from '../../components/SkinsCard'
+import PostRoundCard from '../../components/PostRoundCard'
 import CaptionBlock from '../../components/CaptionBlock'
 import type { Player, Course, LeaderboardEntry, RoundWithDetails, HoleResult } from '../../lib/database.types'
 
@@ -52,6 +53,51 @@ function todayStr(): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
+const STORAGE_KEY_JK = 'gc_hype_jalkikortti'
+const SEASON_START = 'season-start'
+
+interface StoredJkForm {
+  round_ids: string[]
+  cutoff_round_id: string
+  date: string
+}
+
+function loadStoredJkForm(): StoredJkForm | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_JK)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) return null
+    return {
+      round_ids: Array.isArray(parsed.round_ids) ? parsed.round_ids.filter((id: unknown) => typeof id === 'string') : [],
+      cutoff_round_id: typeof parsed.cutoff_round_id === 'string' ? parsed.cutoff_round_id : '',
+      date: typeof parsed.date === 'string' ? parsed.date : '',
+    }
+  } catch {
+    return null
+  }
+}
+
+function fmtShortDate(s: string): string {
+  const [y, m, d] = s.split('-')
+  return `${parseInt(d)}.${parseInt(m)}.${y}`
+}
+
+function roundLabel(r: RoundWithDetails): string {
+  return `${r.player?.full_name ?? '?'} — ${r.course?.name ?? '?'} · ${fmtShortDate(r.played_date)}`
+}
+
+// `sortedRounds` must already be sorted played_date DESC, submitted_at DESC.
+function computeDefaultCutoff(selectedIds: string[], sortedRounds: RoundWithDetails[]): string {
+  const indices = selectedIds
+    .map(id => sortedRounds.findIndex(r => r.id === id))
+    .filter(i => i !== -1)
+  if (indices.length === 0) return SEASON_START
+  const earliestSelectedIndex = Math.max(...indices)
+  const next = sortedRounds[earliestSelectedIndex + 1]
+  return next ? next.id : SEASON_START
+}
+
 export default function AdminHype() {
   const [activePlayers, setActivePlayers] = useState<Player[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
@@ -72,6 +118,15 @@ export default function AdminHype() {
   const [generating, setGenerating] = useState(false)
   const [courseHoleResults, setCourseHoleResults] = useState<HoleResult[]>([])
 
+  // Kierroksen jälkeen
+  const [allSeasonRounds, setAllSeasonRounds] = useState<RoundWithDetails[]>([])
+  const [jkRoundIds, setJkRoundIds] = useState<string[]>([])
+  const [jkCutoffId, setJkCutoffId] = useState('') // '' = auto-default to the round before the earliest selected round
+  const [jkDate, setJkDate] = useState(todayStr)
+  const [jkDropdownOpen, setJkDropdownOpen] = useState(false)
+  const jkDropdownRef = useRef<HTMLDivElement>(null)
+  const [jkPreview, setJkPreview] = useState<{ rounds: RoundWithDetails[]; cutoffTimestamp: string | null; date: string } | null>(null)
+
   const hydratedRef = useRef(false)
 
   // Fetch hole results for the generated course's rounds, used to compute the caption's skins king line
@@ -91,12 +146,17 @@ export default function AdminHype() {
     async function load() {
       try {
         const [players, season] = await Promise.all([getActivePlayers(), getCurrentSeason()])
-        const [lb, sc] = await Promise.all([getLeaderboard(season.id), getSeasonCourses(season.id)])
+        const [lb, sc, rounds] = await Promise.all([getLeaderboard(season.id), getSeasonCourses(season.id), getAllSeasonRounds(season.id)])
         const courses = sc.map(item => item.course)
+        const sortedRounds = [...rounds].sort((a, b) => {
+          if (a.played_date !== b.played_date) return a.played_date < b.played_date ? 1 : -1
+          return a.submitted_at < b.submitted_at ? 1 : -1
+        })
         setActivePlayers(players)
         setLeaderboard(lb)
         setSeasonCourses(courses)
         setSeasonId(season.id)
+        setAllSeasonRounds(sortedRounds)
 
         const stored = loadStoredForm()
         if (stored) {
@@ -104,6 +164,17 @@ export default function AdminHype() {
           const course = stored.course_id ? courses.find(c => c.id === stored.course_id) : undefined
           setSelectedCourseSlug(course ? course.slug : '')
           if (stored.date) setDate(stored.date)
+        }
+
+        const storedJk = loadStoredJkForm()
+        const validStoredJkRoundIds = storedJk?.round_ids.filter(id => sortedRounds.some(r => r.id === id)) ?? []
+        if (validStoredJkRoundIds.length > 0) {
+          setJkRoundIds(validStoredJkRoundIds)
+          const cutoffValid = storedJk?.cutoff_round_id === SEASON_START || sortedRounds.some(r => r.id === storedJk?.cutoff_round_id)
+          setJkCutoffId(cutoffValid ? (storedJk?.cutoff_round_id ?? '') : '')
+          if (storedJk?.date) setJkDate(storedJk.date)
+        } else if (sortedRounds.length > 0) {
+          setJkRoundIds([sortedRounds[0].id])
         }
       } catch (e) {
         console.error(e)
@@ -128,11 +199,27 @@ export default function AdminHype() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
   }, [selectedCourseSlug, selectedPlayerIds, date, seasonCourses])
 
-  // Close dropdown on outside click
+  const effectiveCutoffId = jkCutoffId || computeDefaultCutoff(jkRoundIds, allSeasonRounds)
+
+  // Persist jälkikortti form values to localStorage on every change, once initial hydration is done
+  useEffect(() => {
+    if (!hydratedRef.current) return
+    const payload: StoredJkForm = {
+      round_ids: jkRoundIds,
+      cutoff_round_id: effectiveCutoffId,
+      date: jkDate,
+    }
+    localStorage.setItem(STORAGE_KEY_JK, JSON.stringify(payload))
+  }, [jkRoundIds, effectiveCutoffId, jkDate])
+
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleMouseDown(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false)
+      }
+      if (jkDropdownRef.current && !jkDropdownRef.current.contains(e.target as Node)) {
+        setJkDropdownOpen(false)
       }
     }
     document.addEventListener('mousedown', handleMouseDown)
@@ -186,6 +273,49 @@ export default function AdminHype() {
     setSelectedPlayerIds([])
     setDate(todayStr())
     setDropdownOpen(false)
+  }
+
+  const jkSelectedRounds = jkRoundIds
+    .map(id => allSeasonRounds.find(r => r.id === id))
+    .filter((r): r is RoundWithDetails => !!r)
+  const jkCanGenerate = jkSelectedRounds.length >= 1 && jkSelectedRounds.length <= 8
+
+  const jkPreviewCourses = jkPreview
+    ? [...new Map(jkPreview.rounds.map(r => [r.course_id, r.course])).values()]
+    : []
+  const jkPreviewColor = jkPreviewCourses.length > 1 ? '#E8A820' : (jkPreviewCourses[0]?.color_hex ?? '#2D6A4F')
+  const postRoundCaption = jkPreview
+    ? generatePostRoundCaption(jkPreview.rounds, jkPreview.cutoffTimestamp, allSeasonRounds, leaderboard)
+    : ''
+
+  function toggleJkRound(roundId: string) {
+    setJkRoundIds(prev => {
+      if (prev.includes(roundId)) return prev.filter(id => id !== roundId)
+      if (prev.length >= 8) return prev
+      return [...prev, roundId]
+    })
+  }
+
+  function handleGenerateJalkikortti() {
+    if (jkSelectedRounds.length === 0) return
+    setJkDropdownOpen(false)
+    const cutoffTimestamp = effectiveCutoffId === SEASON_START
+      ? null
+      : (allSeasonRounds.find(r => r.id === effectiveCutoffId)?.submitted_at ?? null)
+    setJkPreview({ rounds: jkSelectedRounds, cutoffTimestamp, date: jkDate })
+  }
+
+  function handleResetJalkikortti() {
+    setJkPreview(null)
+    setJkRoundIds(allSeasonRounds.length > 0 ? [allSeasonRounds[0].id] : [])
+    setJkCutoffId('')
+    setJkDate(todayStr())
+    setJkDropdownOpen(false)
+  }
+
+  function handleClearJalkikortti() {
+    localStorage.removeItem(STORAGE_KEY_JK)
+    handleResetJalkikortti()
   }
 
   if (loading) return (
@@ -349,6 +479,161 @@ export default function AdminHype() {
               </div>
             </div>
             <CaptionBlock caption={caption} color={previewColor} />
+          </div>
+        )}
+      </div>
+
+      <div className="card p-6 mt-8">
+        <div className="label mb-1" style={{ color: '#E8A820' }}>KIERROKSEN JÄLKEEN</div>
+        <p className="font-sans text-gray-500 text-sm mb-6">Luo jälkikortti kierroksen tuloksista</p>
+
+        {!jkPreview ? (
+          <div className="space-y-5">
+            {/* Kierrokset */}
+            <div>
+              <label className="label mb-2 block">KIERROKSET * <span className="normal-case font-normal text-gray-600">(min 1, max 8)</span></label>
+              <div className="relative" ref={jkDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setJkDropdownOpen(o => !o)}
+                  className="font-sans w-full bg-gc-dark border border-white/15 rounded-lg px-3 py-2 text-sm text-left flex items-center justify-between transition-colors focus:outline-none focus:border-white/30"
+                  style={{ color: jkRoundIds.length === 0 ? '#9A8870' : 'white' }}
+                >
+                  {jkRoundIds.length === 0
+                    ? 'Valitse kierrokset...'
+                    : `${jkRoundIds.length} kierros${jkRoundIds.length !== 1 ? 'ta' : ''} valittu`}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, transform: jkDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {jkDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-gc-card border border-white/15 rounded-lg overflow-y-auto z-10 shadow-xl" style={{ maxHeight: 280 }}>
+                    {allSeasonRounds.map(r => {
+                      const isSelected = jkRoundIds.includes(r.id)
+                      const isDisabled = !isSelected && jkRoundIds.length >= 8
+                      return (
+                        <button
+                          key={r.id}
+                          type="button"
+                          disabled={isDisabled}
+                          onClick={() => toggleJkRound(r.id)}
+                          className={`font-sans w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-colors ${
+                            isSelected
+                              ? 'bg-white/10 text-white'
+                              : isDisabled
+                              ? 'text-gray-600 cursor-not-allowed'
+                              : 'text-gray-300 hover:bg-white/5'
+                          }`}
+                        >
+                          <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-gc-green border-gc-green' : 'border-white/20'}`}>
+                            {isSelected && (
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#17130F" strokeWidth="3.5">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </span>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.course?.color_hex ?? '#555', flexShrink: 0 }} />
+                          <span className="truncate">{roundLabel(r)}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+              {/* Pills */}
+              {jkSelectedRounds.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {jkSelectedRounds.map(r => (
+                    <span
+                      key={r.id}
+                      className="font-sans flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs text-white border border-white/20 bg-white/5"
+                    >
+                      {roundLabel(r)}
+                      <button
+                        type="button"
+                        onClick={() => toggleJkRound(r.id)}
+                        className="text-gray-400 hover:text-white transition-colors leading-none"
+                        aria-label={`Poista ${roundLabel(r)}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Vertailukohta */}
+            <div>
+              <label className="label mb-2 block">VERTAILUKOHTA *</label>
+              <p className="font-sans text-gray-600 text-xs mb-2">Vertaa tilanteeseen ennen:</p>
+              <select
+                value={effectiveCutoffId}
+                onChange={e => setJkCutoffId(e.target.value)}
+                className="font-sans w-full bg-gc-dark border border-white/15 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30"
+              >
+                {allSeasonRounds.map(r => (
+                  <option key={r.id} value={r.id}>{roundLabel(r)}</option>
+                ))}
+                <option value={SEASON_START}>Kauden alku (0 kierrosta)</option>
+              </select>
+            </div>
+
+            {/* Päivämäärä */}
+            <div>
+              <label className="label mb-2 block">PÄIVÄMÄÄRÄ</label>
+              <input
+                type="date"
+                value={jkDate}
+                onChange={e => setJkDate(e.target.value)}
+                className="font-sans w-full bg-gc-dark border border-white/15 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleGenerateJalkikortti}
+                disabled={!jkCanGenerate}
+                className="btn-primary font-sans disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Luo jälkikortti
+              </button>
+              <button
+                type="button"
+                onClick={handleClearJalkikortti}
+                className="font-sans text-sm text-gray-500 hover:text-gray-300 border border-white/10 hover:border-white/20 px-3 py-2 rounded-lg transition-colors"
+              >
+                ✕ Tyhjennä
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <button onClick={handleResetJalkikortti} className="btn-ghost font-sans text-sm mb-6">
+              ← Luo uusi
+            </button>
+            <div className="flex flex-col gap-4 -mx-10 md:-mx-12">
+              <div style={CARD_WRAP_STYLE}>
+                <PostRoundCard
+                  selectedRounds={jkPreview.rounds}
+                  cutoffTimestamp={jkPreview.cutoffTimestamp}
+                  allSeasonRounds={allSeasonRounds}
+                  leaderboard={leaderboard}
+                  seasonCourses={seasonCourses}
+                  date={jkPreview.date}
+                />
+              </div>
+              {jkPreviewCourses.map(c => (
+                <div key={c.id} style={CARD_WRAP_STYLE}>
+                  <SkinsCard
+                    course={c}
+                    seasonId={seasonId}
+                    courseRounds={allSeasonRounds.filter(r => r.course_id === c.id).sort((a, b) => b.total_points - a.total_points)}
+                  />
+                </div>
+              ))}
+            </div>
+            <CaptionBlock caption={postRoundCaption} color={jkPreviewColor} />
           </div>
         )}
       </div>
