@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import PublicLayout from './layouts/PublicLayout'
 import AdminLayout from './layouts/AdminLayout'
 import HomePage from './pages/HomePage'
@@ -17,6 +17,7 @@ import AdminRounds from './pages/admin/AdminRounds'
 import AdminCards from './pages/admin/AdminCards'
 import AdminHype from './pages/admin/AdminHype'
 import BetPage from './pages/proto/BetPage'
+import InvitationalRosterPage from './pages/invitational/RosterPage'
 
 export default function App() {
   return (
@@ -32,6 +33,10 @@ export default function App() {
         <Route path="/rules" element={<RulesPage />} />
         <Route path="/me/:token" element={<PersonalDashboard />} />
       </Route>
+
+      {/* Full-screen, no chrome — nav is deliberately absent here */}
+      <Route path="/invitational" element={<Navigate to="/invitational/roster" replace />} />
+      <Route path="/invitational/roster" element={<InvitationalRosterPage />} />
 
       {/* Prototypes — no chrome, no auth, not linked from nav */}
       <Route path="/proto/bet" element={<BetPage />} />

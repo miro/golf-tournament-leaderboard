@@ -15,8 +15,14 @@ export type Database = {
           avatar_url: string | null
           active: boolean
           created_at: string
+          invitational_tagline: string | null
         }
-        Insert: Omit<Database['public']['Tables']['players']['Row'], 'id' | 'created_at' | 'personal_link_token'>
+        // invitational_tagline is optional on insert — it is authored separately, not
+        // supplied when a player is first created.
+        Insert: Omit<
+          Database['public']['Tables']['players']['Row'],
+          'id' | 'created_at' | 'personal_link_token' | 'invitational_tagline'
+        > & { invitational_tagline?: string | null }
         Update: Partial<Database['public']['Tables']['players']['Insert']>
       }
       seasons: {
@@ -119,6 +125,20 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['round_cards']['Row'], 'id' | 'generated_at'>
         Update: Partial<Database['public']['Tables']['round_cards']['Insert']>
       }
+      invitational_results: {
+        Row: {
+          id: string
+          year: number
+          liekkipoika_winner: string | null
+          liekkipoika_winner_player_id: string | null
+          scratch_winner: string | null
+          scratch_winner_player_id: string | null
+          scratch_shots: number | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['invitational_results']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['invitational_results']['Insert']>
+      }
     }
     Views: { [_ in never]: never }
     Functions: { [_ in never]: never }
@@ -135,6 +155,7 @@ export type Round = Database['public']['Tables']['rounds']['Row']
 export type HoleResult = Database['public']['Tables']['hole_results']['Row']
 export type RoundCard = Database['public']['Tables']['round_cards']['Row']
 export type Admin = Database['public']['Tables']['admins']['Row']
+export type InvitationalResult = Database['public']['Tables']['invitational_results']['Row']
 
 // Enriched types used in UI
 export interface LeaderboardEntry {
