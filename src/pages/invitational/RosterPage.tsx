@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   getActivePlayers,
+  getAllSeasonRounds,
   getCurrentSeason,
+  getHoleResultsForRounds,
   getInvitationalResults,
   getLeaderboard,
   getSeasonCourses,
 } from '../../lib/queries'
-import { AMBER, buildRoster, type RosterEntry } from './roster'
+import { skinsByPlayerId } from '../../lib/skins'
+import { AMBER, buildRoster, INVITATIONAL_ROSTER_2026, type KesakisaStats, type RosterEntry } from './roster'
 import RosterCard from './RosterCard'
 
 const SWIPE_THRESHOLD = 50
@@ -18,7 +21,6 @@ const BACK_ZONE = 0.4
 
 export default function InvitationalRosterPage() {
   const [roster, setRoster] = useState<RosterEntry[] | null>(null)
-  const [courseCount, setCourseCount] = useState(4)
   const [loadError, setLoadError] = useState(false)
   const [index, setIndex] = useState(0)
   const [interacted, setInteracted] = useState(false)
@@ -47,16 +49,33 @@ export default function InvitationalRosterPage() {
     ;(async () => {
       try {
         const season = await getCurrentSeason()
-        const [players, standings, results, seasonCourses] = await Promise.all([
+        const [players, standings, results, seasonCourses, rounds] = await Promise.all([
           getActivePlayers(),
           getLeaderboard(season.id),
           getInvitationalResults(),
           getSeasonCourses(season.id),
+          getAllSeasonRounds(season.id),
         ])
+        // Skins are contested against the whole field, so this is computed from every
+        // player's rounds — not just the Invitational twelve.
+        const holeResults = await getHoleResultsForRounds(rounds.map(r => r.id))
         if (cancelled) return
-        const built = buildRoster(players, standings, results)
+
+        const skins = skinsByPlayerId(rounds, holeResults, seasonCourses.map(sc => sc.course))
+        const holesByPlayer = new Map<string, number>()
+        const playerByRound = new Map(rounds.map(r => [r.id, r.player_id]))
+        for (const hr of holeResults) {
+          const pid = playerByRound.get(hr.round_id)
+          if (pid) holesByPlayer.set(pid, (holesByPlayer.get(pid) ?? 0) + 1)
+        }
+        const kesakisa = new Map<string, KesakisaStats>()
+        for (const p of players) {
+          kesakisa.set(p.id, { holesPlayed: holesByPlayer.get(p.id) ?? 0, skins: skins.get(p.id) ?? 0 })
+        }
+
+        const field = new Set(INVITATIONAL_ROSTER_2026)
+        const built = buildRoster(players.filter(p => field.has(p.slug)), standings, results, kesakisa)
         const start = requestedSlug ? built.findIndex(e => e.player.slug === requestedSlug) : -1
-        if (seasonCourses.length > 0) setCourseCount(seasonCourses.length)
         setIndex(start >= 0 ? start : 0)
         setRoster(built)
       } catch {
@@ -250,7 +269,6 @@ export default function InvitationalRosterPage() {
               entry={roster[slot.i]}
               position={slot.i + 1}
               total={total}
-              courseCount={courseCount}
               showHint={slot.i === 0 && !interacted}
             />
           </div>

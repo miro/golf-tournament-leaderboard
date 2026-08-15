@@ -5,6 +5,24 @@ import type { InvitationalResult, LeaderboardEntry, Player } from '../../lib/dat
 export const COURSE_COLORS = ['#2D6A4F', '#1B4FC4', '#C4791B', '#8B1BC4']
 export const AMBER = '#E8A820'
 
+/** The 2026 Invitational field, by player slug. Deliberately separate from
+ * players.active: the Kesäkisa series and the Invitational are different fields, so
+ * a player can be active in the series without being in this year's Invitational. */
+export const INVITATIONAL_ROSTER_2026 = [
+  'brukke',
+  'jussi',
+  'kankkunen',
+  'lauri',
+  'nyyssonen',
+  'pauli',
+  'pekka',
+  'pete',
+  'tatu',
+  'tero',
+  'tommi',
+  'vp',
+]
+
 /** Info-panel treatment per frame colour: a translucent tint of the frame colour
  * laid over a base that is the same hue pushed almost to black. */
 const PANEL_BY_COLOR: Record<string, { tint: string; base: string }> = {
@@ -29,6 +47,10 @@ export interface RosterEntry {
   rank: number | null
   totalPoints: number | null
   roundsPlayed: number
+  /** Season points per hole, 1 decimal. Null when the player has no rounds. */
+  avgPerHole: number | null
+  /** Holes this player holds outright across every course this season. */
+  skins: number
   borderColor: string
   borderWidth: number
   glow: boolean
@@ -52,16 +74,28 @@ function tierOf(e: { liekkipoikaYears: number[]; scratchWins: ScratchWin[]; rank
   return 4
 }
 
+export interface KesakisaStats {
+  /** hole_results rows belonging to this player's published season rounds. */
+  holesPlayed: number
+  skins: number
+}
+
 export function buildRoster(
   players: Player[],
   standings: LeaderboardEntry[],
   results: InvitationalResult[],
+  kesakisa: Map<string, KesakisaStats> = new Map(),
 ): RosterEntry[] {
   const standingByPlayer = new Map(standings.map(e => [e.player.id, e]))
 
   const base = players.map(player => {
     const entry = standingByPlayer.get(player.id)
+    const stats = kesakisa.get(player.id)
+    const points = entry?.total_points ?? null
+    const holes = stats?.holesPlayed ?? 0
     return {
+      avgPerHole: points !== null && holes > 0 ? Math.round((points / holes) * 10) / 10 : null,
+      skins: stats?.skins ?? 0,
       player,
       liekkipoikaYears: results
         .filter(r => winnerMatches(r.liekkipoika_winner_player_id, r.liekkipoika_winner, player))

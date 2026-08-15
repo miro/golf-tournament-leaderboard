@@ -8,8 +8,6 @@ interface Props {
   /** 1-based card number shown top-right. */
   position: number
   total: number
-  /** Number of courses in the season, for the KENTÄT stat box. */
-  courseCount: number
   showHint: boolean
 }
 
@@ -17,46 +15,27 @@ interface Props {
 const NOISE =
   'repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 3px)'
 
-const statBox: React.CSSProperties = {
-  flex: 1,
-  background: 'rgba(0,0,0,0.25)',
-  border: '1px solid rgba(255,255,255,0.10)',
-  borderRadius: 8,
-  padding: '8px 6px',
-  textAlign: 'center',
-}
-
-const statLabel: React.CSSProperties = {
-  fontSize: 9,
-  fontWeight: 600,
-  letterSpacing: '0.12em',
-  color: 'rgba(255,255,255,0.50)',
-  textTransform: 'uppercase',
-}
-
-const statValue: React.CSSProperties = {
-  fontFamily: 'var(--font-display)',
-  fontSize: 20,
-  fontWeight: 800,
-  color: '#fff',
-}
-
 const titleLabel: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: 13,
   fontWeight: 700,
-  letterSpacing: '0.1em',
+  letterSpacing: '0.10em',
 }
 
-export default function RosterCard({ entry, position, total, courseCount, showHint }: Props) {
+export default function RosterCard({ entry, position, total, showHint }: Props) {
   const [photoFailed, setPhotoFailed] = useState(false)
   const { player, liekkipoikaYears, scratchWins } = entry
-  const hasTitles = liekkipoikaYears.length > 0 || scratchWins.length > 0
-  const bothTitleTypes = liekkipoikaYears.length > 0 && scratchWins.length > 0
+  // Points-per-hole needs both a points total and holes to divide by.
+  const showKesakisa = (entry.totalPoints ?? 0) > 0 && entry.avgPerHole !== null
   const pad = (n: number) => String(n).padStart(3, '0')
 
   // Ordering logic keeps these newest-first; titles read better chronologically.
   const liekkipoikaAsc = [...liekkipoikaYears].reverse()
   const scratchAsc = [...scratchWins].reverse()
+  // Shots line mirrors the years line positionally, so a win with no recorded shot
+  // count holds its slot with a dash rather than silently shifting the others.
+  const scratchShots = scratchAsc.some(w => w.shots !== null)
+    ? scratchAsc.map(w => w.shots ?? '—').join(' · ')
+    : null
 
   return (
     <div
@@ -80,6 +59,10 @@ export default function RosterCard({ entry, position, total, courseCount, showHi
         style={{
           position: 'relative',
           height: '58%',
+          // border-box keeps the zone at exactly 58% once the gap padding is added,
+          // so the info panel below keeps its full share of the card.
+          boxSizing: 'border-box',
+          paddingBottom: 12,
           flexShrink: 0,
           overflow: 'hidden',
           borderTopLeftRadius: 8,
@@ -96,7 +79,7 @@ export default function RosterCard({ entry, position, total, courseCount, showHi
             src={playerImagePath(player.full_name)}
             alt={player.full_name}
             onError={() => setPhotoFailed(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center center', display: 'block' }}
           />
         )}
 
@@ -106,6 +89,19 @@ export default function RosterCard({ entry, position, total, courseCount, showHi
             position: 'absolute',
             inset: 0,
             boxShadow: 'inset 0 -8px 16px rgba(0,0,0,0.4)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Breathing room between photo and divider: a soft fade filling the gap */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 12,
+            background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 100%)',
             pointerEvents: 'none',
           }}
         />
@@ -155,15 +151,35 @@ export default function RosterCard({ entry, position, total, courseCount, showHi
         )}
       </div>
 
-      {/* The card cut */}
-      <div style={{ height: 3, flexShrink: 0, background: entry.borderColor }} />
+      {/* The card cut — a hairline rule with the series pill masking its centre */}
+      <div style={{ position: 'relative', flexShrink: 0, borderTop: `1px solid ${entry.borderColor}` }}>
+        <div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontFamily: 'var(--font-display)',
+            fontSize: 14,
+            fontWeight: 800,
+            letterSpacing: '0.10em',
+            color: entry.borderColor,
+            background: '#17130F',
+            border: `1px solid ${entry.borderColor}`,
+            borderRadius: 12,
+            padding: '5px 14px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          GC INVITATIONAL 2026
+        </div>
+      </div>
 
       {/* ZONE 2 — info panel */}
       <div
         style={{
           flex: 1,
           minHeight: 0,
-          padding: '16px 20px 24px 20px',
+          padding: '16px 20px 48px 20px',
           borderBottomLeftRadius: 8,
           borderBottomRightRadius: 8,
           backgroundColor: entry.panelBase,
@@ -173,13 +189,13 @@ export default function RosterCard({ entry, position, total, courseCount, showHi
         <h1
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(32px, 9vw, 48px)',
+            fontSize: 56,
             fontWeight: 900,
             color: '#fff',
             letterSpacing: '0.02em',
             lineHeight: 1,
             textTransform: 'uppercase',
-            marginBottom: 4,
+            marginBottom: 6,
           }}
         >
           {player.full_name}
@@ -189,61 +205,109 @@ export default function RosterCard({ entry, position, total, courseCount, showHi
           <div
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 13,
+              fontSize: 19,
               fontWeight: 400,
               fontStyle: 'italic',
               color: 'rgba(255,255,255,0.65)',
-              lineHeight: 1.3,
-              marginBottom: 12,
+              lineHeight: 1.35,
+              marginBottom: 16,
             }}
           >
             {player.invitational_tagline}
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          <div style={statBox}>
-            <div style={statLabel}>HCP</div>
-            <div style={statValue}>{player.hcp_current ?? '—'}</div>
+        {showKesakisa && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '8px 0',
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              marginBottom: 16,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.50)',
+              }}
+            >
+              Kesäkisa 2026
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 15,
+                fontWeight: 700,
+                color: AMBER,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <span>{entry.avgPerHole?.toFixed(1)}p/väylä</span>
+              <span style={{ width: 1, height: 12, background: 'rgba(255,255,255,0.20)' }} />
+              <span>{entry.skins} skiniä</span>
+            </span>
           </div>
-          <div style={statBox}>
-            <div style={statLabel}>SIJA</div>
-            <div style={statValue}>{entry.rank !== null ? `${entry.rank}.` : '—'}</div>
-          </div>
-          <div style={statBox}>
-            <div style={statLabel}>KENTÄT</div>
-            <div style={statValue}>
-              {entry.roundsPlayed}/{courseCount}
+        )}
+
+        {liekkipoikaYears.length > 0 && (
+          <div
+            style={{
+              // Negative margins cancel the panel's 20px side padding so the banner
+              // runs edge to edge.
+              marginLeft: -20,
+              marginRight: -20,
+              marginTop: 12,
+              marginBottom: 12,
+              padding: '10px 20px',
+              background:
+                'linear-gradient(135deg, rgba(232,168,32,0.25) 0%, rgba(232,168,32,0.15) 50%, rgba(232,168,32,0.25) 100%)',
+              borderTop: '1px solid rgba(232,168,32,0.40)',
+              borderBottom: '1px solid rgba(232,168,32,0.40)',
+              // Label sits left; the first year shares its row, further years stack
+              // beneath it flush right.
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div style={{ ...titleLabel, color: AMBER, letterSpacing: '0.12em' }}>🔥👦 LIEKKIPOIKA</div>
+            <div style={{ textAlign: 'right' }}>
+              {liekkipoikaAsc.map(year => (
+                <div
+                  key={year}
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 36,
+                    fontWeight: 900,
+                    color: AMBER,
+                    lineHeight: 1,
+                    textShadow: '0 2px 12px rgba(232,168,32,0.30)',
+                  }}
+                >
+                  {year}
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
 
-        {hasTitles && (
-          <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
-            {liekkipoikaYears.length > 0 && (
-              <div style={{ flex: bothTitleTypes ? 1 : undefined }}>
-                <div style={{ ...titleLabel, color: AMBER }}>🔥👦 LIEKKIPOIKA</div>
-                {liekkipoikaAsc.map(year => (
-                  <div
-                    key={year}
-                    style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 900, color: AMBER, lineHeight: 1.2 }}
-                  >
-                    {year}
-                  </div>
-                ))}
-              </div>
-            )}
-            {scratchWins.length > 0 && (
-              <div style={{ flex: bothTitleTypes ? 1 : undefined }}>
-                <div style={{ ...titleLabel, color: '#fff' }}>🏆⛳ SCRATCH</div>
-                {scratchAsc.map(win => (
-                  <div
-                    key={win.year}
-                    style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1.25 }}
-                  >
-                    {win.shots !== null ? `${win.year} · ${win.shots} lyöntiä` : win.year}
-                  </div>
-                ))}
+        {scratchWins.length > 0 && (
+          <div>
+            <div style={{ ...titleLabel, color: '#fff', marginBottom: 6 }}>🏆⛳ SCRATCH</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
+              {scratchAsc.map(w => w.year).join(' · ')}
+            </div>
+            {scratchShots && (
+              <div style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.55)', lineHeight: 1.2 }}>
+                {scratchShots} lyöntiä
               </div>
             )}
           </div>
