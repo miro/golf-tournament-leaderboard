@@ -2,9 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import Icon from './icons'
 import { AMBER, GREEN } from './schedule'
 
+const MOBILEPAY_BLUE = '#5A78FF'
 const PAYMENT_NAME = 'Miro'
 const PAYMENT_AMOUNT = 260
 const PAYMENT_COMMENT = 'GC Invitational 2026'
+/** Bare scheme: it opens the app at its home screen and nothing more. Prefilling the
+ * fields needs parameters MobilePay does not publicly document, which is why the
+ * values below are offered on the clipboard instead. */
+const MOBILEPAY_LINK = 'mobilepay://'
 
 /** Every field MobilePay asks for, each on its own clipboard button. */
 const COPY_FIELDS = [
@@ -95,6 +100,10 @@ export default function PaymentPage() {
     timer.current = window.setTimeout(() => setCopiedKey(null), 2000)
   }
 
+  function openMobilePay() {
+    window.location.href = MOBILEPAY_LINK
+  }
+
   return (
     <div>
       <h1 className="font-display text-[28px] font-extrabold text-white leading-tight">Ilmoittautuminen</h1>
@@ -126,7 +135,31 @@ export default function PaymentPage() {
           Maksa MobilePaylla
         </div>
 
-        <div className="flex flex-col gap-2 mt-3">
+        {/* Opens the app; the buttons below carry what has to be typed into it. */}
+        <button
+          type="button"
+          onClick={openMobilePay}
+          className="w-full flex items-center justify-center rounded-xl mt-3"
+          style={{ height: 52, gap: 10, background: MOBILEPAY_BLUE }}
+        >
+          {/* Their real mark needs permission, so this is a plain monogram. */}
+          <span
+            className="flex items-center justify-center rounded-full shrink-0"
+            style={{ width: 28, height: 28, background: 'rgba(255,255,255,0.20)' }}
+          >
+            <span className="font-display text-white" style={{ fontSize: 12, fontWeight: 800 }}>
+              MP
+            </span>
+          </span>
+          <span className="font-display text-white" style={{ fontSize: 17, fontWeight: 700 }}>
+            Avaa MobilePay
+          </span>
+          <span className="text-white/70 shrink-0">
+            <Icon name="arrow-right" size={16} />
+          </span>
+        </button>
+
+        <div className="flex flex-col gap-2 mt-2">
           {COPY_FIELDS.map(field => (
             <button
               key={field.key}
