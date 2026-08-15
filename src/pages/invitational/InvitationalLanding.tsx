@@ -15,10 +15,6 @@ import {
   type SchedulePhase,
 } from './schedule'
 
-/** Drop a photo of the Liekki-Major venue here and the hero picks it up; until then
- * the request fails quietly and the gradient sits on the dark base. */
-const HERO_IMAGE = '/invitational-hero.jpg'
-
 interface Card {
   to: string
   icon: 'users' | 'calendar' | 'credit-card'
@@ -67,7 +63,6 @@ function Countdown({ phase }: { phase: SchedulePhase }) {
 
 export default function InvitationalLanding() {
   const [phase, setPhase] = useState<SchedulePhase | null>(null)
-  const [heroFailed, setHeroFailed] = useState(false)
   // Captured once per mount: the countdown does not need to tick live.
   const [now] = useState(() => new Date())
 
@@ -86,24 +81,14 @@ export default function InvitationalLanding() {
 
   return (
     <div className="min-h-screen bg-gc-dark">
-      <div className="relative flex flex-col items-center justify-center text-center px-6" style={{ minHeight: '45vh' }}>
-        {!heroFailed && (
-          <img
-            src={HERO_IMAGE}
-            alt=""
-            aria-hidden="true"
-            onError={() => setHeroFailed(true)}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.85) 100%)' }}
-        />
-
+      {/* Pattern and vignette layers live in .invitational-hero as ::before/::after. */}
+      <div
+        className="invitational-hero flex flex-col items-center justify-center text-center px-6"
+        style={{ minHeight: '45vh' }}
+      >
         <BackButton to="/" label="Takaisin etusivulle" />
 
-        <div className="relative py-12">
+        <div className="relative py-12" style={{ zIndex: 2 }}>
           <img
             src="/gc-logo.png"
             alt="Golf Company"

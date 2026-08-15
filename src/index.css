@@ -61,6 +61,44 @@
     filter: invert(1);
   }
 
+  /* Landing hero: the same tiled mark as the shell but larger and stronger, with a
+     radial vignette over it so the middle stays clear for the wordmark and the
+     pattern only really reads out at the edges. */
+  .invitational-hero {
+    position: relative;
+    /* Clips the ::before, which is deliberately oversized. */
+    overflow: hidden;
+    background-color: #17130F;
+  }
+  .invitational-hero::before {
+    content: '';
+    position: absolute;
+    /* Overhangs the box so the 15° tilt cannot expose a bare corner. */
+    inset: -20%;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url('/gc-logo.png');
+    background-repeat: repeat;
+    background-size: 160px 160px;
+    opacity: 0.09;
+    transform: rotate(15deg);
+    filter: invert(1);
+  }
+  .invitational-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 70% 80% at 50% 45%,
+      transparent 0%,
+      transparent 35%,
+      rgba(15, 11, 8, 0.6) 65%,
+      rgba(15, 11, 8, 0.9) 100%
+    );
+  }
+
   /* Nike-style 4-stripe bar */
   .stripe-bar {
     @apply flex h-1.5 w-full;
