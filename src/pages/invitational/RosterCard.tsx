@@ -31,6 +31,11 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
   // Ordering logic keeps these newest-first; titles read better chronologically.
   const liekkipoikaAsc = [...liekkipoikaYears].reverse()
   const scratchAsc = [...scratchWins].reverse()
+  // Shots line mirrors the years line positionally, so a win with no recorded shot
+  // count holds its slot with a dash rather than silently shifting the others.
+  const scratchShots = scratchAsc.some(w => w.shots !== null)
+    ? scratchAsc.map(w => w.shots ?? '—').join(' · ')
+    : null
 
   return (
     <div
@@ -53,6 +58,7 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
       <div
         style={{
           position: 'relative',
+          width: '100%',
           height: '58%',
           flexShrink: 0,
           overflow: 'hidden',
@@ -70,7 +76,15 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
             src={playerImagePath(player.full_name)}
             alt={player.full_name}
             onError={() => setPhotoFailed(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center center',
+              display: 'block',
+            }}
           />
         )}
 
@@ -80,6 +94,20 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
             position: 'absolute',
             inset: 0,
             boxShadow: 'inset 0 -8px 16px rgba(0,0,0,0.4)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Breathing room before the hard break, as an overlay on the photo rather
+            than padding — padding here left a visible strip of card background. */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 12,
+            background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 100%)',
             pointerEvents: 'none',
           }}
         />
@@ -157,7 +185,7 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
         style={{
           flex: 1,
           minHeight: 0,
-          padding: '16px 20px 28px 20px',
+          padding: '16px 20px 48px 20px',
           borderBottomLeftRadius: 8,
           borderBottomRightRadius: 8,
           backgroundColor: entry.panelBase,
@@ -242,45 +270,52 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
               // runs edge to edge.
               marginLeft: -20,
               marginRight: -20,
-              marginTop: 16,
-              marginBottom: 16,
-              padding: '12px 20px',
+              marginTop: 12,
+              marginBottom: 12,
+              padding: '10px 20px',
               background:
                 'linear-gradient(135deg, rgba(232,168,32,0.25) 0%, rgba(232,168,32,0.15) 50%, rgba(232,168,32,0.25) 100%)',
               borderTop: '1px solid rgba(232,168,32,0.40)',
               borderBottom: '1px solid rgba(232,168,32,0.40)',
+              // Label sits left; the first year shares its row, further years stack
+              // beneath it flush right.
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
             <div style={{ ...titleLabel, color: AMBER, letterSpacing: '0.12em' }}>🔥👦 LIEKKIPOIKA</div>
-            {liekkipoikaAsc.map(year => (
-              <div
-                key={year}
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 48,
-                  fontWeight: 900,
-                  color: AMBER,
-                  lineHeight: 1,
-                  textShadow: '0 2px 12px rgba(232,168,32,0.30)',
-                }}
-              >
-                {year}
-              </div>
-            ))}
+            <div style={{ textAlign: 'right' }}>
+              {liekkipoikaAsc.map(year => (
+                <div
+                  key={year}
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 36,
+                    fontWeight: 900,
+                    color: AMBER,
+                    lineHeight: 1,
+                    textShadow: '0 2px 12px rgba(232,168,32,0.30)',
+                  }}
+                >
+                  {year}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {scratchWins.length > 0 && (
           <div>
             <div style={{ ...titleLabel, color: '#fff', marginBottom: 6 }}>🏆⛳ SCRATCH</div>
-            {scratchAsc.map(win => (
-              <div
-                key={win.year}
-                style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}
-              >
-                {win.shots !== null ? `${win.year} · ${win.shots} lyöntiä` : win.year}
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
+              {scratchAsc.map(w => w.year).join(' · ')}
+            </div>
+            {scratchShots && (
+              <div style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.55)', lineHeight: 1.2 }}>
+                {scratchShots} lyöntiä
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
