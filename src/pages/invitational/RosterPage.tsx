@@ -310,16 +310,20 @@ export default function InvitationalRosterPage() {
           Clears the 3px story bar, which sits at the very top and ignores taps. */}
       <BackButton to="/invitational" label="Takaisin Invitationalin etusivulle" />
 
+      {/* Dots ride at the top under the story bar rather than along the bottom, which
+          gives the info panel back the height its longest cards were losing. */}
       <div
         style={{
           position: 'absolute',
-          bottom: 16,
+          top: 3,
           left: 0,
           right: 0,
+          marginTop: 6,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          gap: 5,
+          gap: 4,
+          zIndex: 10,
           pointerEvents: 'none',
         }}
       >
@@ -328,8 +332,8 @@ export default function InvitationalRosterPage() {
           <span
             key={e.player.id}
             style={{
-              width: 6,
-              height: 6,
+              width: 5,
+              height: 5,
               borderRadius: '50%',
               background: i === index - 1 ? AMBER : 'rgba(154,136,112,0.50)',
             }}

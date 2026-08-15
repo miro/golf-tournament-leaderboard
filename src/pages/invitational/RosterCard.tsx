@@ -36,6 +36,8 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
   const scratchShots = scratchAsc.some(w => w.shots !== null)
     ? scratchAsc.map(w => w.shots ?? '—').join(' · ')
     : null
+  /** Three wins is where the two-row layout starts costing more height than it earns. */
+  const compactScratch = scratchWins.length >= 3
 
   return (
     <div
@@ -117,7 +119,8 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
           alt="GC"
           style={{
             position: 'absolute',
-            top: 16,
+            // Clears the story bar and the dot row that now sit above it.
+            top: 32,
             left: '50%',
             transform: 'translateX(-50%)',
             height: 52,
@@ -129,7 +132,7 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
         <span
           style={{
             position: 'absolute',
-            top: 16,
+            top: 32,
             right: 16,
             fontFamily: "'Courier New', monospace",
             fontSize: 12,
@@ -307,14 +310,24 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
 
         {scratchWins.length > 0 && (
           <div>
-            <div style={{ ...titleLabel, color: '#fff', marginBottom: 6 }}>🏆⛳ SCRATCH</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
-              {scratchAsc.map(w => w.year).join(' · ')}
-            </div>
-            {scratchShots && (
-              <div style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.55)', lineHeight: 1.2 }}>
-                {scratchShots} lyöntiä
+            <div style={{ ...titleLabel, color: '#fff', marginBottom: compactScratch ? 4 : 6 }}>🏆⛳ SCRATCH</div>
+            {compactScratch ? (
+              // Three or more wins outgrow the two-row layout, so years carry their
+              // shot counts inline and the separate shots row disappears.
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
+                {scratchAsc.map(w => (w.shots !== null ? `${w.year} (${w.shots})` : String(w.year))).join(' · ')}
               </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
+                  {scratchAsc.map(w => w.year).join(' · ')}
+                </div>
+                {scratchShots && (
+                  <div style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.55)', lineHeight: 1.2 }}>
+                    {scratchShots} lyöntiä
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
