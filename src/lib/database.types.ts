@@ -139,6 +139,28 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['invitational_results']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['invitational_results']['Insert']>
       }
+      invitational_schedule: {
+        Row: {
+          id: string
+          year: number
+          /** 'friday' | 'saturday' | 'sunday' — the UI groups on event_date instead. */
+          day: string
+          /** ISO date; the weekday heading is derived from it. */
+          event_date: string
+          display_order: number
+          /** 'HH:MM:SS' from Postgres `time`, or null when the event has no fixed time. */
+          start_time: string | null
+          category: 'golf' | 'transport' | 'food' | 'social' | 'ceremony' | 'logistics'
+          title: string
+          subtitle: string | null
+          location: string | null
+          tee_times: string[] | null
+          is_highlight: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['invitational_schedule']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['invitational_schedule']['Insert']>
+      }
     }
     Views: { [_ in never]: never }
     Functions: { [_ in never]: never }
@@ -156,6 +178,7 @@ export type HoleResult = Database['public']['Tables']['hole_results']['Row']
 export type RoundCard = Database['public']['Tables']['round_cards']['Row']
 export type Admin = Database['public']['Tables']['admins']['Row']
 export type InvitationalResult = Database['public']['Tables']['invitational_results']['Row']
+export type InvitationalScheduleEvent = Database['public']['Tables']['invitational_schedule']['Row']
 
 // Enriched types used in UI
 export interface LeaderboardEntry {

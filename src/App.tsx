@@ -18,6 +18,9 @@ import AdminCards from './pages/admin/AdminCards'
 import AdminHype from './pages/admin/AdminHype'
 import BetPage from './pages/proto/BetPage'
 import InvitationalRosterPage from './pages/invitational/RosterPage'
+import InvitationalLayout from './pages/invitational/InvitationalLayout'
+import InvitationalSchedulePage from './pages/invitational/SchedulePage'
+import InvitationalPaymentPage from './pages/invitational/PaymentPage'
 
 export default function App() {
   return (
@@ -32,10 +35,17 @@ export default function App() {
         <Route path="/player/:slug" element={<PlayerProfilePage />} />
         <Route path="/rules" element={<RulesPage />} />
         <Route path="/me/:token" element={<PersonalDashboard />} />
+
+        {/* Invitational content tabs — main nav plus the tab bar. The Pelaajat tab
+            points at the chrome-less roster route defined below. */}
+        <Route path="/invitational" element={<InvitationalLayout />}>
+          <Route index element={<Navigate to="/invitational/roster" replace />} />
+          <Route path="schedule" element={<InvitationalSchedulePage />} />
+          <Route path="payment" element={<InvitationalPaymentPage />} />
+        </Route>
       </Route>
 
       {/* Full-screen, no chrome — nav is deliberately absent here */}
-      <Route path="/invitational" element={<Navigate to="/invitational/roster" replace />} />
       <Route path="/invitational/roster" element={<InvitationalRosterPage />} />
 
       {/* Prototypes — no chrome, no auth, not linked from nav */}

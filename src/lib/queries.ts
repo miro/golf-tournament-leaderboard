@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Season, Course, Player, LeaderboardEntry, RoundWithDetails, HoleResult, InvitationalResult } from './database.types'
+import type { Season, Course, Player, LeaderboardEntry, RoundWithDetails, HoleResult, InvitationalResult, InvitationalScheduleEvent } from './database.types'
 
 export async function getCurrentSeason(): Promise<Season> {
   const { data, error } = await supabase
@@ -107,6 +107,17 @@ export async function getInvitationalResults(): Promise<InvitationalResult[]> {
     .order('year', { ascending: false })
   if (error) throw error
   return (data ?? []) as unknown as InvitationalResult[]
+}
+
+export async function getInvitationalSchedule(year: number): Promise<InvitationalScheduleEvent[]> {
+  const { data, error } = await supabase
+    .from('invitational_schedule')
+    .select('*')
+    .eq('year', year)
+    .order('event_date')
+    .order('display_order')
+  if (error) throw error
+  return (data ?? []) as unknown as InvitationalScheduleEvent[]
 }
 
 export async function getCourses(): Promise<Course[]> {

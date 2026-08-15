@@ -1,15 +1,27 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useLocation } from 'react-router-dom'
 
-const navItems = [
+interface NavItem {
+  to: string
+  label: string
+  end?: boolean
+  /** Keeps the item lit across a section's sub-routes, not just its own path. */
+  activePrefix?: string
+}
+
+const navItems: NavItem[] = [
   { to: '/', label: 'Tulokset', end: true },
   { to: '/feed', label: 'Feed' },
   { to: '/courses', label: 'Kentät' },
   { to: '/players', label: 'Pelaajat' },
-  { to: '/invitational/roster', label: 'Invitational' },
+  // Ohjelma is the landing tab: the roster is full-screen and hides this nav, so
+  // entering there would leave no way through to the other tabs.
+  { to: '/invitational/schedule', label: 'Invitational', activePrefix: '/invitational' },
   { to: '/rules', label: 'Säännöt' },
 ]
 
 export default function PublicLayout() {
+  const { pathname } = useLocation()
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Nike-style stripe bar */}
@@ -27,14 +39,14 @@ export default function PublicLayout() {
           </NavLink>
 
           <nav className="flex items-center gap-0.5">
-            {navItems.map(({ to, label, end }) => (
+            {navItems.map(({ to, label, end, activePrefix }) => (
               <NavLink
                 key={to}
                 to={to}
                 end={end}
                 className={({ isActive }) =>
                   `px-3 py-1.5 rounded-md text-[15px] font-medium font-display transition-colors ${
-                    isActive
+                    isActive || (activePrefix && pathname.startsWith(activePrefix))
                       ? 'bg-gc-green text-gc-dark font-bold'
                       : 'text-gc-muted hover:text-white hover:bg-white/8'
                   }`
