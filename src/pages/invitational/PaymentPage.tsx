@@ -30,7 +30,7 @@ const INCLUDED: IncludedItem[] = [
   { text: 'Liekki-Major — green fee (Lake & Forest Course)' },
   {
     text: 'Ruokailu koko viikonlopun ajan',
-    detail: 'Aamiainen · lounas · illallinen (Ravintola Pölli)',
+    detail: 'Aamiainen · lounas · illallinen',
   },
   { text: 'Kuljetukset kentälle ja takaisin' },
   { text: 'Palkintogaala' },
