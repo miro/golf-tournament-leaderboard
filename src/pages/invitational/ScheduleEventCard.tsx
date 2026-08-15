@@ -80,7 +80,6 @@ function HighlightCard({ event }: { event: InvitationalScheduleEvent }) {
 }
 
 function StandardCard({ event }: { event: InvitationalScheduleEvent }) {
-  const teeTimes = event.tee_times ?? []
   return (
     <div className="bg-gc-card rounded-xl p-4 mb-2 flex gap-3">
       {/* Untimed events show no placeholder, but the column keeps its width so that
@@ -97,25 +96,16 @@ function StandardCard({ event }: { event: InvitationalScheduleEvent }) {
 
         {event.subtitle && <div className="text-[13px] text-gc-muted mt-1">{event.subtitle}</div>}
         {event.location && <LocationRow location={event.location} />}
-
-        {teeTimes.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {teeTimes.map(time => (
-              <span
-                key={time}
-                className="font-display text-[13px] font-bold rounded-md px-2 py-0.5"
-                style={{ color: AMBER, background: 'rgba(232,168,32,0.14)', border: '1px solid rgba(232,168,32,0.35)' }}
-              >
-                {formatTime(time)}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   )
 }
 
 export default function ScheduleEventCard({ event }: { event: InvitationalScheduleEvent }) {
-  return event.is_highlight ? <HighlightCard event={event} /> : <StandardCard event={event} />
+  // Tee times are what people read off their phone on the morning of a round, so any
+  // event carrying them earns the prominent card and the large pills — not just the
+  // ones flagged is_highlight. That flag still promotes tee-time-less events like the
+  // Palkintogaala on its own.
+  const prominent = event.is_highlight || (event.tee_times?.length ?? 0) > 0
+  return prominent ? <HighlightCard event={event} /> : <StandardCard event={event} />
 }
