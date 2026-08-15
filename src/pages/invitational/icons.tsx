@@ -11,6 +11,7 @@ type IconName =
   | 'check'
   | 'x'
   | 'arrow-left'
+  | 'arrow-right'
   | 'calendar'
   | 'credit-card'
   | 'chevron-right'
@@ -41,6 +42,7 @@ const PATHS: Record<IconName, string[]> = {
   check: ['M5 12l5 5l10-10'],
   x: ['M18 6l-12 12', 'M6 6l12 12'],
   'arrow-left': ['M5 12l14 0', 'M5 12l6 6', 'M5 12l6-6'],
+  'arrow-right': ['M5 12l14 0', 'M13 18l6-6', 'M13 6l6 6'],
   calendar: [
     'M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z',
     'M16 3v4',

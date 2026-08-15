@@ -3,7 +3,12 @@ import Icon from './icons'
 import { AMBER, GREEN } from './schedule'
 
 const MUTED_RED = '#8A3A3A'
+const MOBILEPAY_BLUE = '#5A78FF'
 const PAYMENT_NAME = 'Miro'
+const PAYMENT_AMOUNT = 260
+/** Also offered on the clipboard, for anyone who opens the app by hand. */
+const PAYMENT_COMMENT = 'GC Invitational 2026'
+const MOBILEPAY_LINK = `mobilepay://send?amount=${PAYMENT_AMOUNT}&comment=${encodeURIComponent(PAYMENT_COMMENT)}`
 
 const INCLUDED = [
   'Majoitus viikonlopun ajaksi',
@@ -42,15 +47,19 @@ export default function PaymentPage() {
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
-  async function copyName() {
+  async function copyComment() {
     try {
-      await navigator.clipboard.writeText(PAYMENT_NAME)
+      await navigator.clipboard.writeText(PAYMENT_COMMENT)
     } catch {
       return
     }
     setCopied(true)
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => setCopied(false), 2000)
+  }
+
+  function openMobilePay() {
+    window.location.href = MOBILEPAY_LINK
   }
 
   return (
@@ -87,12 +96,43 @@ export default function PaymentPage() {
         <div className="font-display text-4xl font-black text-white mt-4 leading-none">{PAYMENT_NAME}</div>
         <div className="text-sm text-gc-muted mt-1">MobilePay</div>
 
-        <button type="button" onClick={copyName} className="btn-ghost text-sm mt-4 py-1.5">
-          {copied ? 'Kopioitu ✓' : 'Kopioi nimi'}
+        <button
+          type="button"
+          onClick={openMobilePay}
+          className="w-full flex items-center justify-center rounded-xl mt-4"
+          style={{ height: 52, gap: 10, background: MOBILEPAY_BLUE }}
+        >
+          {/* Their real mark needs permission, so this is a plain monogram. */}
+          <span
+            className="flex items-center justify-center rounded-full shrink-0"
+            style={{ width: 28, height: 28, background: 'rgba(255,255,255,0.20)' }}
+          >
+            <span className="font-display text-white" style={{ fontSize: 12, fontWeight: 800 }}>
+              MP
+            </span>
+          </span>
+          <span className="font-display text-white" style={{ fontSize: 17, fontWeight: 700 }}>
+            Avaa MobilePay
+          </span>
+          <span className="text-white/70 shrink-0">
+            <Icon name="arrow-right" size={16} />
+          </span>
         </button>
 
+        {/* The deep link fails silently when MobilePay is missing, so the manual
+            route has to be written out rather than left to the button. */}
+        <p className="text-xs text-center mt-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          Avaa MobilePay → lähetä 260 € → etsi käyttäjä: {PAYMENT_NAME}
+        </p>
+
+        <div className="text-center">
+          <button type="button" onClick={copyComment} className="btn-ghost text-xs mt-2 py-1">
+            {copied ? 'Kopioitu ✓' : 'Kopioi viestikenttä'}
+          </button>
+        </div>
+
         <p className="text-[13px] text-gc-muted italic mt-3">
-          Lisää viestiksi: GC Invitational 2026 + oma nimesi
+          Lisää viestiksi: {PAYMENT_COMMENT} + oma nimesi
         </p>
       </div>
 
