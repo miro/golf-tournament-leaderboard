@@ -42,7 +42,7 @@ const cards: Card[] = [
   {
     to: '/invitational/payment',
     icon: 'credit-card',
-    title: 'Maksaminen',
+    title: 'Ilmoittautuminen',
     subtitle: '260 € · MobilePay · Miro',
   },
 ]
