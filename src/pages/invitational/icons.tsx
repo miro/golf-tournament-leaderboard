@@ -1,7 +1,19 @@
 /** Inline Tabler-style line icons. The project has no icon dependency, so the
  * handful the invitational pages need are drawn here on Tabler's 24×24 grid. */
 
-type IconName = 'car' | 'kitchen' | 'users' | 'trophy' | 'home' | 'map-pin' | 'check' | 'x'
+type IconName =
+  | 'car'
+  | 'kitchen'
+  | 'users'
+  | 'trophy'
+  | 'home'
+  | 'map-pin'
+  | 'check'
+  | 'x'
+  | 'arrow-left'
+  | 'calendar'
+  | 'credit-card'
+  | 'chevron-right'
 
 const PATHS: Record<IconName, string[]> = {
   car: [
@@ -28,6 +40,22 @@ const PATHS: Record<IconName, string[]> = {
   ],
   check: ['M5 12l5 5l10-10'],
   x: ['M18 6l-12 12', 'M6 6l12 12'],
+  'arrow-left': ['M5 12l14 0', 'M5 12l6 6', 'M5 12l6-6'],
+  calendar: [
+    'M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z',
+    'M16 3v4',
+    'M8 3v4',
+    'M4 11h16',
+    'M11 15h1',
+    'M12 15v3',
+  ],
+  'credit-card': [
+    'M3 8a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8z',
+    'M3 10h18',
+    'M7 15h.01',
+    'M11 15h2',
+  ],
+  'chevron-right': ['M9 6l6 6l-6 6'],
 }
 
 interface Props {

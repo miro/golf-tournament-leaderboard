@@ -5,13 +5,12 @@ import ScheduleEventCard from './ScheduleEventCard'
 import {
   AMBER,
   GREEN,
+  INVITATIONAL_YEAR,
   countdownText,
   formatDayHeading,
   groupByDay,
   schedulePhase,
 } from './schedule'
-
-const INVITATIONAL_YEAR = 2026
 
 export default function SchedulePage() {
   const [events, setEvents] = useState<InvitationalScheduleEvent[] | null>(null)

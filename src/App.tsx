@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import PublicLayout from './layouts/PublicLayout'
 import AdminLayout from './layouts/AdminLayout'
 import HomePage from './pages/HomePage'
@@ -18,6 +18,7 @@ import AdminCards from './pages/admin/AdminCards'
 import AdminHype from './pages/admin/AdminHype'
 import BetPage from './pages/proto/BetPage'
 import InvitationalRosterPage from './pages/invitational/RosterPage'
+import InvitationalLanding from './pages/invitational/InvitationalLanding'
 import InvitationalLayout from './pages/invitational/InvitationalLayout'
 import InvitationalSchedulePage from './pages/invitational/SchedulePage'
 import InvitationalPaymentPage from './pages/invitational/PaymentPage'
@@ -35,18 +36,16 @@ export default function App() {
         <Route path="/player/:slug" element={<PlayerProfilePage />} />
         <Route path="/rules" element={<RulesPage />} />
         <Route path="/me/:token" element={<PersonalDashboard />} />
-
-        {/* Invitational content tabs — main nav plus the tab bar. The Pelaajat tab
-            points at the chrome-less roster route defined below. */}
-        <Route path="/invitational" element={<InvitationalLayout />}>
-          <Route index element={<Navigate to="/invitational/roster" replace />} />
-          <Route path="schedule" element={<InvitationalSchedulePage />} />
-          <Route path="payment" element={<InvitationalPaymentPage />} />
-        </Route>
       </Route>
 
-      {/* Full-screen, no chrome — nav is deliberately absent here */}
+      {/* Invitational — its own world. No main nav and no banner on any of these;
+          the back arrows are the way out. */}
+      <Route path="/invitational" element={<InvitationalLanding />} />
       <Route path="/invitational/roster" element={<InvitationalRosterPage />} />
+      <Route element={<InvitationalLayout />}>
+        <Route path="/invitational/schedule" element={<InvitationalSchedulePage />} />
+        <Route path="/invitational/payment" element={<InvitationalPaymentPage />} />
+      </Route>
 
       {/* Prototypes — no chrome, no auth, not linked from nav */}
       <Route path="/proto/bet" element={<BetPage />} />

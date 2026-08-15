@@ -3,6 +3,11 @@ import type { InvitationalScheduleEvent } from '../../lib/database.types'
 export const AMBER = '#E8A820'
 export const GREEN = '#2D6A4F'
 
+export const INVITATIONAL_YEAR = 2026
+/** Shown in the main-site banner and the landing hero, neither of which loads the
+ * schedule, so it is stated here rather than derived from the event rows. */
+export const INVITATIONAL_DATE_RANGE = '25.–27.9.2026'
+
 const WEEKDAYS_FI = ['Sunnuntai', 'Maanantai', 'Tiistai', 'Keskiviikko', 'Torstai', 'Perjantai', 'Lauantai']
 
 /** `new Date('2026-09-25')` is parsed as UTC midnight, which lands on the previous
@@ -76,4 +81,10 @@ export function schedulePhase(days: ScheduleDay[], now: Date): SchedulePhase | n
 export function countdownText(days: number): string {
   if (days === 0) return 'Invitational alkaa tänään'
   return `${days} ${days === 1 ? 'päivä' : 'päivää'} Invitationaliin`
+}
+
+/** The landing hero already names the event above it, so it counts down plainly. */
+export function daysRemainingText(days: number): string {
+  if (days === 0) return 'Alkaa tänään'
+  return `${days} ${days === 1 ? 'päivä' : 'päivää'} jäljellä`
 }

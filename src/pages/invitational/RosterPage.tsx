@@ -9,6 +9,7 @@ import {
   getSeasonCourses,
 } from '../../lib/queries'
 import { skinsByPlayerId } from '../../lib/skins'
+import BackButton from './BackButton'
 import { AMBER, buildRoster, INVITATIONAL_ROSTER_2026, type KesakisaStats, type RosterEntry } from './roster'
 import RosterCard from './RosterCard'
 import IntroCard from './IntroCard'
@@ -301,6 +302,10 @@ export default function InvitationalRosterPage() {
 
       {/* Story timer. Keyed on the slide so it remounts and refills from zero. */}
       <StoryProgressBar key={index} paused={held} onComplete={() => go(1)} />
+
+      {/* Sibling of the gesture track, so a tap here never advances the carousel.
+          Clears the 3px story bar, which sits at the very top and ignores taps. */}
+      <BackButton to="/invitational" label="Takaisin Invitationalin etusivulle" />
 
       <div
         style={{

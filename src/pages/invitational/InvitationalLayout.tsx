@@ -1,19 +1,28 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
+import Icon from './icons'
 
-/** Pelaajat links out of this layout: the roster is a full-screen carousel with
- * no chrome, so it renders outside PublicLayout and has no tab bar of its own. */
+/** Pelaajat is not a tab: the roster is a full-screen carousel with no chrome, so it
+ * is reached from the landing page instead. */
 const tabs = [
-  { to: '/invitational/roster', label: 'Pelaajat' },
   { to: '/invitational/schedule', label: 'Ohjelma' },
   { to: '/invitational/payment', label: 'Maksaminen' },
 ]
 
 export default function InvitationalLayout() {
   return (
-    <div>
-      {/* top-14 clears the 56px main nav, which sticks at top-0 with z-40. */}
-      <div className="sticky top-14 z-30 bg-gc-dark border-b border-white/8">
+    <div className="min-h-screen bg-gc-dark">
+      {/* The main nav is absent on /invitational/*, so this bar sticks to the top. */}
+      <div className="sticky top-0 z-30 bg-gc-dark border-b border-white/8">
         <div className="max-w-[680px] mx-auto px-4 flex items-center gap-1 h-12">
+          <Link
+            to="/invitational"
+            aria-label="Takaisin Invitationalin etusivulle"
+            className="flex items-center text-white/60 hover:text-white transition-colors duration-150 -ml-1"
+            style={{ padding: '0 12px' }}
+          >
+            <Icon name="arrow-left" size={20} />
+          </Link>
+
           {tabs.map(({ to, label }) => (
             <NavLink
               key={to}
