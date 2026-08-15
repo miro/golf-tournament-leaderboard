@@ -90,6 +90,21 @@
   animation: totem-chip-out 100ms ease-in both;
 }
 
+/* Instagram-style story timer on /invitational/roster. The auto-advance is driven
+   off this animation's animationend, so bar and advance can never disagree. */
+@keyframes progressFill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+@keyframes story-arrow {
+  0%, 100% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+}
+.animate-story-arrow {
+  animation: story-arrow 1.2s ease-in-out infinite;
+}
+
 @keyframes chip-name-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }

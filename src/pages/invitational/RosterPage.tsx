@@ -11,6 +11,8 @@ import {
 import { skinsByPlayerId } from '../../lib/skins'
 import { AMBER, buildRoster, INVITATIONAL_ROSTER_2026, type KesakisaStats, type RosterEntry } from './roster'
 import RosterCard from './RosterCard'
+import IntroCard from './IntroCard'
+import StoryProgressBar from './StoryProgressBar'
 
 const SWIPE_THRESHOLD = 50
 const SNAP_MS = 300
@@ -21,9 +23,13 @@ const BACK_ZONE = 0.4
 
 export default function InvitationalRosterPage() {
   const [roster, setRoster] = useState<RosterEntry[] | null>(null)
+  const [historyYears, setHistoryYears] = useState(0)
   const [loadError, setLoadError] = useState(false)
+  /** Slide 0 is the intro card; players occupy 1..roster.length. */
   const [index, setIndex] = useState(0)
   const [interacted, setInteracted] = useState(false)
+  /** Held down — freezes the story bar and its auto-advance. */
+  const [held, setHeld] = useState(false)
 
   // Carousel transform: `slide` is the committed ±1 step being animated, `drag` the
   // live finger offset in px, `anim` whether the track is currently transitioning.
@@ -42,7 +48,10 @@ export default function InvitationalRosterPage() {
     () => new URLSearchParams(window.location.search).get('player'),
   )
 
-  const total = roster?.length ?? 0
+  /** Number of player cards. */
+  const playerCount = roster?.length ?? 0
+  /** Number of slides including the intro card at index 0. */
+  const total = playerCount > 0 ? playerCount + 1 : 0
 
   useEffect(() => {
     let cancelled = false
@@ -75,8 +84,10 @@ export default function InvitationalRosterPage() {
 
         const field = new Set(INVITATIONAL_ROSTER_2026)
         const built = buildRoster(players.filter(p => field.has(p.slug)), standings, results, kesakisa)
+        // Deep links address players, so shift past the intro card at slide 0.
         const start = requestedSlug ? built.findIndex(e => e.player.slug === requestedSlug) : -1
-        setIndex(start >= 0 ? start : 0)
+        setIndex(start >= 0 ? start + 1 : 0)
+        setHistoryYears(results.length)
         setRoster(built)
       } catch {
         if (!cancelled) setLoadError(true)
@@ -146,14 +157,20 @@ export default function InvitationalRosterPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
-  // Keep the URL pointing at the visible card so it can be shared as-is.
+  // Keep the URL pointing at the visible card so it can be shared as-is. The intro
+  // card is not a player, so it drops the query param entirely.
   useEffect(() => {
-    const entry = roster?.[index]
-    if (!entry) return
-    window.history.replaceState(null, '', `/invitational/roster?player=${entry.player.slug}`)
+    if (!roster) return
+    const entry = index > 0 ? roster[index - 1] : null
+    window.history.replaceState(
+      null,
+      '',
+      entry ? `/invitational/roster?player=${entry.player.slug}` : '/invitational/roster',
+    )
   }, [index, roster])
 
   function onTouchStart(e: React.TouchEvent) {
+    setHeld(true)
     if (busy.current) return
     const t = e.touches[0]
     touchStart.current = { x: t.clientX, y: t.clientY, axis: '?' }
@@ -176,6 +193,7 @@ export default function InvitationalRosterPage() {
   }
 
   function onTouchEnd(e: React.TouchEvent) {
+    setHeld(false)
     const start = touchStart.current
     touchStart.current = null
     recentTouch.current = true
@@ -252,6 +270,8 @@ export default function InvitationalRosterPage() {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        // Without this a cancelled touch would leave the story timer paused forever.
+        onTouchCancel={onTouchEnd}
         onClick={onClick}
         style={{
           position: 'absolute',
@@ -265,15 +285,22 @@ export default function InvitationalRosterPage() {
       >
         {slots.map(slot => (
           <div key={slot.key} style={{ position: 'absolute', inset: 0, transform: `translateX(${slot.offset}%)` }}>
-            <RosterCard
-              entry={roster[slot.i]}
-              position={slot.i + 1}
-              total={total}
-              showHint={slot.i === 0 && !interacted}
-            />
+            {slot.i === 0 ? (
+              <IntroCard playerCount={playerCount} historyYears={historyYears} />
+            ) : (
+              <RosterCard
+                entry={roster[slot.i - 1]}
+                position={slot.i}
+                total={playerCount}
+                showHint={slot.i === 1 && !interacted}
+              />
+            )}
           </div>
         ))}
       </div>
+
+      {/* Story timer. Keyed on the slide so it remounts and refills from zero. */}
+      <StoryProgressBar key={index} paused={held} onComplete={() => go(1)} />
 
       <div
         style={{
@@ -288,6 +315,7 @@ export default function InvitationalRosterPage() {
           pointerEvents: 'none',
         }}
       >
+        {/* One dot per player; none lit on the intro card, which is slide 0. */}
         {roster.map((e, i) => (
           <span
             key={e.player.id}
@@ -295,7 +323,7 @@ export default function InvitationalRosterPage() {
               width: 6,
               height: 6,
               borderRadius: '50%',
-              background: i === index ? AMBER : 'rgba(154,136,112,0.50)',
+              background: i === index - 1 ? AMBER : 'rgba(154,136,112,0.50)',
             }}
           />
         ))}

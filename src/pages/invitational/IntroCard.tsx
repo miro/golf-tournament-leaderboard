@@ -1,0 +1,149 @@
+import { AMBER } from './roster'
+
+interface Props {
+  /** Size of this year's field, shown in the stats row. */
+  playerCount: number
+  /** How many years of invitational_results exist. */
+  historyYears: number
+}
+
+/** Same 45 degree grain as the player info panels, a touch fainter. */
+const NOISE =
+  'repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px)'
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 900, color: AMBER }}>{value}</div>
+      <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em' }}>
+        {label}
+      </div>
+    </div>
+  )
+}
+
+export default function IntroCard({ playerCount, historyYears }: Props) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        boxSizing: 'border-box',
+        overflow: 'hidden',
+        borderRadius: 12,
+        border: `4px solid ${AMBER}`,
+        // Inset for the same reason as the player cards: the card fills the viewport,
+        // so an outer glow would fall off-screen entirely.
+        boxShadow: 'inset 0 0 24px rgba(232,168,32,0.25)',
+        backgroundColor: '#17130F',
+        backgroundImage: NOISE,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 20px',
+        textAlign: 'center',
+      }}
+    >
+      <img
+        src="/gc-logo.png"
+        alt="GC"
+        style={{
+          height: 80,
+          width: 'auto',
+          filter: 'invert(1) drop-shadow(0 4px 16px rgba(232,168,32,0.20))',
+          marginBottom: 24,
+        }}
+      />
+
+      <div
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 22,
+          fontWeight: 600,
+          color: 'rgba(255,255,255,0.70)',
+          letterSpacing: '0.20em',
+        }}
+      >
+        GOLF COMPANY
+      </div>
+      <div
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 48,
+          fontWeight: 900,
+          color: AMBER,
+          letterSpacing: '0.08em',
+          lineHeight: 1,
+          textShadow: '0 4px 20px rgba(232,168,32,0.35)',
+        }}
+      >
+        INVITATIONAL
+      </div>
+      <div
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 72,
+          fontWeight: 900,
+          color: '#fff',
+          letterSpacing: '0.04em',
+          lineHeight: 1,
+        }}
+      >
+        2026
+      </div>
+
+      <div style={{ width: 60, height: 2, background: AMBER, margin: '24px auto' }} />
+
+      <div
+        style={{
+          fontSize: 16,
+          fontWeight: 500,
+          color: 'rgba(255,255,255,0.70)',
+          letterSpacing: '0.08em',
+          marginBottom: 4,
+        }}
+      >
+        25.–27.9.2026
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.50)', marginBottom: 20 }}>
+        Lake &amp; Forest Course
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32 }}>
+        <Stat value={String(playerCount)} label="pelaajaa" />
+        <div style={{ width: 1, height: 40, background: 'rgba(255,255,255,0.15)' }} />
+        <Stat value={String(historyYears)} label="vuotta historiaa" />
+      </div>
+
+      <div
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 20,
+          fontWeight: 700,
+          fontStyle: 'italic',
+          color: 'rgba(255,255,255,0.80)',
+        }}
+      >
+        Liekkipaita jaossa.
+      </div>
+
+      <div
+        style={{
+          marginTop: 32,
+          fontSize: 12,
+          color: 'rgba(255,255,255,0.40)',
+          letterSpacing: '0.08em',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
+        pyyhkäise aloittaaksesi
+        <span className="animate-story-arrow" style={{ display: 'inline-block' }}>
+          →
+        </span>
+      </div>
+    </div>
+  )
+}
