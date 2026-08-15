@@ -5,6 +5,7 @@ const navItems = [
   { to: '/feed', label: 'Feed' },
   { to: '/courses', label: 'Kentät' },
   { to: '/players', label: 'Pelaajat' },
+  { to: '/invitational/roster', label: 'Invitational' },
   { to: '/rules', label: 'Säännöt' },
 ]
 
