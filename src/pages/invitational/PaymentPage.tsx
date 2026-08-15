@@ -2,13 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import Icon from './icons'
 import { AMBER, GREEN } from './schedule'
 
-// MUTED_RED went with the red x icons — the pack list uses no icons.
-const MOBILEPAY_BLUE = '#5A78FF'
 const PAYMENT_NAME = 'Miro'
 const PAYMENT_AMOUNT = 260
-/** Also offered on the clipboard, for anyone who opens the app by hand. */
 const PAYMENT_COMMENT = 'GC Invitational 2026'
-const MOBILEPAY_LINK = `mobilepay://send?amount=${PAYMENT_AMOUNT}&comment=${encodeURIComponent(PAYMENT_COMMENT)}`
+
+/** Every field MobilePay asks for, each on its own clipboard button. */
+const COPY_FIELDS = [
+  { key: 'name', label: `Kopioi nimi: ${PAYMENT_NAME}`, value: PAYMENT_NAME },
+  { key: 'amount', label: `Kopioi summa: ${PAYMENT_AMOUNT}`, value: String(PAYMENT_AMOUNT) },
+  { key: 'comment', label: `Kopioi viesti: ${PAYMENT_COMMENT}`, value: PAYMENT_COMMENT },
+]
 
 interface IncludedItem {
   text: string
@@ -75,24 +78,21 @@ function PackList({ items }: { items: string[] }) {
 }
 
 export default function PaymentPage() {
-  const [copied, setCopied] = useState(false)
+  /** Which field was last copied, so only that button confirms. */
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
-  async function copyComment() {
+  async function copyField(key: string, value: string) {
     try {
-      await navigator.clipboard.writeText(PAYMENT_COMMENT)
+      await navigator.clipboard.writeText(value)
     } catch {
       return
     }
-    setCopied(true)
+    setCopiedKey(key)
     window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setCopied(false), 2000)
-  }
-
-  function openMobilePay() {
-    window.location.href = MOBILEPAY_LINK
+    timer.current = window.setTimeout(() => setCopiedKey(null), 2000)
   }
 
   return (
@@ -123,51 +123,26 @@ export default function PaymentPage() {
 
       <div className={CARD}>
         <div className="label" style={{ color: AMBER, opacity: 0.75 }}>
-          Maksuohjeet
+          Maksa MobilePaylla
         </div>
 
-        <p className="text-[15px] text-white mt-3">Maksa MobilePaylla mahdollisimman pian.</p>
-
-        <div className="font-display text-4xl font-black text-white mt-4 leading-none">{PAYMENT_NAME}</div>
-        <div className="text-sm text-gc-muted mt-1">MobilePay</div>
-
-        <button
-          type="button"
-          onClick={openMobilePay}
-          className="w-full flex items-center justify-center rounded-xl mt-4"
-          style={{ height: 52, gap: 10, background: MOBILEPAY_BLUE }}
-        >
-          {/* Their real mark needs permission, so this is a plain monogram. */}
-          <span
-            className="flex items-center justify-center rounded-full shrink-0"
-            style={{ width: 28, height: 28, background: 'rgba(255,255,255,0.20)' }}
-          >
-            <span className="font-display text-white" style={{ fontSize: 12, fontWeight: 800 }}>
-              MP
-            </span>
-          </span>
-          <span className="font-display text-white" style={{ fontSize: 17, fontWeight: 700 }}>
-            Avaa MobilePay
-          </span>
-          <span className="text-white/70 shrink-0">
-            <Icon name="arrow-right" size={16} />
-          </span>
-        </button>
-
-        {/* The deep link fails silently when MobilePay is missing, so the manual
-            route has to be written out rather than left to the button. */}
-        <p className="text-xs text-center mt-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          Avaa MobilePay → lähetä 260 € → etsi käyttäjä: {PAYMENT_NAME}
-        </p>
-
-        <div className="text-center">
-          <button type="button" onClick={copyComment} className="btn-ghost text-xs mt-2 py-1">
-            {copied ? 'Kopioitu ✓' : 'Kopioi viestikenttä'}
-          </button>
+        <div className="flex flex-col gap-2 mt-3">
+          {COPY_FIELDS.map(field => (
+            <button
+              key={field.key}
+              type="button"
+              onClick={() => copyField(field.key, field.value)}
+              className="btn-ghost w-full"
+              style={{ fontFamily: 'var(--font-display)', fontSize: 15 }}
+            >
+              {copiedKey === field.key ? 'Kopioitu ✓' : field.label}
+            </button>
+          ))}
         </div>
 
         <p className="text-[13px] text-gc-muted italic mt-3">
-          Lisää viestiksi: {PAYMENT_COMMENT} + oma nimesi
+          Avaa MobilePay → hae käyttäjä {PAYMENT_NAME} → lähetä {PAYMENT_AMOUNT} € viestillä{' '}
+          {PAYMENT_COMMENT}
         </p>
       </div>
 
