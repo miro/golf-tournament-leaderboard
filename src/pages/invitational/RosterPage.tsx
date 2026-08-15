@@ -220,8 +220,9 @@ export default function InvitationalRosterPage() {
     return (
       <div
         style={{
-          position: 'fixed',
-          inset: 0,
+          // Matches the loaded carousel: fills the column, not the viewport.
+          position: 'relative',
+          width: '100%',
           height: '100dvh',
           background: '#17130F',
           display: 'flex',
@@ -265,7 +266,9 @@ export default function InvitationalRosterPage() {
   return (
     <div
       ref={containerRef}
-      style={{ position: 'fixed', inset: 0, height: '100dvh', overflow: 'hidden', background: '#17130F' }}
+      // Relative, not fixed: the carousel fills the phone-width column it sits in
+      // rather than the whole viewport, which is what makes the desktop framing work.
+      style={{ position: 'relative', width: '100%', height: '100dvh', overflow: 'hidden', background: '#17130F' }}
     >
       <div
         onTouchStart={onTouchStart}

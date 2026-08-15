@@ -40,6 +40,27 @@
     @apply text-xs font-semibold text-gc-muted uppercase tracking-wider;
   }
 
+  /* Desktop backdrop for /invitational/*: a faint tiled logo watermark behind the
+     phone-width content column. A pseudo-element rather than a background on the
+     element itself, so the rotation cannot drag the column along with it. */
+  .invitational-shell::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url('/gc-logo.png');
+    background-repeat: repeat;
+    background-size: 120px 120px;
+    background-position: 0 0;
+    opacity: 0.04;
+    /* Scaled past the viewport so the 15° tilt leaves no bare corners. */
+    transform: rotate(15deg) scale(1.5);
+    transform-origin: center;
+    /* The mark is black artwork; inverting it reads as white on the dark backdrop. */
+    filter: invert(1);
+  }
+
   /* Nike-style 4-stripe bar */
   .stripe-bar {
     @apply flex h-1.5 w-full;

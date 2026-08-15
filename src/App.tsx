@@ -20,6 +20,7 @@ import BetPage from './pages/proto/BetPage'
 import InvitationalRosterPage from './pages/invitational/RosterPage'
 import InvitationalLanding from './pages/invitational/InvitationalLanding'
 import InvitationalLayout from './pages/invitational/InvitationalLayout'
+import InvitationalTabsLayout from './pages/invitational/InvitationalTabsLayout'
 import InvitationalSchedulePage from './pages/invitational/SchedulePage'
 import InvitationalPaymentPage from './pages/invitational/PaymentPage'
 
@@ -39,12 +40,15 @@ export default function App() {
       </Route>
 
       {/* Invitational — its own world. No main nav and no banner on any of these;
-          the back arrows are the way out. */}
-      <Route path="/invitational" element={<InvitationalLanding />} />
-      <Route path="/invitational/roster" element={<InvitationalRosterPage />} />
+          the back arrows are the way out. Every route sits in the phone-width shell,
+          with the tab bar as a second layer over schedule and payment. */}
       <Route element={<InvitationalLayout />}>
-        <Route path="/invitational/schedule" element={<InvitationalSchedulePage />} />
-        <Route path="/invitational/payment" element={<InvitationalPaymentPage />} />
+        <Route path="/invitational" element={<InvitationalLanding />} />
+        <Route path="/invitational/roster" element={<InvitationalRosterPage />} />
+        <Route element={<InvitationalTabsLayout />}>
+          <Route path="/invitational/schedule" element={<InvitationalSchedulePage />} />
+          <Route path="/invitational/payment" element={<InvitationalPaymentPage />} />
+        </Route>
       </Route>
 
       {/* Prototypes — no chrome, no auth, not linked from nav */}
