@@ -58,11 +58,8 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
       <div
         style={{
           position: 'relative',
+          width: '100%',
           height: '58%',
-          // border-box keeps the zone at exactly 58% once the gap padding is added,
-          // so the info panel below keeps its full share of the card.
-          boxSizing: 'border-box',
-          paddingBottom: 12,
           flexShrink: 0,
           overflow: 'hidden',
           borderTopLeftRadius: 8,
@@ -79,7 +76,15 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
             src={playerImagePath(player.full_name)}
             alt={player.full_name}
             onError={() => setPhotoFailed(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center center', display: 'block' }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center center',
+              display: 'block',
+            }}
           />
         )}
 
@@ -93,7 +98,8 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
           }}
         />
 
-        {/* Breathing room between photo and divider: a soft fade filling the gap */}
+        {/* Breathing room before the hard break, as an overlay on the photo rather
+            than padding — padding here left a visible strip of card background. */}
         <div
           style={{
             position: 'absolute',
