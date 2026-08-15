@@ -5,7 +5,8 @@ import Icon from './icons'
  * is reached from the landing page instead. */
 const tabs = [
   { to: '/invitational/schedule', label: 'Ohjelma' },
-  { to: '/invitational/payment', label: 'Maksaminen' },
+  // Route stays /payment; only the label changed.
+  { to: '/invitational/payment', label: 'Ilmoittautuminen' },
 ]
 
 export default function InvitationalTabsLayout() {

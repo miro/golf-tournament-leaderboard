@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Icon from './icons'
 import { AMBER, GREEN } from './schedule'
 
-const MUTED_RED = '#8A3A3A'
+// MUTED_RED went with the red x icons — the pack list uses no icons.
 const MOBILEPAY_BLUE = '#5A78FF'
 const PAYMENT_NAME = 'Miro'
 const PAYMENT_AMOUNT = 260
@@ -10,31 +10,64 @@ const PAYMENT_AMOUNT = 260
 const PAYMENT_COMMENT = 'GC Invitational 2026'
 const MOBILEPAY_LINK = `mobilepay://send?amount=${PAYMENT_AMOUNT}&comment=${encodeURIComponent(PAYMENT_COMMENT)}`
 
-const INCLUDED = [
-  'Majoitus viikonlopun ajaksi',
-  'Friday Warmup — green fee (Old Course)',
-  'Liekki-Major — green fee (Lake & Forest Course)',
-  'Aamiainen lauantaina',
-  'Lounas lauantaina (Golden Resort Club)',
-  'Kuljetukset kentälle ja takaisin',
-  'Italialainen illallinen (Ravintola Pölli)',
-  'Palkintogaala',
+interface IncludedItem {
+  text: string
+  /** Optional second line, indented to sit under the text rather than the icon. */
+  detail?: string
+}
+
+const INCLUDED: IncludedItem[] = [
+  { text: 'Majoitus viikonlopun ajaksi' },
+  { text: 'Friday Warmup — green fee (Old Course)' },
+  { text: 'Liekki-Major — green fee (Lake & Forest Course)' },
+  {
+    text: 'Ruokailu koko viikonlopun ajan',
+    detail: 'Aamiainen · lounas · illallinen (Ravintola Pölli)',
+  },
+  { text: 'Kuljetukset kentälle ja takaisin' },
+  { text: 'Palkintogaala' },
 ]
 
-const EXCLUDED = ['Omat juomat', 'Omat pyyhkeet', 'Omat lakanat']
+const PACK = ['Omat juomat', 'Omat pyyhkeet', 'Omat lakanat']
 
 const CARD = 'bg-gc-card rounded-2xl p-6 mb-4 border border-white/8'
 
-function ItemList({ items, included }: { items: string[]; included: boolean }) {
+function IncludedList({ items }: { items: IncludedItem[] }) {
+  return (
+    <div className="mt-3">
+      {items.map((item, i) => (
+        <div key={item.text} className={`py-2.5 ${i > 0 ? 'border-t border-white/6' : ''}`}>
+          <div className="flex items-center gap-3">
+            <Icon name="check" size={16} color={GREEN} />
+            <span className="text-[15px] text-white">{item.text}</span>
+          </div>
+          {item.detail && (
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2, marginLeft: 28 }}>
+              {item.detail}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Reminders rather than features, so no icons and deliberately quieter than the
+ * included list. */
+function PackList({ items }: { items: string[] }) {
   return (
     <div className="mt-3">
       {items.map((item, i) => (
         <div
           key={item}
-          className={`flex items-center gap-3 py-2.5 ${i > 0 ? 'border-t border-white/6' : ''}`}
+          style={{
+            padding: '10px 0',
+            fontSize: 15,
+            color: 'rgba(255,255,255,0.65)',
+            borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+          }}
         >
-          <Icon name={included ? 'check' : 'x'} size={16} color={included ? GREEN : MUTED_RED} />
-          <span className={`text-[15px] ${included ? 'text-white' : 'text-gc-muted'}`}>{item}</span>
+          🧳 {item}
         </div>
       ))}
     </div>
@@ -64,7 +97,7 @@ export default function PaymentPage() {
 
   return (
     <div>
-      <h1 className="font-display text-[28px] font-extrabold text-white leading-tight">Maksaminen</h1>
+      <h1 className="font-display text-[28px] font-extrabold text-white leading-tight">Ilmoittautuminen</h1>
       <div className="text-[15px] text-gc-muted mb-6">Golf Company Invitational 2026</div>
 
       <div className={`${CARD} p-8 text-center`}>
@@ -78,12 +111,14 @@ export default function PaymentPage() {
         <div className="label" style={{ color: AMBER, opacity: 0.75 }}>
           Mitä sisältyy
         </div>
-        <ItemList items={INCLUDED} included />
+        <IncludedList items={INCLUDED} />
       </div>
 
       <div className={CARD}>
-        <div className="label">Omat hankinnat</div>
-        <ItemList items={EXCLUDED} included={false} />
+        <div className="label" style={{ color: 'rgba(255,255,255,0.50)' }}>
+          Muista pakata mukaan
+        </div>
+        <PackList items={PACK} />
       </div>
 
       <div className={CARD}>
