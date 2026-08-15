@@ -11,11 +11,11 @@ const PAYMENT_COMMENT = 'GC Invitational 2026'
  * values below are offered on the clipboard instead. */
 const MOBILEPAY_LINK = 'mobilepay://'
 
-/** Every field MobilePay asks for, each on its own clipboard button. */
-const COPY_FIELDS = [
-  { key: 'name', label: `Kopioi nimi: ${PAYMENT_NAME}`, value: PAYMENT_NAME },
-  { key: 'amount', label: `Kopioi summa: ${PAYMENT_AMOUNT}`, value: String(PAYMENT_AMOUNT) },
-  { key: 'comment', label: `Kopioi viesti: ${PAYMENT_COMMENT}`, value: PAYMENT_COMMENT },
+/** Read-only: short enough to retype, and both are already on the page above. Only
+ * the message is worth a clipboard button. */
+const INFO_FIELDS = [
+  { label: 'Nimi', value: PAYMENT_NAME },
+  { label: 'Summa', value: `${PAYMENT_AMOUNT} €` },
 ]
 
 interface IncludedItem {
@@ -83,21 +83,20 @@ function PackList({ items }: { items: string[] }) {
 }
 
 export default function PaymentPage() {
-  /** Which field was last copied, so only that button confirms. */
-  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
-  async function copyField(key: string, value: string) {
+  async function copyComment() {
     try {
-      await navigator.clipboard.writeText(value)
+      await navigator.clipboard.writeText(PAYMENT_COMMENT)
     } catch {
       return
     }
-    setCopiedKey(key)
+    setCopied(true)
     window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setCopiedKey(null), 2000)
+    timer.current = window.setTimeout(() => setCopied(false), 2000)
   }
 
   function openMobilePay() {
@@ -159,19 +158,28 @@ export default function PaymentPage() {
           </span>
         </button>
 
-        <div className="flex flex-col gap-2 mt-2">
-          {COPY_FIELDS.map(field => (
-            <button
-              key={field.key}
-              type="button"
-              onClick={() => copyField(field.key, field.value)}
-              className="btn-ghost w-full"
-              style={{ fontFamily: 'var(--font-display)', fontSize: 15 }}
+        <div className="mt-3">
+          {INFO_FIELDS.map(field => (
+            <div
+              key={field.label}
+              className="flex items-center justify-between py-2.5 border-t border-white/6"
             >
-              {copiedKey === field.key ? 'Kopioitu ✓' : field.label}
-            </button>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.50)' }}>{field.label}</span>
+              <span className="font-display text-white" style={{ fontSize: 16, fontWeight: 700 }}>
+                {field.value}
+              </span>
+            </div>
           ))}
         </div>
+
+        <button
+          type="button"
+          onClick={copyComment}
+          className="btn-ghost w-full mt-2"
+          style={{ fontFamily: 'var(--font-display)', fontSize: 15 }}
+        >
+          {copied ? 'Kopioitu ✓' : `Kopioi viesti: ${PAYMENT_COMMENT}`}
+        </button>
 
         <p className="text-[13px] text-gc-muted italic mt-3">
           Avaa MobilePay → hae käyttäjä {PAYMENT_NAME} → lähetä {PAYMENT_AMOUNT} € viestillä{' '}
