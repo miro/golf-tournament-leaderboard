@@ -11,13 +11,15 @@ interface Props {
 const NOISE =
   'repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px)'
 
-function Stat({ value, label }: { value: string; label: string }) {
+function StatRow({ number, text }: { number: string; text: string }) {
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 900, color: AMBER }}>{value}</div>
-      <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em' }}>
-        {label}
-      </div>
+    <div>
+      <span style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 900, color: AMBER, display: 'inline' }}>
+        {number}
+      </span>
+      <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: 'rgba(255,255,255,0.75)', display: 'inline', marginLeft: 8 }}>
+        {text}
+      </span>
     </div>
   )
 }
@@ -110,10 +112,10 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
         Lake &amp; Forest Course
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32 }}>
-        <Stat value={String(playerCount)} label="pelaajaa" />
-        <div style={{ width: 1, height: 40, background: 'rgba(255,255,255,0.15)' }} />
-        <Stat value={String(historyYears)} label="vuotta historiaa" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '24px 0', padding: '0 8px', textAlign: 'left', width: '100%', boxSizing: 'border-box' }}>
+        <StatRow number={String(historyYears)} text="aikaisempaa mestaria" />
+        <StatRow number={String(playerCount)} text="kutsuttua. Yksi Liekkipaita." />
+        <StatRow number="IX" text="Golf Company Invitational" />
       </div>
 
       <div
