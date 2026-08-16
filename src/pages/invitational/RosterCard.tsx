@@ -31,13 +31,6 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
   // Ordering logic keeps these newest-first; titles read better chronologically.
   const liekkipoikaAsc = [...liekkipoikaYears].reverse()
   const scratchAsc = [...scratchWins].reverse()
-  // Shots line mirrors the years line positionally, so a win with no recorded shot
-  // count holds its slot with a dash rather than silently shifting the others.
-  const scratchShots = scratchAsc.some(w => w.shots !== null)
-    ? scratchAsc.map(w => w.shots ?? '—').join(' · ')
-    : null
-  /** Three wins is where the two-row layout starts costing more height than it earns. */
-  const compactScratch = scratchWins.length >= 3
 
   return (
     <div
@@ -310,25 +303,11 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
 
         {scratchWins.length > 0 && (
           <div>
-            <div style={{ ...titleLabel, color: '#fff', marginBottom: compactScratch ? 4 : 6 }}>🏆⛳ SCRATCH</div>
-            {compactScratch ? (
-              // Three or more wins outgrow the two-row layout, so years carry their
-              // shot counts inline and the separate shots row disappears.
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
-                {scratchAsc.map(w => (w.shots !== null ? `${w.year} (${w.shots})` : String(w.year))).join(' · ')}
-              </div>
-            ) : (
-              <>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
-                  {scratchAsc.map(w => w.year).join(' · ')}
-                </div>
-                {scratchShots && (
-                  <div style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.55)', lineHeight: 1.2 }}>
-                    {scratchShots} lyöntiä
-                  </div>
-                )}
-              </>
-            )}
+            <div style={{ ...titleLabel, color: '#fff', marginBottom: 4 }}>🏆⛳ SCRATCH</div>
+            {/* Years carry their shot counts inline, at every win count. */}
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
+              {scratchAsc.map(w => (w.shots !== null ? `${w.year} (${w.shots})` : String(w.year))).join(' · ')}
+            </div>
           </div>
         )}
       </div>
