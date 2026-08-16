@@ -161,6 +161,18 @@ export default function InvitationalLanding() {
             </Link>
           ))}
         </div>
+
+        <div className="max-w-[680px] mx-auto text-center" style={{ marginTop: 16 }}>
+          <a
+            href="https://karaokelistat.fi/7269"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 text-white/50 hover:text-white/80 hover:border-white/20 transition-colors"
+            style={{ padding: '8px 16px', fontSize: 13 }}
+          >
+            🎤 Karhu Pub Setlist
+          </a>
+        </div>
       </div>
     </div>
   )
