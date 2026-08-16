@@ -38,7 +38,19 @@ const INCLUDED: IncludedItem[] = [
 
 const PACK = ['Omat juomat', 'Omat pyyhkeet', 'Omat lakanat']
 
+interface GolfCarDay {
+  day: string
+  detail: string
+  players: string[]
+}
+
+const GOLF_CAR_DAYS: GolfCarDay[] = [
+  { day: 'Perjantai', detail: '3 golfautoa varattu — varaukset Miron nimissä.', players: ['Jussi', 'Pekka', 'Tommi'] },
+  { day: 'Lauantai', detail: '4 golfautoa varattu — varaukset Miron nimissä.', players: ['Brukke', 'Nyyssönen', 'Tommi', 'Pekka', 'Jussi', 'VP', 'Tero'] },
+]
+
 const CARD = 'bg-gc-card rounded-2xl p-6 mb-4 border border-white/8'
+const GOLF_CARS_CARD = 'bg-gc-card rounded-2xl p-5 mb-4 border border-white/8'
 
 function IncludedList({ items }: { items: IncludedItem[] }) {
   return (
@@ -78,6 +90,37 @@ function PackList({ items }: { items: string[] }) {
           🧳 {item}
         </div>
       ))}
+    </div>
+  )
+}
+
+function GolfCarSection({ day, detail, players }: GolfCarDay) {
+  return (
+    <div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'white', marginBottom: 6 }}>
+        {day}
+      </div>
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.50)', marginBottom: 8 }}>
+        {detail}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {players.map(name => (
+          <span
+            key={name}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 20,
+              padding: '4px 12px',
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'white',
+            }}
+          >
+            {name}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
@@ -127,6 +170,25 @@ export default function PaymentPage() {
           Muista pakata mukaan
         </div>
         <PackList items={PACK} />
+      </div>
+
+      <div className={GOLF_CARS_CARD}>
+        <div className="label" style={{ color: AMBER, opacity: 0.75 }}>
+          Golfautot
+        </div>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.50)', fontStyle: 'italic', marginBottom: 16 }}>
+          Ei sisälly osallistumismaksuun.
+        </p>
+
+        <GolfCarSection {...GOLF_CAR_DAYS[0]} />
+
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '16px 0' }} />
+
+        <GolfCarSection {...GOLF_CAR_DAYS[1]} />
+
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontStyle: 'italic', marginTop: 16, lineHeight: 1.5 }}>
+          Golfautot jaetaan lähtöryhmien mukaan perjantai- ja lauantaiaamuina. Jos olet listalla — olet sitoutunut maksamaan auton.
+        </p>
       </div>
 
       <div className={CARD}>
