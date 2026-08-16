@@ -32,7 +32,7 @@ const INCLUDED: IncludedItem[] = [
     text: 'Ruokailu koko viikonlopun ajan',
     detail: 'Perjantain illallisesta sunnuntain aamupalaan',
   },
-  { text: 'Kuljetukset kentälle ja takaisin' },
+  { text: 'Kuljetukset Golden Resortiin' },
   { text: 'Palkintogaala' },
 ]
 
