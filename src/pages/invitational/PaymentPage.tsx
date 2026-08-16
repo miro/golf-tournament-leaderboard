@@ -250,7 +250,7 @@ export default function PaymentPage() {
       </div>
 
       <p className="text-[13px] text-gc-muted text-center mt-4">
-        Maksa mahdollisimman pian — paikat vahvistuvat maksun jälkeen.
+        Maksa mahdollisimman pian — ilmoittautuminen on sitova eikä sitä voi perua.
       </p>
     </div>
   )
