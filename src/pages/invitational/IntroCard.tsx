@@ -13,11 +13,11 @@ const NOISE =
 
 function StatRow({ number, text }: { number: string; text: string }) {
   return (
-    <div>
-      <span style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 900, color: AMBER, display: 'inline' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span style={{ fontFamily: 'var(--font-display)', fontSize: 52, fontWeight: 900, color: AMBER, lineHeight: 1 }}>
         {number}
       </span>
-      <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: 'rgba(255,255,255,0.75)', display: 'inline', marginLeft: 8 }}>
+      <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 400, color: 'rgba(255,255,255,0.55)' }}>
         {text}
       </span>
     </div>
@@ -61,10 +61,10 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
       <div
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 22,
+          fontSize: 13,
           fontWeight: 600,
-          color: 'rgba(255,255,255,0.70)',
-          letterSpacing: '0.20em',
+          color: 'rgba(255,255,255,0.45)',
+          letterSpacing: '0.25em',
         }}
       >
         GOLF COMPANY
@@ -72,10 +72,10 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
       <div
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 48,
+          fontSize: 36,
           fontWeight: 900,
           color: AMBER,
-          letterSpacing: '0.08em',
+          letterSpacing: '0.06em',
           lineHeight: 1,
           textShadow: '0 4px 20px rgba(232,168,32,0.35)',
         }}
@@ -88,8 +88,8 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
           fontSize: 72,
           fontWeight: 900,
           color: '#fff',
-          letterSpacing: '0.04em',
-          lineHeight: 1,
+          letterSpacing: '0.02em',
+          lineHeight: 0.95,
         }}
       >
         2026
@@ -108,11 +108,11 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
       >
         25.–27.9.2026
       </div>
-      <div style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.50)', marginBottom: 20 }}>
+      <div style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.50)', marginBottom: 0 }}>
         Lake &amp; Forest Course
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '24px 0', padding: '0 8px', textAlign: 'left', width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16, marginBottom: 0, padding: '0 8px', textAlign: 'left', width: '100%', boxSizing: 'border-box' }}>
         <StatRow number={String(historyYears)} text="aikaisempaa mestaria" />
         <StatRow number={String(playerCount)} text="kutsuttua. Yksi Liekkipaita." />
         <StatRow number="IX" text="Golf Company Invitational" />
@@ -121,10 +121,12 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
       <div
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 20,
+          fontSize: 28,
           fontWeight: 700,
           fontStyle: 'italic',
-          color: 'rgba(255,255,255,0.80)',
+          color: '#fff',
+          marginTop: 24,
+          marginBottom: 0,
         }}
       >
         Liekkipaita jaossa.
@@ -133,9 +135,9 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
       <div
         style={{
           marginTop: 32,
-          fontSize: 12,
-          color: 'rgba(255,255,255,0.40)',
-          letterSpacing: '0.08em',
+          fontSize: 11,
+          color: 'rgba(255,255,255,0.30)',
+          letterSpacing: '0.10em',
           display: 'flex',
           alignItems: 'center',
           gap: 6,
