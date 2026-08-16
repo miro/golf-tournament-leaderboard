@@ -109,7 +109,7 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
         25.–27.9.2026
       </div>
       <div style={{ fontSize: 14, fontWeight: 400, color: 'rgba(255,255,255,0.50)', marginBottom: 0 }}>
-        Lake &amp; Forest Course
+        Tahko
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16, marginBottom: 0, padding: '0 8px', textAlign: 'left', width: '100%', boxSizing: 'border-box' }}>
