@@ -27,7 +27,7 @@ const cards: Card[] = [
     to: '/invitational/roster',
     icon: 'users',
     title: 'Pelaajat',
-    subtitle: `${INVITATIONAL_ROSTER_2026.length} pelaajaa · Tutustu joukkueeseen`,
+    subtitle: `${INVITATIONAL_ROSTER_2026.length} pelaajaa · Tutustu pelaajiin`,
   },
   {
     to: '/invitational/schedule',
