@@ -1,336 +1,134 @@
-import { useRef, useState } from 'react'
-import { CATEGORY_META, CATEGORY_ORDER, POINTS_PER_HOLE, type CellSymbolShape, type CompositionAnswer, type HoleCategory, compositionCounts, compositionPoints, compositionTotal, strokeCountForHole } from './types'
+import { useRef, useState, type PointerEvent } from 'react'
+import { CATEGORY_META, CATEGORY_ORDER, type CompositionAnswer, type HoleCategory, compositionPoints, strokeCountForHole, COMPOSITION_HOLE_PARS } from './types'
 
-const STBL_PAR = 36
+const LABELS = ['Birdie', 'Par', 'Bogey', 'Tupla', 'Tripla', 'Worse']
+const position = (category: HoleCategory) => (CATEGORY_ORDER.indexOf(category) + 0.5) / 6 * 100
+const color = (category: HoleCategory) => category === 'par' ? 'rgba(255,255,255,0.30)' : CATEGORY_META[category].brushColor
+const clamp = (x: number) => Math.max(100 / 12, Math.min(100 - 100 / 12, x))
+const categoryAt = (x: number) => CATEGORY_ORDER[Math.max(0, Math.min(5, Math.floor(x / 100 * 6)))]
 
-const TARGET = 18
-const MAX_UNDO = 10
-const EMPTY_CELL_BG = '#2a2520'
-const CELL_SIZE = 48
-
-// Standard 4-4-3-5 layout per nine, summing to par 72
-const HOLE_PARS: number[] = [4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4]
+function Symbol({ category }: { category: HoleCategory }) {
+  const squares = category === 'triple' ? [26, 18, 10] : category === 'double' ? [26, 16] : [22]
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+      {category === 'birdie' ? <circle cx="14" cy="14" r="13" fill="none" stroke={color(category)} strokeWidth="2" />
+        : category !== 'par' && squares.map(size => <rect key={size} x={(28 - size) / 2} y={(28 - size) / 2} width={size} height={size} fill={category === 'worse' ? '#555555' : 'none'} stroke={color(category)} strokeWidth="1.5" />)}
+      <circle cx="14" cy="14" r="6" fill={color(category)} />
+    </svg>
+  )
+}
 
 interface Props {
   value: CompositionAnswer
   onChange: (value: CompositionAnswer) => void
 }
 
-function holeIndexFromPoint(x: number, y: number): number | null {
-  const el = document.elementFromPoint(x, y)
-  const cell = el instanceof Element ? el.closest<HTMLElement>('[data-hole]') : null
-  if (!cell) return null
-  const idx = Number(cell.dataset.hole)
-  return Number.isNaN(idx) ? null : idx
-}
-
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-// Traditional scorecard notation: circle=birdie+, square=bogey, nested squares=double/triple, filled=worse
-function CellSymbol({ shape, sizePx, color }: { shape: CellSymbolShape; sizePx: number; color: string }) {
-  if (shape === 'none') return null
-  if (shape === 'circle') {
-    return (
-      <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="42" fill="none" stroke={color} strokeWidth="8" />
-      </svg>
-    )
-  }
-  if (shape === 'square') {
-    return (
-      <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
-        <rect x="8" y="8" width="84" height="84" fill="none" stroke={color} strokeWidth="8" />
-      </svg>
-    )
-  }
-  if (shape === 'double-square') {
-    return (
-      <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
-        <rect x="4" y="4" width="92" height="92" fill="none" stroke={color} strokeWidth="7" />
-        <rect x="22" y="22" width="56" height="56" fill="none" stroke={color} strokeWidth="7" />
-      </svg>
-    )
-  }
-  if (shape === 'triple-square') {
-    return (
-      <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
-        <rect x="2" y="2" width="96" height="96" fill="none" stroke={color} strokeWidth="6" />
-        <rect x="18" y="18" width="64" height="64" fill="none" stroke={color} strokeWidth="6" />
-        <rect x="34" y="34" width="32" height="32" fill="none" stroke={color} strokeWidth="6" />
-      </svg>
-    )
-  }
-  return (
-    <svg width={sizePx} height={sizePx} viewBox="0 0 100 100">
-      <rect x="4" y="4" width="92" height="92" fill={color} />
-    </svg>
-  )
-}
-
-// Brush-button version: fixed 28x28 canvas with the exact pixel sizes/strokes specified for the selector
-function BrushSymbol({ shape, color }: { shape: CellSymbolShape; color: string }) {
-  const c = 14 // canvas center (28x28)
-  const centered = (size: number) => c - size / 2
-  if (shape === 'circle') {
-    return (
-      <svg width={28} height={28} viewBox="0 0 28 28">
-        <circle cx={c} cy={c} r={13} fill="none" stroke={color} strokeWidth={2.5} />
-      </svg>
-    )
-  }
-  if (shape === 'square') {
-    return (
-      <svg width={28} height={28} viewBox="0 0 28 28">
-        <rect x={centered(22)} y={centered(22)} width={22} height={22} fill="none" stroke={color} strokeWidth={2} />
-      </svg>
-    )
-  }
-  if (shape === 'double-square') {
-    return (
-      <svg width={28} height={28} viewBox="0 0 28 28">
-        <rect x={centered(26)} y={centered(26)} width={26} height={26} fill="none" stroke={color} strokeWidth={1.5} />
-        <rect x={centered(16)} y={centered(16)} width={16} height={16} fill="none" stroke={color} strokeWidth={1.5} />
-      </svg>
-    )
-  }
-  if (shape === 'triple-square') {
-    return (
-      <svg width={28} height={28} viewBox="0 0 28 28">
-        <rect x={centered(26)} y={centered(26)} width={26} height={26} fill="none" stroke={color} strokeWidth={1.5} />
-        <rect x={centered(18)} y={centered(18)} width={18} height={18} fill="none" stroke={color} strokeWidth={1.5} />
-        <rect x={centered(10)} y={centered(10)} width={10} height={10} fill="none" stroke={color} strokeWidth={1.5} />
-      </svg>
-    )
-  }
-  if (shape === 'filled-square') {
-    return (
-      <svg width={28} height={28} viewBox="0 0 28 28">
-        <rect x={centered(22)} y={centered(22)} width={22} height={22} fill={color} />
-      </svg>
-    )
-  }
-  // 'none' (par): rounded square outline signals "no marking / baseline"
-  return (
-    <svg width={28} height={28} viewBox="0 0 28 28">
-      <rect x={centered(22)} y={centered(22)} width={22} height={22} rx={2} fill="none" stroke={color} strokeWidth={1.5} />
-    </svg>
-  )
-}
-
 export default function CompositionQuestion({ value, onChange }: Props) {
-  const [brush, setBrush] = useState<HoleCategory>('par')
-  const [canUndo, setCanUndo] = useState(false)
-  const [justCleared, setJustCleared] = useState(false)
-  const historyRef = useRef<(HoleCategory | null)[][]>([])
-
-  const total = compositionTotal(value)
-  const counts = compositionCounts(value)
+  const gesture = useRef<{ id: number; hole: number; x: number; y: number; mode: 'pending' | 'horizontal' | 'vertical' } | null>(null)
+  const [drag, setDrag] = useState<{ hole: number; x: number } | null>(null)
   const points = compositionPoints(value)
-  const fillPct = Math.min(100, (total / TARGET) * 100)
-  const stblDelta = STBL_PAR - points
-  const deltaLabel = stblDelta === 0 ? 'E' : stblDelta > 0 ? `+${stblDelta}` : `${stblDelta}`
-  const deltaColor = stblDelta < 0 ? '#E8453C' : 'white'
+  const scratch = value.holes.reduce<number>((sum, category, hole) => sum + (category ? strokeCountForHole(COMPOSITION_HOLE_PARS[hole], category) : 0), 0)
+  const delta = 36 - points
 
-  function undo() {
-    const prev = historyRef.current.pop()
-    setCanUndo(historyRef.current.length > 0)
-    if (prev) onChange({ holes: prev })
+  function select(hole: number, category: HoleCategory) {
+    onChange({ holes: value.holes.map((current, index) => index === hole ? category : current) })
   }
 
-  function reset() {
-    historyRef.current = []
-    setCanUndo(false)
-    onChange({ holes: Array(18).fill(null) })
-    setJustCleared(true)
-    setTimeout(() => setJustCleared(false), 1500)
+  function trackX(e: PointerEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    return clamp((e.clientX - rect.left) / rect.width * 100)
   }
 
-  function handlePointerDown(e: React.PointerEvent, startHole: number) {
-    e.preventDefault()
-    historyRef.current.push([...value.holes])
-    if (historyRef.current.length > MAX_UNDO) historyRef.current.shift()
-    setCanUndo(true)
-
-    const working = [...value.holes]
-    const touched = new Set<number>()
-    let lastHole = startHole
-    let moved = false
-
-    function paint(hole: number) {
-      if (touched.has(hole)) return
-      touched.add(hole)
-      working[hole] = brush
-      onChange({ holes: [...working] })
-    }
-
-    function onMove(ev: PointerEvent) {
-      const hole = holeIndexFromPoint(ev.clientX, ev.clientY)
-      if (hole === null || hole === lastHole) return
-      moved = true
-      lastHole = hole
-      paint(startHole)
-      paint(hole)
-    }
-
-    function onUp() {
-      if (!moved) {
-        working[startHole] = working[startHole] === brush ? null : brush
-        onChange({ holes: [...working] })
-      }
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-    }
-
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
+  function start(e: PointerEvent<HTMLDivElement>, hole: number) {
+    if (!e.isPrimary || e.button !== 0) return
+    gesture.current = { id: e.pointerId, hole, x: e.clientX, y: e.clientY, mode: 'pending' }
+    e.currentTarget.setPointerCapture(e.pointerId)
   }
+
+  function move(e: PointerEvent<HTMLDivElement>) {
+    const g = gesture.current
+    if (!g || g.id !== e.pointerId) return
+    const dx = Math.abs(e.clientX - g.x)
+    const dy = Math.abs(e.clientY - g.y)
+    if (g.mode === 'pending' && Math.max(dx, dy) > 6) g.mode = dx > dy ? 'horizontal' : 'vertical'
+    if (g.mode === 'horizontal') {
+      if (e.cancelable) e.preventDefault()
+      setDrag({ hole: g.hole, x: trackX(e) })
+    }
+  }
+
+  function end(e: PointerEvent<HTMLDivElement>) {
+    const g = gesture.current
+    if (!g || g.id !== e.pointerId) return
+    if (g.mode !== 'vertical') select(g.hole, categoryAt(trackX(e)))
+    gesture.current = null
+    setDrag(null)
+  }
+
+  const linePoints = value.holes.flatMap((category, hole) => {
+    const x = drag?.hole === hole ? drag.x : category ? position(category) : null
+    return x === null ? [] : [`${x},${hole * 72 + 36}`]
+  }).join(' ')
 
   return (
-    <div>
-      <p className="text-gc-muted text-sm italic mb-4">Valitse tulos ja maalaa väylät</p>
-
-      <div className="grid grid-cols-6 gap-[6px] mb-2">
-        {CATEGORY_ORDER.map(key => {
-          const meta = CATEGORY_META[key]
-          const active = brush === key
-          const count = counts[key]
+    <div className="w-full min-w-0">
+      <p className="text-gc-muted text-sm italic mb-4">Valitse tulos jokaiselle väylälle. Viimeinen väylä avaa lukituksen.</p>
+      <div className="sticky top-0 z-10 border-b border-white/10" style={{ background: '#17130F' }}>
+        <div className="flex items-center justify-between gap-2 py-3">
+          <div className="text-gc-muted text-[13px]"><span className="block text-white font-display font-bold text-xl">{scratch} lyöntiä</span>Scratch</div>
+          <span className={`font-display font-black text-[28px] ${delta < 0 ? 'text-gc-red' : 'text-white'}`}>{delta === 0 ? 'E' : delta > 0 ? `+${delta}` : delta}</span>
+          <span className="text-gc-muted text-[13px]">{points}p stableford</span>
+        </div>
+        <div className="flex items-center text-[11px] font-display font-semibold">
+          <span className="w-9 shrink-0 text-center text-white/60">Väylä</span>
+          <span className="ml-1 w-8 shrink-0 text-center text-[#E8A820]">Par</span>
+          <div className="ml-2 flex-1 min-w-0 grid grid-cols-6 text-center text-white/50">{LABELS.map((label, index) => (
+            <span key={label} className={`py-2 ${index === 1 ? 'bg-white/[0.05] border-x border-white/[0.12] text-white/80' : ''}`}>{label}</span>
+          ))}</div>
+        </div>
+      </div>
+      <div className="relative w-full select-none">
+        <div aria-hidden="true" className="absolute inset-y-0 right-0 grid grid-cols-6 pointer-events-none" style={{ left: 80 }}>
+          {CATEGORY_ORDER.map((category, index) => (
+            <div key={category} className={category === 'par'
+              ? 'bg-white/[0.05] border-x border-white/[0.12]'
+              : index > 2 ? 'border-l border-white/[0.04]' : ''} />
+          ))}
+        </div>
+        <svg className="absolute top-0 pointer-events-none" style={{ left: 80, width: 'calc(100% - 80px)', height: 1296 }} viewBox="0 0 100 1296" preserveAspectRatio="none" aria-hidden="true">
+          <polyline points={linePoints} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        </svg>
+        {value.holes.map((category, hole) => {
+          const x = drag?.hole === hole ? drag.x : category ? position(category) : null
+          const shownCategory = drag?.hole === hole ? categoryAt(drag.x) : category
           return (
-            <button
-              key={key}
-              onClick={() => setBrush(key)}
-              className="relative flex items-center justify-center transition-transform"
-              style={{
-                height: 44,
-                borderRadius: 8,
-                borderWidth: active ? 2 : 1,
-                borderStyle: 'solid',
-                borderColor: active ? meta.brushColor : 'rgba(255,255,255,0.12)',
-                background: active ? hexToRgba(meta.brushColor, 0.2) : EMPTY_CELL_BG,
-              }}
-            >
-              <BrushSymbol shape={meta.symbol} color={meta.brushSymbolColor} />
-              <span
-                className="absolute flex items-center justify-center font-bold text-white"
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  background: meta.brushColor,
-                  fontSize: 10,
-                  bottom: 2,
-                  right: 2,
-                  display: count > 0 ? 'flex' : 'none',
+            <div key={hole} className="flex items-center h-[72px]">
+              <span className="w-9 shrink-0 text-center font-display text-xl font-semibold text-white/70">{hole + 1}</span>
+              <span className="ml-1 w-8 shrink-0 text-center font-display text-xl font-bold text-[#E8A820]">{COMPOSITION_HOLE_PARS[hole]}</span>
+              <div
+                className="relative ml-2 flex-1 min-w-0 h-full cursor-ew-resize focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E8A820]"
+                style={{ touchAction: 'pan-y pinch-zoom' }}
+                role="slider" tabIndex={0} aria-label={`Väylä ${hole + 1}, par ${COMPOSITION_HOLE_PARS[hole]}`}
+                aria-valuemin={0} aria-valuemax={5} aria-valuenow={category ? CATEGORY_ORDER.indexOf(category) : 1}
+                aria-valuetext={category ? CATEGORY_META[category].fullLabel : 'Aseta viimeinen väylä'}
+                onPointerDown={e => start(e, hole)} onPointerMove={move} onPointerUp={end}
+                onPointerCancel={() => { gesture.current = null; setDrag(null) }}
+                onLostPointerCapture={() => { gesture.current = null; setDrag(null) }}
+                onKeyDown={e => {
+                  const index = category ? CATEGORY_ORDER.indexOf(category) : 1
+                  const next = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? Math.min(5, index + 1) : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? Math.max(0, index - 1) : e.key === 'Home' ? 0 : e.key === 'End' ? 5 : e.key === 'Enter' || e.key === ' ' ? index : null
+                  if (next !== null) { e.preventDefault(); select(hole, CATEGORY_ORDER[next]) }
                 }}
               >
-                {count}
-              </span>
-            </button>
+                <div className="absolute top-1/2 inset-x-0 h-px bg-white/[0.12]" />
+                {x !== null && shownCategory ? <div className="absolute top-1/2 pointer-events-none -translate-x-1/2 -translate-y-1/2" style={{ left: `${x}%` }}><Symbol category={shownCategory} /></div>
+                  : <span className="composition-pending absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full border border-dashed border-white/20" style={{ left: '25%' }} />}
+              </div>
+            </div>
           )
         })}
       </div>
-      <p className="text-gc-muted italic mb-3" style={{ fontSize: 13 }}>
-        {CATEGORY_META[brush].fullLabel} — {POINTS_PER_HOLE[brush]}p{POINTS_PER_HOLE[brush] > 0 ? '/väylä' : ''}
-      </p>
-
-      <div className="flex justify-end gap-3 mb-2">
-        {justCleared ? (
-          <span className="text-sm text-green-500 font-semibold px-1">Tyhjennetty ✓</span>
-        ) : (
-          <button onClick={reset} className="text-sm text-gc-muted px-1">
-            ✕ Tyhjennä
-          </button>
-        )}
-        <button
-          onClick={undo}
-          disabled={!canUndo}
-          className="text-sm text-gc-muted disabled:opacity-30 px-1"
-        >
-          ↩ Kumoa
-        </button>
-      </div>
-
-      <div className="space-y-3 select-none">
-        {[0, 1].map(rowIdx => (
-          <div key={rowIdx}>
-            <div className="grid grid-cols-9 gap-[3px] mb-1">
-              {HOLE_PARS.slice(rowIdx * 9, rowIdx * 9 + 9).map((par, i) => (
-                <div key={i} className="text-center text-gc-muted" style={{ fontSize: 12, fontWeight: 600 }}>
-                  {par}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-9 gap-[3px]">
-              {Array.from({ length: 9 }).map((_, i) => {
-                const holeIndex = rowIdx * 9 + i
-                const category = value.holes[holeIndex]
-                const meta = category ? CATEGORY_META[category] : null
-                const strokeCount = category ? strokeCountForHole(HOLE_PARS[holeIndex], category) : null
-                return (
-                  <div
-                    key={holeIndex}
-                    data-hole={holeIndex}
-                    onPointerDown={e => handlePointerDown(e, holeIndex)}
-                    className="touch-none cursor-pointer relative"
-                    style={{
-                      height: CELL_SIZE,
-                      borderRadius: 6,
-                      background: meta ? hexToRgba(meta.cellColor, meta.cellBgOpacity) : EMPTY_CELL_BG,
-                      border: meta ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
-                    {meta && meta.symbol !== 'none' && (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ opacity: 0.6 }}>
-                        <CellSymbol shape={meta.symbol} sizePx={Math.round((CELL_SIZE * meta.symbolSizePct) / 100)} color={meta.cellColor} />
-                      </div>
-                    )}
-                    {meta && (
-                      <div
-                        className="absolute inset-0 flex items-center justify-center font-display font-extrabold"
-                        style={{ fontSize: 18, color: meta.numberColor }}
-                      >
-                        {strokeCount}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <div className="flex justify-between mb-1">
-          <span className="text-gc-muted" style={{ fontSize: 14 }}>{total} / {TARGET} väylää maalattu</span>
-          {total === TARGET && <span className="text-green-500 font-bold">✓ Valmis!</span>}
-        </div>
-        <div className="rounded-full bg-white/10 overflow-hidden" style={{ height: 4 }}>
-          <div
-            className={`h-full rounded-full transition-all ${total === TARGET ? 'bg-green-500' : 'bg-gc-green'}`}
-            style={{ width: `${fillPct}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="mt-3 text-center">
-        <div
-          className="text-gc-muted font-semibold"
-          style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase' }}
-        >
-          Ennustettu tulos
-        </div>
-        <div className="font-display font-black" style={{ fontSize: 48, color: deltaColor }}>
-          {deltaLabel}
-        </div>
-        <div className="text-gc-muted" style={{ fontSize: 13 }}>
-          {points}p stableford
-        </div>
-      </div>
+      {value.holes[17] === null && <p className="text-center text-xs italic text-gc-muted mt-2">Aseta viimeinen väylä</p>}
     </div>
   )
 }

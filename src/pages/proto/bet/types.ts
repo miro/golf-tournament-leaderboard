@@ -68,11 +68,34 @@ export interface CompositionAnswer {
   holes: (HoleCategory | null)[] // 18 entries
 }
 
-export const EMPTY_COMPOSITION: CompositionAnswer = { holes: Array(18).fill(null) }
+// Prototype course pars, retained from the original composition grid.
+export const COMPOSITION_HOLE_PARS = [4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4]
+
+export const EMPTY_COMPOSITION: CompositionAnswer = { holes: [...Array<HoleCategory>(17).fill('par'), null] }
+
+export interface CompositionLineAnswer {
+  type: 'composition_line'
+  featured_player_id: string
+  holes: { hole: number; category: HoleCategory; par: number }[]
+  summary: Record<HoleCategory, number> & { predicted_points: number; stbl_delta: number }
+}
+
+export function lockComposition(value: CompositionAnswer, playerId: string): CompositionLineAnswer {
+  if (value.holes.length !== 18 || value.holes.some(category => category === null)) {
+    throw new Error('All 18 holes must be set before locking')
+  }
+  const predicted_points = compositionPoints(value)
+  return {
+    type: 'composition_line',
+    featured_player_id: playerId,
+    holes: value.holes.map((category, index) => ({ hole: index + 1, category: category!, par: COMPOSITION_HOLE_PARS[index] })),
+    summary: { ...compositionCounts(value), predicted_points, stbl_delta: 36 - predicted_points },
+  }
+}
 
 export interface BetAnswers {
   q1Score: number | null
-  q2Composition: CompositionAnswer
+  q2Composition: CompositionAnswer | CompositionLineAnswer
   q3BestGroup: string | null
   q4BestFront9: string | null
   q5BestBack9: string | null
@@ -94,17 +117,20 @@ export interface SeasonStanding {
   points: number
 }
 
-export function compositionTotal(c: CompositionAnswer): number {
+export function compositionTotal(c: CompositionAnswer | CompositionLineAnswer): number {
   return c.holes.filter(h => h !== null).length
 }
 
-export function compositionCounts(c: CompositionAnswer): Record<HoleCategory, number> {
+export function compositionCounts(c: CompositionAnswer | CompositionLineAnswer): Record<HoleCategory, number> {
   const counts: Record<HoleCategory, number> = { birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, worse: 0 }
-  for (const h of c.holes) if (h) counts[h]++
+  for (const h of c.holes) {
+    const category = typeof h === 'object' && h !== null ? h.category : h
+    if (category) counts[category]++
+  }
   return counts
 }
 
-export function compositionPoints(c: CompositionAnswer): number {
+export function compositionPoints(c: CompositionAnswer | CompositionLineAnswer): number {
   const counts = compositionCounts(c)
   return CATEGORY_ORDER.reduce((sum, key) => sum + counts[key] * POINTS_PER_HOLE[key], 0)
 }

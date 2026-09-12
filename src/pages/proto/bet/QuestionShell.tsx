@@ -7,7 +7,9 @@ interface Props {
   questionText: string
   context?: string
   lockDisabled: boolean
-  lockLabel?: string
+  lockLabel?: ReactNode
+  hideLock?: boolean
+  fadeLock?: boolean
   onLock: () => void
   transitioningOut: boolean
   children: ReactNode
@@ -19,6 +21,8 @@ export default function QuestionShell({
   context,
   lockDisabled,
   lockLabel = 'LUKITSE VEIKKAUS →',
+  hideLock = false,
+  fadeLock = false,
   onLock,
   transitioningOut,
   children,
@@ -51,13 +55,13 @@ export default function QuestionShell({
 
       <div className="mb-8">{children}</div>
 
-      <button
-        className="btn-primary w-full text-lg py-3 disabled:opacity-30 disabled:cursor-not-allowed"
+      {!hideLock && <button
+        className={`btn-primary w-full text-lg py-3 disabled:opacity-30 disabled:cursor-not-allowed ${fadeLock ? 'composition-lock-in' : ''}`}
         disabled={lockDisabled}
         onClick={onLock}
       >
         {lockLabel}
-      </button>
+      </button>}
     </div>
   )
 }

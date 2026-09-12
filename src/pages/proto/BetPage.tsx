@@ -10,7 +10,7 @@ import BeatTheLeaderQuestion from './bet/BeatTheLeaderQuestion'
 import YesNoQuestion from './bet/YesNoQuestion'
 import PodiumQuestion from './bet/PodiumQuestion'
 import CompletionScreen from './bet/CompletionScreen'
-import { EMPTY_COMPOSITION, type BetAnswers, type RandomAssignment, type SeasonStanding, compositionTotal } from './bet/types'
+import { EMPTY_COMPOSITION, type BetAnswers, type RandomAssignment, type SeasonStanding, compositionTotal, compositionPoints, lockComposition } from './bet/types'
 
 const COMBINED_QUESTION_INDEX = 2
 const AFTER_COMBINED_INDEX = 6
@@ -145,6 +145,8 @@ export default function BetPage() {
   const { playerA, playerB, targetPlayer, roster } = assignment
   const playerById = new Map(roster.map(p => [p.id, p]))
   const q2Total = compositionTotal(answers.q2Composition)
+  const q2Delta = 36 - compositionPoints(answers.q2Composition)
+  const q2DeltaLabel = q2Delta === 0 ? 'E' : q2Delta > 0 ? `+${q2Delta}` : `${q2Delta}`
 
   return (
     <div className="min-h-screen bg-gc-dark">
@@ -178,12 +180,22 @@ export default function BetPage() {
             questionText={`Miten ${playerB.full_name}:n kierros menee?`}
             context={`HCP ${playerB.hcp_current ?? '–'} · Kajaani Par ${course.par_total}`}
             lockDisabled={q2Total !== 18}
-            lockLabel={q2Total === 18 ? undefined : `Maalaa vielä ${Math.abs(18 - q2Total)} väylää`}
-            onLock={commit}
+            lockLabel={<>
+              <span className="block normal-case text-xl leading-tight break-words">{playerB.full_name} {q2DeltaLabel}</span>
+              <span className="block text-sm mt-1">LUKITSE VEIKKAUS →</span>
+            </>}
+            hideLock={q2Total !== 18}
+            fadeLock
+            onLock={() => {
+              if ('type' in answers.q2Composition || q2Total !== 18) return
+              const payload = lockComposition(answers.q2Composition, playerB.id)
+              setAnswers(a => ({ ...a, q2Composition: payload }))
+              commit()
+            }}
             transitioningOut={transitioningOut}
           >
             <CompositionQuestion
-              value={answers.q2Composition}
+              value={'type' in answers.q2Composition ? { holes: answers.q2Composition.holes.map(h => h.category) } : answers.q2Composition}
               onChange={v => setAnswers(a => ({ ...a, q2Composition: v }))}
             />
           </QuestionShell>

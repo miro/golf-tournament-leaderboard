@@ -1,7 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Player } from '../../../lib/database.types'
+import { playerImagePath } from '../../../lib/playerImage'
 import InitialsAvatar from '../../../components/shared/InitialsAvatar'
 import type { SeasonStanding } from './types'
+
+function PlayerPortrait({ name }: { name: string }) {
+  const [failed, setFailed] = useState(false)
+  return (
+    <div className="relative w-full aspect-[4/3] overflow-hidden bg-gc-dark">
+      {failed ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <InitialsAvatar name={name} size={88} color="#2D6A4F" />
+        </div>
+      ) : (
+        <img src={playerImagePath(name)} alt={name} draggable={false}
+          onError={() => setFailed(true)}
+          className="w-full h-full object-cover object-center" />
+      )}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-transparent to-black/10" />
+      <img src="/gc-logo.png" alt="" className="absolute top-3 left-3 h-7 w-auto invert drop-shadow-lg" />
+    </div>
+  )
+}
 
 export type BetKey = 'best_total' | 'best_front' | 'best_back' | 'best_scratch'
 
@@ -41,7 +61,6 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
   const playersById = new Map(players.map(p => [p.id, p]))
   const containerRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
-  const betChipRefs = useRef<(HTMLButtonElement | null)[]>([])
   const rafRef = useRef<number | null>(null)
   const [centeredIndex, setCenteredIndex] = useState(0)
   const [activeBet, setActiveBet] = useState<BetKey | null>(() => firstUnassigned(assignments))
@@ -106,12 +125,6 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
     updateCentered()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    if (activeBet === null) return
-    const idx = BET_TYPES.findIndex(b => b.key === activeBet)
-    betChipRefs.current[idx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-  }, [activeBet])
 
   function handleChipClick(key: BetKey) {
     if (assignments[key]) {
@@ -189,8 +202,8 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
         Jaa veikkaukset haluamillesi pelaajille
       </p>
 
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1 mb-3">
-        {BET_TYPES.map((bet, betIdx) => {
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        {BET_TYPES.map(bet => {
           const assignedPlayerId = assignments[bet.key]
           const assignedPlayer = assignedPlayerId ? playersById.get(assignedPlayerId) : null
           const isActive = activeBet === bet.key
@@ -198,31 +211,27 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
           return (
             <button
               key={bet.key}
-              ref={el => {
-                betChipRefs.current[betIdx] = el
-              }}
               onClick={() => handleChipClick(bet.key)}
-              className="relative shrink-0 flex flex-col items-center justify-center transition-transform"
+              className="relative min-w-0 flex flex-col items-center justify-center"
               style={{
-                minHeight: 44,
-                padding: '8px 14px',
-                borderRadius: 22,
-                borderWidth: isActive ? 2 : 1,
+                minHeight: 64,
+                padding: '10px 8px',
+                borderRadius: 12,
+                borderWidth: 2,
                 borderStyle: 'solid',
                 borderColor: isActive ? '#E8A820' : isAssigned ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.12)',
                 background: isActive ? 'rgba(232,168,32,0.2)' : '#2a2520',
-                transform: isActive ? 'scale(1.05)' : 'scale(1)',
               }}
             >
-              <div className="flex items-center" style={{ gap: 8 }}>
+              <div className="flex min-w-0 items-center" style={{ gap: 6 }}>
                 <span>{bet.icon}</span>
-                <span className={`font-display font-semibold text-sm whitespace-nowrap ${isActive ? 'text-white' : 'text-gc-muted'}`}>
+                <span className={`font-display font-semibold text-sm leading-tight [overflow-wrap:anywhere] ${isActive ? 'text-white' : 'text-gc-muted'}`}>
                   {bet.label}
                 </span>
               </div>
               {isAssigned && assignedPlayer && (
                 <span
-                  className="text-gc-green font-semibold whitespace-nowrap animate-chip-name-fade-in"
+                  className="text-gc-green font-semibold max-w-full break-words animate-chip-name-fade-in"
                   style={{ fontSize: 10 }}
                 >
                   {assignedPlayer.full_name.split(' ')[0]}
@@ -257,12 +266,12 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
       <div
         ref={containerRef}
         onScroll={onScroll}
-        className="flex items-start overflow-x-auto snap-x snap-mandatory no-scrollbar gap-4 pl-[17.5%] pr-[17.5%]"
+        className="flex items-start overflow-x-auto snap-x snap-mandatory no-scrollbar gap-3 px-[16%]"
       >
         {sorted.map((p, i) => {
           const diff = Math.abs(i - centeredIndex)
-          const opacity = diff === 0 ? 1 : diff === 1 ? 0.5 : 0.2
-          const scale = diff === 0 ? 1 : diff === 1 ? 0.85 : 0.75
+          const opacity = diff === 0 ? 1 : diff === 1 ? 0.7 : 0.35
+          const scale = diff === 0 ? 1 : diff === 1 ? 0.94 : 0.88
           const standing = standingsByPlayer.get(p.id)
 
           const assignedKeys = BET_TYPES.filter(b => assignments[b.key] === p.id).map(b => b.key)
@@ -287,20 +296,20 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
                 cardRefs.current[i] = el
               }}
               onClick={() => handleCardTap(i)}
-              className="shrink-0 snap-center flex flex-col items-center text-center w-[65%] cursor-pointer"
+              className="shrink-0 snap-center flex flex-col items-center text-center w-full min-w-0 overflow-hidden cursor-pointer"
               style={{
                 background: cardBg,
                 border: `${cardBorderWidth}px solid ${cardBorderColor}`,
                 borderRadius: 16,
-                padding: '24px 24px 20px 24px',
                 opacity,
                 transform: `scale(${scale})`,
                 transformOrigin: 'top center',
                 transition: 'transform 200ms ease, opacity 200ms ease, background-color 200ms ease, border-color 200ms ease',
               }}
             >
-              <InitialsAvatar name={p.full_name} size={72} color="#2D6A4F" />
-              <div className="font-display font-bold text-white mt-4" style={{ fontSize: 22 }}>
+              <PlayerPortrait name={p.full_name} />
+              <div className="w-full px-3 pb-4 border-t border-white/10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px)' }}>
+              <div className="font-display font-bold text-white mt-4 max-w-full break-words" style={{ fontSize: 22 }}>
                 {p.full_name}
               </div>
               <div className="text-gc-muted mt-1" style={{ fontSize: 14 }}>
@@ -318,9 +327,9 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
               )}
 
               {orderedChips.length > 0 && (
-                <div className="w-full animate-totem-divider-in" style={{ margin: '0 -24px 0 -24px', width: 'calc(100% + 48px)' }}>
+                <div className="w-full animate-totem-divider-in" style={{ marginTop: 16 }}>
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', margin: '0 12px' }} />
-                  <div className="flex flex-col" style={{ padding: '8px 12px 12px 12px' }}>
+                  <div className="flex flex-col" style={{ padding: '8px 0 0' }}>
                     {orderedChips.map(bet => {
                       const isEntering = enteringChip?.key === bet.key && enteringChip.playerId === p.id
                       const isExiting = exitingChip?.key === bet.key && exitingChip.playerId === p.id && !assignedKeys.includes(bet.key)
@@ -332,20 +341,21 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
                             isExiting ? 'animate-totem-chip-out' : ''
                           }`}
                           style={{
-                            height: 32,
-                            padding: '0 10px',
+                            minHeight: 44,
+                            padding: '6px 10px',
                             borderRadius: 6,
                             background: 'rgba(232,168,32,0.12)',
                             border: '1px solid rgba(232,168,32,0.30)',
                             marginBottom: 6,
                           }}
                         >
-                          <span className="text-white font-bold truncate" style={{ fontSize: 12 }}>
+                          <span className="text-white font-bold min-w-0 text-left break-words" style={{ fontSize: 12 }}>
                             {bet.icon} {bet.label}
                           </span>
                           <button
                             onClick={() => removeViaTotem(bet.key)}
-                            className="text-gc-muted shrink-0"
+                            aria-label={`Poista ${bet.label}`}
+                            className="text-gc-muted shrink-0 flex items-center justify-center min-w-8 min-h-8"
                             style={{ fontSize: 14, marginLeft: 6 }}
                           >
                             ✕
@@ -356,6 +366,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
                   </div>
                 </div>
               )}
+              </div>
             </div>
           )
         })}
