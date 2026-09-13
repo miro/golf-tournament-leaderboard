@@ -373,15 +373,26 @@ export default function PublicBetPage() {
     return nextIndex
   }
 
-  async function loadResults(eventId: string, currentParticipantId: string) {
+  async function loadResults(eventId: string, currentParticipantId: string, identityToken?: string | null) {
     const [{ data: participants, error: participantError }, { data: bets, error: betError }] = await Promise.all([
       db.from('betting_participants').select('*').eq('event_id', eventId).order('submitted_at', { ascending: true }),
       db.from('bets').select('*').eq('participant_id', currentParticipantId),
     ])
     if (participantError) throw participantError
-    if (betError) throw betError
+    let resolvedBets = (bets ?? []) as unknown as BetRow[]
+    if ((!resolvedBets.length || betError) && identityToken) {
+      const securedBets = await db.rpc('get_public_betting_bets', {
+        p_event_id: eventId,
+        p_participant_id: currentParticipantId,
+        p_identity_token: identityToken,
+      })
+      if (!securedBets.error && Array.isArray(securedBets.data) && securedBets.data.length) {
+        resolvedBets = securedBets.data as BetRow[]
+      }
+    }
+    if (betError && !resolvedBets.length) throw betError
     const all = (participants ?? []) as unknown as Participant[]
-    const loadedResult = { current: all.find(participant => participant.id === currentParticipantId) ?? null, bets: (bets ?? []) as unknown as BetRow[], participants: all }
+    const loadedResult = { current: all.find(participant => participant.id === currentParticipantId) ?? null, bets: resolvedBets, participants: all }
     setResult(loadedResult)
     if (loadedResult.bets.length) clearDraft(eventId)
     return loadedResult
@@ -401,7 +412,7 @@ export default function PublicBetPage() {
     )
     for (const participant of matchingParticipants) {
       try {
-        const loadedResult = await loadResults(eventId, participant.id)
+        const loadedResult = await loadResults(eventId, participant.id, currentIdentity.identity_token)
         if (loadedResult.bets.length) return { participant, loadedResult }
       } catch {
         // Continue checking duplicate participant rows for this identity.
@@ -516,7 +527,7 @@ export default function PublicBetPage() {
         if (loadedEvent.status === 'draft') { setMessage('Veikkaukset eivät ole vielä auki'); setStage('message'); return }
         if (savedSubmission?.submitted) {
           try {
-            const loadedResult = await loadResults(loadedEvent.id, savedSubmission.participant_id)
+            const loadedResult = await loadResults(loadedEvent.id, savedSubmission.participant_id, savedIdentity?.identity_token)
             if (loadedResult.bets.length) {
               setParticipantId(savedSubmission.participant_id)
               if (loadedResult.current) setIsEventPlayer(Boolean(loadedResult.current.is_event_player))
@@ -555,7 +566,7 @@ export default function PublicBetPage() {
           let resumableParticipant: Participant | undefined
           for (const matchingParticipant of matchingParticipants) {
             try {
-              const serverResult = await loadResults(loadedEvent.id, matchingParticipant.id)
+              const serverResult = await loadResults(loadedEvent.id, matchingParticipant.id, savedIdentity.identity_token)
               if (serverResult.bets.length) {
                 setParticipantId(matchingParticipant.id)
                 setIsEventPlayer(Boolean(matchingParticipant.is_event_player))
