@@ -213,7 +213,7 @@ function PodiumPicker({ players, value, onChange, seasonalHandicaps = {} }: { pl
     placementTimer.current = setTimeout(() => {
       setDepartingSelection({ playerId, slot, phase: 'medal' })
       onChange({ first: next[0], second: next[1], third: next[2] })
-      collapseTimer.current = setTimeout(() => setDepartingSelection(null), 320)
+      collapseTimer.current = setTimeout(() => setDepartingSelection(null), 760)
     }, 220)
   }
 
