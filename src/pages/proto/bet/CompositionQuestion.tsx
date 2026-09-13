@@ -46,7 +46,7 @@ export default function CompositionQuestion({ value, onChange, playerHandicap = 
   const scratch = value.holes.reduce<number>((sum, category, hole) => sum + (category ? strokeCountForHole(holePars[hole] ?? COMPOSITION_HOLE_PARS[hole], category) : 0), 0)
   const stablefordPoints = value.holes.reduce<number>((sum, category, hole) => sum + (stablefordForHole(category, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1) ?? 0), 0)
   const delta = 36 - points
-  const infoWidth = showStablefordPreview ? 88 : 80
+  const infoWidth = 80
 
   function select(hole: number, category: HoleCategory) {
     onChange({ holes: value.holes.map((current, index) => index === hole ? category : current) })
@@ -101,7 +101,7 @@ export default function CompositionQuestion({ value, onChange, playerHandicap = 
         </div>
         <div className="flex items-center text-[11px] font-display font-semibold">
           <span className="w-9 shrink-0 text-center text-white/60">Väylä</span>
-          <span className={`ml-1 ${showStablefordPreview ? 'w-10' : 'w-8'} shrink-0 text-center text-league-primary`}>{showStablefordPreview ? 'Par / SI' : 'Par'}</span>
+          <span className="ml-1 w-8 shrink-0 text-center text-league-primary">Par</span>
           <div className="ml-2 flex-1 min-w-0 grid grid-cols-6 text-center text-white/50">{LABELS.map((label, index) => (
             <span key={label} className={`py-2 ${index === 1 ? 'bg-white/[0.05] border-x border-white/[0.12] text-white/80' : ''}`}>{label}</span>
           ))}</div>
@@ -124,7 +124,7 @@ export default function CompositionQuestion({ value, onChange, playerHandicap = 
           return (
             <div key={hole} className="flex items-center h-[72px]">
               <span className="w-9 shrink-0 text-center font-display text-xl font-semibold text-white/70">{hole + 1}</span>
-              <span className={`ml-1 flex ${showStablefordPreview ? 'w-10' : 'w-8'} shrink-0 flex-col items-center justify-center text-center font-display font-bold text-league-primary`}><span className="text-xl leading-none">{holePars[hole] ?? COMPOSITION_HOLE_PARS[hole]}</span>{showStablefordPreview && <><span className="mt-1 text-[9px] leading-none text-white/50">SI {holeHandicapIndexes[hole] ?? hole + 1}</span><span className="mt-1 text-[10px] leading-none text-white/70">{stablefordForHole(shownCategory, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1) == null ? '–' : `${stablefordForHole(shownCategory, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1)}p`}</span></>}</span>
+              <span className="ml-1 flex w-8 shrink-0 flex-col items-center justify-center text-center font-display font-bold text-league-primary"><span className="text-xl leading-none">{holePars[hole] ?? COMPOSITION_HOLE_PARS[hole]}</span>{showStablefordPreview && <span className="mt-1 text-[10px] leading-none text-white/70">{stablefordForHole(shownCategory, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1) == null ? '–' : `${stablefordForHole(shownCategory, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1)}p`}</span>}</span>
               <div
                 className="relative ml-2 flex-1 min-w-0 h-full cursor-ew-resize focus-visible:outline focus-visible:outline-2 focus-visible:outline-league-primary"
                 style={{ touchAction: 'pan-y pinch-zoom' }}

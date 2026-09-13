@@ -283,9 +283,8 @@ export default function PublicBetPage() {
         if (loadedEvent.course_id) {
           try {
             const { data: rounds, error: roundsError } = await db.from('rounds')
-              .select('id, player_id, hcp_at_time, played_date, submitted_at')
+              .select('id, player_id, course_id, hcp_at_time, played_date, submitted_at')
               .eq('league_id', loadedEvent.league_id)
-              .eq('course_id', loadedEvent.course_id)
               .eq('status', 'published')
               .order('played_date', { ascending: false })
               .order('submitted_at', { ascending: false })
@@ -293,21 +292,23 @@ export default function PublicBetPage() {
             if (!roundsError && rounds?.length) {
               const eventPlayerIds = new Set(loadedEventPlayers.map(item => item.player_id))
               const fallbackHcps: Record<string, number> = {}
-              for (const round of rounds as Array<{ id: string; player_id: string; hcp_at_time: number | null }>) {
+              for (const round of rounds as Array<{ id: string; player_id: string; course_id: string; hcp_at_time: number | null }>) {
                 if (eventPlayerIds.has(round.player_id) && round.hcp_at_time != null && fallbackHcps[round.player_id] == null) fallbackHcps[round.player_id] = Number(round.hcp_at_time)
               }
               setPlayerHandicaps(fallbackHcps)
-              const sampleRoundId = (rounds[0] as { id: string }).id
-              const { data: holes, error: holesError } = await db.from('hole_results')
-                .select('hole_number, par, stroke_index')
-                .eq('round_id', sampleRoundId)
-                .order('hole_number')
-              if (!holesError && holes?.length) {
-                const byHole = new Map((holes as Array<{ hole_number: number; par: number; stroke_index: number }>).map(hole => [hole.hole_number, hole]))
-                setHoleGuide(parameterPars.map((par, index) => {
-                  const hole = byHole.get(index + 1)
-                  return { par: Number(hole?.par ?? par), stroke_index: Number(hole?.stroke_index ?? parameterIndexes[index] ?? index + 1) }
-                }))
+              const sampleRoundId = (rounds as Array<{ id: string; course_id: string }>).find(round => round.course_id === loadedEvent.course_id)?.id
+              if (sampleRoundId) {
+                const { data: holes, error: holesError } = await db.from('hole_results')
+                  .select('hole_number, par, stroke_index')
+                  .eq('round_id', sampleRoundId)
+                  .order('hole_number')
+                if (!holesError && holes?.length) {
+                  const byHole = new Map((holes as Array<{ hole_number: number; par: number; stroke_index: number }>).map(hole => [hole.hole_number, hole]))
+                  setHoleGuide(parameterPars.map((par, index) => {
+                    const hole = byHole.get(index + 1)
+                    return { par: Number(hole?.par ?? par), stroke_index: Number(hole?.stroke_index ?? parameterIndexes[index] ?? index + 1) }
+                  }))
+                }
               }
             }
           } catch {
