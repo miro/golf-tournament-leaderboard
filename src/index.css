@@ -214,6 +214,12 @@
 }
 .animate-podium-selection { animation: podium-selection 240ms ease-out both; }
 
+@keyframes podium-rank-reveal {
+  0% { opacity: 0; transform: scale(0.78); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-podium-rank-reveal { animation: podium-rank-reveal 260ms ease-out both; }
+
 @keyframes player-pick-confirm {
   0% { transform: translateY(0) scale(1); }
   45% { transform: translateY(-8px) scale(1.04); }
@@ -222,5 +228,5 @@
 .animate-player-pick-confirm { animation: player-pick-confirm 300ms ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .composition-pending, .composition-lock-in, .animate-podium-slot-in, .animate-podium-selection, .animate-player-pick-confirm { animation: none; }
+  .composition-pending, .composition-lock-in, .animate-podium-slot-in, .animate-podium-selection, .animate-podium-rank-reveal, .animate-player-pick-confirm { animation: none; }
 }
