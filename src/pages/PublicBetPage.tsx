@@ -471,7 +471,16 @@ export default function PublicBetPage() {
         setIdentity(savedIdentity)
         if (savedDraft?.answers && typeof savedDraft.answers === 'object') {
           setAnswers(savedDraft.answers)
-          setCurrentQuestion(Math.min(Math.max(savedDraft.current_question ?? 0, 0), Math.max(loadedQuestions.length - 1, 0)))
+          const savedQuestionIndex = Math.min(Math.max(savedDraft.current_question ?? 0, 0), Math.max(loadedQuestions.length - 1, 0))
+          const groupedQuestionIndexes = loadedQuestions
+            .map((question, index) => COMBINED_KEY_BY_QUESTION[question.question_type.key] != null ? index : -1)
+            .filter(index => index >= 0)
+          const groupedQuestionSet = groupedQuestionIndexes.length >= 1 && groupedQuestionIndexes.length <= 4 ? new Set(groupedQuestionIndexes) : new Set<number>()
+          const firstIncompleteIndex = loadedQuestions.findIndex(question => savedDraft.answers[question.id] == null)
+          const resumeIndex = firstIncompleteIndex >= 0 && savedQuestionIndex > firstIncompleteIndex
+            ? groupedQuestionSet.has(firstIncompleteIndex) ? Math.min(...groupedQuestionIndexes) : firstIncompleteIndex
+            : savedQuestionIndex
+          setCurrentQuestion(resumeIndex)
         }
         if (loadedEvent.status === 'draft') { setMessage('Veikkaukset eivät ole vielä auki'); setStage('message'); return }
         if (savedSubmission?.submitted) {
