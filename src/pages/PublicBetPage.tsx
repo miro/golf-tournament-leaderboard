@@ -182,11 +182,16 @@ function PlayerCarousel({ players, selectedId, confirming = false, onSelect, sta
 
 function PodiumPicker({ players, value, onChange, seasonalHandicaps = {} }: { players: Player[]; value: PodiumAnswer; onChange: (value: PodiumAnswer) => void; seasonalHandicaps?: Record<string, number> }) {
   const [recentSelection, setRecentSelection] = useState<{ playerId: string; slot: number } | null>(null)
+  const [animatingPlayerId, setAnimatingPlayerId] = useState<string | null>(null)
   const selectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const placementTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const slots = [value.first, value.second, value.third]
   const medals = ['\u{1F947}', '\u{1F948}', '\u{1F949}']
 
-  useEffect(() => () => { if (selectionTimer.current) clearTimeout(selectionTimer.current) }, [])
+  useEffect(() => () => {
+    if (selectionTimer.current) clearTimeout(selectionTimer.current)
+    if (placementTimer.current) clearTimeout(placementTimer.current)
+  }, [])
 
   const remove = (index: number) => {
     const next = [...slots]
@@ -196,13 +201,17 @@ function PodiumPicker({ players, value, onChange, seasonalHandicaps = {} }: { pl
 
   const selectPlayer = (playerId: string) => {
     const slot = slots.findIndex(value => value === null)
-    if (slot < 0) return
+    if (slot < 0 || animatingPlayerId) return
     const next = [...slots]
     next[slot] = playerId
     setRecentSelection({ playerId, slot })
+    setAnimatingPlayerId(playerId)
     if (selectionTimer.current) clearTimeout(selectionTimer.current)
     selectionTimer.current = setTimeout(() => setRecentSelection(null), 650)
-    onChange({ first: next[0], second: next[1], third: next[2] })
+    placementTimer.current = setTimeout(() => {
+      setAnimatingPlayerId(null)
+      onChange({ first: next[0], second: next[1], third: next[2] })
+    }, 220)
   }
 
   const recentPlayer = recentSelection ? players.find(player => player.id === recentSelection.playerId) : null
@@ -225,7 +234,7 @@ function PodiumPicker({ players, value, onChange, seasonalHandicaps = {} }: { pl
       </div>
       <div className="mb-2 min-h-[16px] text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }} aria-live="polite">{recentPlayer && recentSelection ? <span className="inline-block normal-case tracking-normal text-league-primary animate-podium-selection">{recentPlayer.full_name} → {recentSelection.slot + 1}. sija</span> : 'Valitse pelaajat'}</div>
       <div className="grid max-h-[38vh] grid-cols-2 gap-2 overflow-y-auto">
-        {players.filter(player => !slots.includes(player.id)).map(player => <PlayerCard key={player.id} player={player} hcpOverride={seasonalHandicaps[player.id]} compact onClick={() => selectPlayer(player.id)} />)}
+        {players.filter(player => !slots.includes(player.id)).map(player => <PlayerCard key={player.id} player={player} hcpOverride={seasonalHandicaps[player.id]} compact confirming={animatingPlayerId === player.id} onClick={() => selectPlayer(player.id)} />)}
       </div>
     </div>
   )
