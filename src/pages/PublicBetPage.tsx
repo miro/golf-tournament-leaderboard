@@ -347,11 +347,13 @@ export default function PublicBetPage() {
     () => questions.filter(question => COMBINED_KEY_BY_QUESTION[question.question_type.key] != null),
     [questions],
   )
-  const combinedQuestionIndexes = combinedPlayerQuestions.map(question => questions.indexOf(question))
-  const combinedStartIndex = combinedPlayerQuestions.length === 4 && Math.max(...combinedQuestionIndexes) - Math.min(...combinedQuestionIndexes) === 3
-    ? Math.min(...combinedQuestionIndexes)
-    : -1
-  const combinedEndIndex = combinedStartIndex >= 0 ? combinedStartIndex + 3 : -1
+  const combinedQuestionIndexes = useMemo(
+    () => combinedPlayerQuestions.map(question => questions.indexOf(question)),
+    [combinedPlayerQuestions, questions],
+  )
+  const combinedQuestionIndexSet = useMemo(() => new Set(combinedQuestionIndexes), [combinedQuestionIndexes])
+  const combinedStartIndex = combinedPlayerQuestions.length === 4 ? Math.min(...combinedQuestionIndexes) : -1
+  const combinedEndIndex = combinedPlayerQuestions.length === 4 ? Math.max(...combinedQuestionIndexes) : -1
   const standingsByPlayer = useMemo(() => {
     const entries: Array<[string, { rank: number; points: number }]> = []
     players.forEach(player => {
@@ -360,6 +362,12 @@ export default function PublicBetPage() {
     })
     return new Map(entries)
   }, [players, seasonStats])
+
+  function nextRegularQuestionIndex(afterIndex: number) {
+    let nextIndex = afterIndex + 1
+    while (nextIndex < questions.length && combinedQuestionIndexSet.has(nextIndex)) nextIndex += 1
+    return nextIndex
+  }
 
   async function loadResults(eventId: string, currentParticipantId: string) {
     const [{ data: participants, error: participantError }, { data: bets, error: betError }] = await Promise.all([
@@ -596,17 +604,21 @@ export default function PublicBetPage() {
 
   function lockCombined() {
     if (submitting || combinedEndIndex < 0) return
-    if (combinedEndIndex === questions.length - 1) { submitAnswers(); return }
+    const nextIndex = nextRegularQuestionIndex(currentQuestion === combinedStartIndex ? combinedStartIndex : combinedEndIndex)
+    if (nextIndex >= questions.length) { submitAnswers(); return }
     setMoving(true)
-    window.setTimeout(() => { setCurrentQuestion(combinedEndIndex + 1); setMoving(false) }, 180)
+    window.setTimeout(() => { setCurrentQuestion(nextIndex); setMoving(false) }, 180)
   }
 
   function lockQuestion() {
     if (submitting) return
     if (!questions[currentQuestion]) return
     if (currentQuestion === questions.length - 1) { submitAnswers(); return }
+    const nextIndex = currentQuestion + 1 === combinedStartIndex
+      ? combinedStartIndex
+      : nextRegularQuestionIndex(currentQuestion)
     setMoving(true)
-    window.setTimeout(() => { setCurrentQuestion(index => index + 1); setMoving(false) }, 180)
+    window.setTimeout(() => { setCurrentQuestion(nextIndex); setMoving(false) }, 180)
   }
 
   if (!event || stage === 'message') return <PageMessage>{message}</PageMessage>
@@ -614,7 +626,7 @@ export default function PublicBetPage() {
   if (stage === 'identity') return <IdentityForm event={event} initialIdentity={identity} onSubmit={createOrRecoverParticipant} busy={identityBusy} />
   if (stage === 'returning' && identity) return <ReturningIdentity event={event} identity={identity} onContinue={(code) => createOrRecoverParticipant(identity.display_name, identity.pin, code)} onChangeIdentity={changeIdentity} onLogout={logout} busy={identityBusy} />
   if (stage === 'wrong-code') return <WrongCodeNotice onRetry={retryParticipantCode} onContinue={() => setStage('questions')} onLogout={logout} />
-  if (stage === 'questions' && currentQuestion === combinedStartIndex) {
+  if (stage === 'questions' && combinedStartIndex >= 0 && combinedQuestionIndexSet.has(currentQuestion)) {
     const assignments = Object.fromEntries(combinedPlayerQuestions.map(question => [COMBINED_KEY_BY_QUESTION[question.question_type.key], typeof answers[question.id] === 'string' ? answers[question.id] : null])) as CombinedAssignments
     return <MainShell onLogout={logout}><CombinedPlayerPickScreen players={players} standingsByPlayer={standingsByPlayer} assignments={assignments} onAssign={assignCombined} onLock={lockCombined} transitioningOut={moving} seasonalHandicaps={playerHandicaps} questionStartIndex={combinedStartIndex} totalQuestions={questions.length} /></MainShell>
   }
