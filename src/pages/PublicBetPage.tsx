@@ -470,6 +470,30 @@ export default function PublicBetPage() {
           setCurrentQuestion(Math.min(Math.max(savedDraft.current_question ?? 0, 0), Math.max(loadedQuestions.length - 1, 0)))
         }
         if (loadedEvent.status === 'draft') { setMessage('Veikkaukset eivät ole vielä auki'); setStage('message'); return }
+        if (savedIdentity) {
+          const { data: matchingParticipants, error: matchingParticipantError } = await db.from('betting_participants')
+            .select('*')
+            .eq('event_id', loadedEvent.id)
+            .eq('identity_token', savedIdentity.identity_token)
+            .order('submitted_at', { ascending: false })
+            .limit(1)
+          const matchingParticipant = !matchingParticipantError ? (matchingParticipants?.[0] as Participant | undefined) : undefined
+          if (matchingParticipant) {
+            setParticipantId(matchingParticipant.id)
+            setIsEventPlayer(Boolean(matchingParticipant.is_event_player))
+            try {
+              const serverResult = await loadResults(loadedEvent.id, matchingParticipant.id)
+              if (serverResult.bets.length) {
+                writeStorage(submissionKey(loadedEvent.id), { submitted: true, participant_id: matchingParticipant.id, submitted_at: matchingParticipant.submitted_at } satisfies Submission)
+                setStage('results')
+                return
+              }
+            } catch {
+              // Continue through the normal identity flow if the optional resume read fails.
+            }
+            if (loadedEvent.status === 'betting_open') { setStage('questions'); return }
+          }
+        }
         if (savedSubmission?.submitted) {
           setParticipantId(savedSubmission.participant_id)
           const loadedResult = await loadResults(loadedEvent.id, savedSubmission.participant_id)
@@ -523,13 +547,17 @@ export default function PublicBetPage() {
         setParticipantId(createdId)
       }
       setIsEventPlayer(codeCorrect)
-      const { data: existingBets, error: existingBetsError } = await db.from('bets').select('id').eq('participant_id', createdId).limit(1)
-      if (!existingBetsError && existingBets?.length) {
-        const submission: Submission = { submitted: true, participant_id: createdId, submitted_at: new Date().toISOString() }
-        writeStorage(submissionKey(event.id), submission)
-        await loadResults(event.id, createdId)
-        setStage('results')
-        return
+      if (!createdId) throw new Error('Osallistujaa ei löytynyt')
+      try {
+        const existingResult = await loadResults(event.id, createdId)
+        if (existingResult.bets.length) {
+          const submission: Submission = { submitted: true, participant_id: createdId, submitted_at: existingResult.current?.submitted_at ?? new Date().toISOString() }
+          writeStorage(submissionKey(event.id), submission)
+          setStage('results')
+          return
+        }
+      } catch {
+        // The participant can still continue if the optional existing-bets read fails.
       }
       if (code && !codeCorrect) setStage('wrong-code')
       else setStage('questions')
@@ -586,6 +614,19 @@ export default function PublicBetPage() {
       setAnswers(submittedAnswers)
       setStage('complete')
     } catch (error) {
+      const submitError = error as { code?: string; message?: string }
+      if (participantId && (submitError.code === 'P0001' || submitError.message?.includes('Veikkaukset on jo lähetetty'))) {
+        try {
+          const existingResult = await loadResults(event.id, participantId)
+          if (existingResult.bets.length) {
+            writeStorage(submissionKey(event.id), { submitted: true, participant_id: participantId, submitted_at: existingResult.current?.submitted_at ?? new Date().toISOString() } satisfies Submission)
+            setStage('results')
+            return
+          }
+        } catch {
+          // Fall through to the normal submission error if the existing result cannot be loaded.
+        }
+      }
       setMessage(error instanceof Error ? error.message : 'Veikkausten lähetys epäonnistui')
       setStage('submit-error')
     } finally { setSubmitting(false) }
