@@ -8,7 +8,7 @@ export type EventRow = {
 }
 export type EventPlayer = { event_id: string; player_id: string; display_order: number; player: Player }
 export type QuestionType = { id: string; key: string; display_name: string; description: string; max_points: number; requires_target_player: boolean; active: boolean }
-export type EventQuestion = { id: string; event_id: string; question_type_id: string; question_type_key: string | null; display_order: number; question_text: string | null; parameters: Record<string, unknown>; correct_answer: unknown; question_type: QuestionType }
+export type EventQuestion = { id: string; event_id: string; question_type_id: string; question_type_key: string | null; display_order: number; question_text: string | null; points_possible: number | null; parameters: Record<string, unknown>; correct_answer: unknown; question_type: QuestionType }
 export type EventParticipant = { id: string; event_id: string; display_name: string; emoji_pin: string | null; pin: string | null; identity_token: string | null; bettor_account_id: string | null; is_event_player: boolean; submitted_at: string; total_points_awarded: number }
 export type EventScore = { id: string; event_id: string; player_id: string; played_date: string; total_points: number; total_strokes: number | null; submitted_at: string; is_corrected: boolean; player?: Player; holes?: Array<{ id: string; event_score_id: string; hole_number: number; points: number }> }
 
@@ -80,7 +80,7 @@ export async function getEventScores(eventId: string): Promise<EventScore[]> {
   return [...byScore.values()]
 }
 
-export async function createEvent(payload: { name: string; event_date: string; course_id: string | null; participant_code: string | null; playerIds: string[]; questions: Array<{ question_type_id: string; question_type_key: string; question_text: string; display_order: number; parameters: Record<string, unknown> }> }) {
+export async function createEvent(payload: { name: string; event_date: string; course_id: string | null; participant_code: string | null; playerIds: string[]; questions: Array<{ question_type_id: string; question_type_key: string; question_text: string; points_possible: number; display_order: number; parameters: Record<string, unknown> }> }) {
   const { data: event, error } = await scopedTable('league_events').insert({ league_id: getActiveLeagueId(), name: payload.name, event_date: payload.event_date, course_id: payload.course_id, participant_code: payload.participant_code, status: 'draft' }).select().single()
   if (error) throw error
   const eventId = (event as any).id as string
@@ -89,7 +89,7 @@ export async function createEvent(payload: { name: string; event_date: string; c
     const { error: playerError } = await scopedTable('league_event_players').insert(players)
     if (playerError) throw playerError
   }
-  const { error: questionError } = await scopedTable('betting_questions').insert(payload.questions.map(q => ({ event_id: eventId, question_type_id: q.question_type_id, question_type_key: q.question_type_key, question_text: q.question_text, display_order: q.display_order, parameters: q.parameters })))
+  const { error: questionError } = await scopedTable('betting_questions').insert(payload.questions.map(q => ({ event_id: eventId, question_type_id: q.question_type_id, question_type_key: q.question_type_key, question_text: q.question_text, points_possible: q.points_possible, display_order: q.display_order, parameters: q.parameters })))
   if (questionError) throw questionError
   return eventId
 }
