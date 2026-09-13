@@ -61,8 +61,8 @@ export async function getEventScores(eventId: string): Promise<EventScore[]> {
   return [...byScore.values()]
 }
 
-export async function createEvent(payload: { name: string; event_date: string; course_id: string | null; playerIds: string[]; questions: Array<{ question_type_id: string; display_order: number; parameters: Record<string, unknown> }> }) {
-  const { data: event, error } = await scopedTable('league_events').insert({ league_id: getActiveLeagueId(), name: payload.name, event_date: payload.event_date, course_id: payload.course_id, status: 'draft' }).select().single()
+export async function createEvent(payload: { name: string; event_date: string; course_id: string | null; participant_code: string | null; playerIds: string[]; questions: Array<{ question_type_id: string; display_order: number; parameters: Record<string, unknown> }> }) {
+  const { data: event, error } = await scopedTable('league_events').insert({ league_id: getActiveLeagueId(), name: payload.name, event_date: payload.event_date, course_id: payload.course_id, participant_code: payload.participant_code, status: 'draft' }).select().single()
   if (error) throw error
   const eventId = (event as any).id as string
   const players = payload.playerIds.map((player_id, i) => ({ event_id: eventId, player_id, display_order: i + 1 }))
