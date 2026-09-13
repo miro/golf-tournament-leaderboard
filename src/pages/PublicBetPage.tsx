@@ -351,7 +351,10 @@ export default function PublicBetPage() {
     () => combinedPlayerQuestions.map(question => questions.indexOf(question)),
     [combinedPlayerQuestions, questions],
   )
-  const combinedQuestionIndexSet = useMemo(() => new Set(combinedQuestionIndexes), [combinedQuestionIndexes])
+  const combinedQuestionIndexSet = useMemo(
+    () => combinedPlayerQuestions.length === 4 ? new Set(combinedQuestionIndexes) : new Set<number>(),
+    [combinedPlayerQuestions.length, combinedQuestionIndexes],
+  )
   const combinedStartIndex = combinedPlayerQuestions.length === 4 ? Math.min(...combinedQuestionIndexes) : -1
   const combinedEndIndex = combinedPlayerQuestions.length === 4 ? Math.max(...combinedQuestionIndexes) : -1
   const standingsByPlayer = useMemo(() => {
@@ -587,6 +590,12 @@ export default function PublicBetPage() {
 
   function retryParticipantCode() { setStage('identity') }
 
+  function resumeIncompleteQuestion() {
+    const firstIncompleteIndex = questions.findIndex(question => answers[question.id] == null)
+    if (firstIncompleteIndex >= 0) setCurrentQuestion(firstIncompleteIndex)
+    setStage('questions')
+  }
+
   async function submitAnswers() {
     if (!event) return
     let currentParticipantId = participantId
@@ -689,7 +698,7 @@ export default function PublicBetPage() {
   }
 
   if (!event || stage === 'message') return <PageMessage>{message}</PageMessage>
-  if (stage === 'submit-error') return <PageMessage action={<div className="flex flex-col items-center gap-3"><button type="button" onClick={() => setStage(participantId ? 'questions' : 'identity')} className="rounded-xl px-6 py-3 font-display font-bold" style={{ background: 'var(--league-primary)', color: 'var(--bg-dark)' }}>Palaa takaisin</button><button type="button" onClick={logout} className="rounded-xl border px-6 py-3 font-display font-semibold text-white" style={{ borderColor: 'var(--border-accent)' }}>Kirjaudu ulos</button></div>}>{message}</PageMessage>
+  if (stage === 'submit-error') return <PageMessage action={<div className="flex flex-col items-center gap-3"><button type="button" onClick={participantId ? resumeIncompleteQuestion : () => setStage('identity')} className="rounded-xl px-6 py-3 font-display font-bold" style={{ background: 'var(--league-primary)', color: 'var(--bg-dark)' }}>Palaa takaisin</button><button type="button" onClick={logout} className="rounded-xl border px-6 py-3 font-display font-semibold text-white" style={{ borderColor: 'var(--border-accent)' }}>Kirjaudu ulos</button></div>}>{message}</PageMessage>
   if (stage === 'identity') return <IdentityForm event={event} initialIdentity={identity} onSubmit={createOrRecoverParticipant} busy={identityBusy} />
   if (stage === 'returning' && identity) return <ReturningIdentity event={event} identity={identity} onContinue={(code) => createOrRecoverParticipant(identity.display_name, identity.pin, code)} onChangeIdentity={changeIdentity} onLogout={logout} busy={identityBusy} />
   if (stage === 'wrong-code') return <WrongCodeNotice onRetry={retryParticipantCode} onContinue={() => setStage('questions')} onLogout={logout} />
