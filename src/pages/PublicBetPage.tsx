@@ -15,6 +15,7 @@ const db = supabase as any
 
 type Identity = { display_name: string; pin: string; identity_token: string }
 type Submission = { submitted: true; participant_id: string; submitted_at: string }
+type BettingDraft = { answers: Record<string, Answer>; current_question: number }
 type PodiumAnswer = { first: string | null; second: string | null; third: string | null }
 type CompositionAnswer = PrototypeCompositionAnswer | PrototypeCompositionLineAnswer
 type Answer = number | boolean | string | PodiumAnswer | CompositionAnswer
@@ -29,6 +30,7 @@ type PageStage = 'identity' | 'returning' | 'wrong-code' | 'questions' | 'comple
 
 const IDENTITY_KEY = 'betting_identity'
 const submissionKey = (eventId: string) => `betting_submission_${eventId}`
+const draftKey = (eventId: string) => `betting_draft_${eventId}`
 const COMBINED_KEY_BY_QUESTION: Record<string, BetKey> = {
   player_pick_best_total: 'best_total',
   player_pick_best_front: 'best_front',
@@ -51,6 +53,11 @@ function writeStorage(key: string, value: unknown) {
 
 function clearIdentity() {
   try { window.localStorage.removeItem(IDENTITY_KEY) } catch { /* storage is optional */ }
+}
+
+function clearDraft(eventId: string | null) {
+  if (!eventId) return
+  try { window.localStorage.removeItem(draftKey(eventId)) } catch { /* storage is optional */ }
 }
 
 function formatDate(value: string) {
@@ -346,8 +353,15 @@ export default function PublicBetPage() {
     if (participantError) throw participantError
     if (betError) throw betError
     const all = (participants ?? []) as unknown as Participant[]
-    setResult({ current: all.find(participant => participant.id === currentParticipantId) ?? null, bets: (bets ?? []) as unknown as BetRow[], participants: all })
+    const loadedResult = { current: all.find(participant => participant.id === currentParticipantId) ?? null, bets: (bets ?? []) as unknown as BetRow[], participants: all }
+    setResult(loadedResult)
+    return loadedResult
   }
+
+  useEffect(() => {
+    if (!event || stage !== 'questions' || !Object.keys(answers).length) return
+    writeStorage(draftKey(event.id), { answers, current_question: currentQuestion } satisfies BettingDraft)
+  }, [answers, currentQuestion, event, stage])
 
   useEffect(() => {
     let cancelled = false
@@ -424,11 +438,20 @@ export default function PublicBetPage() {
         }
         const savedIdentity = readStorage<Identity>(IDENTITY_KEY)
         const savedSubmission = readStorage<Submission>(submissionKey(loadedEvent.id))
+        const savedDraft = readStorage<BettingDraft>(draftKey(loadedEvent.id))
         setIdentity(savedIdentity)
+        if (savedDraft?.answers && typeof savedDraft.answers === 'object') {
+          setAnswers(savedDraft.answers)
+          setCurrentQuestion(Math.min(Math.max(savedDraft.current_question ?? 0, 0), Math.max(loadedQuestions.length - 1, 0)))
+        }
         if (loadedEvent.status === 'draft') { setMessage('Veikkaukset eivät ole vielä auki'); setStage('message'); return }
         if (savedSubmission?.submitted) {
           setParticipantId(savedSubmission.participant_id)
-          await loadResults(loadedEvent.id, savedSubmission.participant_id)
+          const loadedResult = await loadResults(loadedEvent.id, savedSubmission.participant_id)
+          if (loadedEvent.status === 'betting_open' && savedIdentity && loadedResult.bets.length === 0) {
+            setStage('returning')
+            return
+          }
           if (!cancelled) setStage('results')
           return
         }
@@ -491,12 +514,13 @@ export default function PublicBetPage() {
     } finally { setIdentityBusy(false) }
   }
 
-  function changeIdentity() { clearIdentity(); setIdentity(null); setParticipantId(null); setStage('identity') }
+  function changeIdentity() { clearIdentity(); clearDraft(event?.id ?? null); setIdentity(null); setParticipantId(null); setStage('identity') }
 
   function logout() {
     clearIdentity()
     if (event) {
       try { window.localStorage.removeItem(submissionKey(event.id)) } catch { /* storage is optional */ }
+      clearDraft(event.id)
     }
     setIdentity(null)
     setParticipantId(null)
@@ -532,6 +556,7 @@ export default function PublicBetPage() {
       if (betsInsert.error) throw betsInsert.error
       const submission: Submission = { submitted: true, participant_id: participantId, submitted_at: submittedAt }
       writeStorage(submissionKey(event.id), submission)
+      clearDraft(event.id)
       const participant = { id: participantId, event_id: event.id, display_name: identity?.display_name ?? '', pin: identity?.pin ?? null, identity_token: identity?.identity_token ?? null, bettor_account_id: null, is_event_player: isEventPlayer, submitted_at: submittedAt, total_points_awarded: 0 }
       setResult({ current: participant, participants: [participant], bets: rows as BetRow[] })
       setAnswers(submittedAnswers)
