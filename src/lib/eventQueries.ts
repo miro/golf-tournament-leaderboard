@@ -12,6 +12,25 @@ export type EventQuestion = { id: string; event_id: string; question_type_id: st
 export type EventParticipant = { id: string; event_id: string; display_name: string; emoji_pin: string | null; pin: string | null; identity_token: string | null; bettor_account_id: string | null; is_event_player: boolean; submitted_at: string; total_points_awarded: number }
 export type EventScore = { id: string; event_id: string; player_id: string; played_date: string; total_points: number; total_strokes: number | null; submitted_at: string; is_corrected: boolean; player?: Player; holes?: Array<{ id: string; event_score_id: string; hole_number: number; points: number }> }
 
+function canonicalQuestionTypeKey(row: any): string {
+  if (typeof row.key === 'string' && row.key.trim()) return row.key
+  if (typeof row.question_type_key === 'string' && row.question_type_key.trim()) return row.question_type_key
+  if (typeof row.type_key === 'string' && row.type_key.trim()) return row.type_key
+  const text = `${row.display_name ?? ''} ${row.description ?? ''}`.toLocaleLowerCase()
+  if (text.includes('päihittää') || text.includes('johtaj')) return 'beat_the_leader'
+  if (text.includes('scratch')) return 'player_pick_best_scratch'
+  if (text.includes('etuyhdeksän') || text.includes('etuysi')) return 'player_pick_best_front'
+  if (text.includes('takayhdeksän') || text.includes('takaysi')) return 'player_pick_best_back'
+  if (text.includes('parhaan tuloksen') || text.includes('eniten stableford')) return 'player_pick_best_total'
+  if (text.includes('yksittäinen pelaaja') || text.includes('paljonko pisteitä')) return 'slider_player_points'
+  if (text.includes('neljä birdie') || text.includes('vähintään 4 birdie')) return 'yes_no_four_birdies'
+  if (text.includes('nollatulos') || text.includes('nollapiste')) return 'yes_no_zero'
+  if (text.includes('birdie')) return 'yes_no_birdie'
+  if (text.includes('top 3') || text.includes('podium')) return 'podium_top3'
+  if (text.includes('pää vastaan pää') || text.includes('kaksintaistelu')) return 'yes_no_head_to_head'
+  return String(row.slug ?? row.display_name ?? '')
+}
+
 export async function getLeagueEvents(): Promise<EventRow[]> {
   const { data, error } = await scopedTable('league_events').select('*, course:courses(name)').order('event_date', { ascending: false })
   if (error) throw error
@@ -33,7 +52,7 @@ export async function getEventPlayers(eventId: string): Promise<EventPlayer[]> {
 export async function getActiveQuestionTypes(): Promise<QuestionType[]> {
   const { data, error } = await scopedTable('betting_question_types').select('*').eq('active', true).order('display_name')
   if (error) throw error
-  return (data ?? []) as QuestionType[]
+  return (data ?? []).map((row: any) => ({ ...row, key: canonicalQuestionTypeKey(row) })) as QuestionType[]
 }
 
 export async function getEventQuestions(eventId: string): Promise<EventQuestion[]> {
