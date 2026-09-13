@@ -588,7 +588,33 @@ export default function PublicBetPage() {
   function retryParticipantCode() { setStage('identity') }
 
   async function submitAnswers() {
-    if (!event || !participantId || questions.some(question => answers[question.id] == null)) return
+    if (!event) return
+    let currentParticipantId = participantId
+    if (!currentParticipantId && identity?.identity_token) {
+      const { data: matchingParticipants } = await db.from('betting_participants')
+        .select('id,is_event_player')
+        .eq('event_id', event.id)
+        .eq('identity_token', identity.identity_token)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+      const matchingParticipant = matchingParticipants?.[0] as { id: string; is_event_player: boolean } | undefined
+      if (matchingParticipant) {
+        currentParticipantId = matchingParticipant.id
+        setParticipantId(matchingParticipant.id)
+        setIsEventPlayer(Boolean(matchingParticipant.is_event_player))
+      }
+    }
+    if (!currentParticipantId) {
+      setMessage('Veikkaajan tunnus puuttuu. Kirjaudu uudelleen jatkaaksesi.')
+      setStage('identity')
+      return
+    }
+    const missingQuestions = questions.filter(question => answers[question.id] == null)
+    if (missingQuestions.length) {
+      setMessage(`Täytä vielä: ${missingQuestions.map(question => questionTitle(question, players)).join(', ')}`)
+      setStage('submit-error')
+      return
+    }
     setSubmitting(true)
     try {
       const submittedAt = new Date().toISOString()
@@ -603,23 +629,23 @@ export default function PublicBetPage() {
           answer = lockComposition(rawAnswer, target.id, holeGuide.map(hole => hole.par), targetHandicap, holeGuide.map(hole => hole.stroke_index))
           submittedAnswers[question.id] = answer
         }
-        return { participant_id: participantId, question_id: question.id, answer, points_awarded: null }
+        return { participant_id: currentParticipantId, question_id: question.id, answer, points_awarded: null }
       })
-      const betsInsert = await db.rpc('submit_public_bets', { p_event_id: event.id, p_participant_id: participantId, p_identity_token: identity?.identity_token, p_bets: rows.map(row => ({ question_id: row.question_id, answer: row.answer })) })
+      const betsInsert = await db.rpc('submit_public_bets', { p_event_id: event.id, p_participant_id: currentParticipantId, p_identity_token: identity?.identity_token, p_bets: rows.map(row => ({ question_id: row.question_id, answer: row.answer })) })
       if (betsInsert.error) throw betsInsert.error
-      const submission: Submission = { submitted: true, participant_id: participantId, submitted_at: submittedAt }
+      const submission: Submission = { submitted: true, participant_id: currentParticipantId, submitted_at: submittedAt }
       writeStorage(submissionKey(event.id), submission)
-      const participant = { id: participantId, event_id: event.id, display_name: identity?.display_name ?? '', pin: identity?.pin ?? null, identity_token: identity?.identity_token ?? null, bettor_account_id: null, is_event_player: isEventPlayer, submitted_at: submittedAt, total_points_awarded: 0 }
+      const participant = { id: currentParticipantId, event_id: event.id, display_name: identity?.display_name ?? '', pin: identity?.pin ?? null, identity_token: identity?.identity_token ?? null, bettor_account_id: null, is_event_player: isEventPlayer, submitted_at: submittedAt, total_points_awarded: 0 }
       setResult({ current: participant, participants: [participant], bets: rows as BetRow[] })
       setAnswers(submittedAnswers)
       setStage('complete')
     } catch (error) {
       const submitError = error as { code?: string; message?: string }
-      if (participantId && (submitError.code === 'P0001' || submitError.message?.includes('Veikkaukset on jo lähetetty'))) {
+      if (currentParticipantId && (submitError.code === 'P0001' || submitError.message?.includes('Veikkaukset on jo lähetetty'))) {
         try {
-          const existingResult = await loadResults(event.id, participantId)
+          const existingResult = await loadResults(event.id, currentParticipantId)
           if (existingResult.bets.length) {
-            writeStorage(submissionKey(event.id), { submitted: true, participant_id: participantId, submitted_at: existingResult.current?.submitted_at ?? new Date().toISOString() } satisfies Submission)
+            writeStorage(submissionKey(event.id), { submitted: true, participant_id: currentParticipantId, submitted_at: existingResult.current?.submitted_at ?? new Date().toISOString() } satisfies Submission)
             setStage('results')
             return
           }
