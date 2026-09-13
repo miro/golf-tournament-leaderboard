@@ -46,7 +46,7 @@ export default function CompositionQuestion({ value, onChange, playerHandicap = 
   const scratch = value.holes.reduce<number>((sum, category, hole) => sum + (category ? strokeCountForHole(holePars[hole] ?? COMPOSITION_HOLE_PARS[hole], category) : 0), 0)
   const stablefordPoints = value.holes.reduce<number>((sum, category, hole) => sum + (stablefordForHole(category, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1) ?? 0), 0)
   const delta = 36 - points
-  const stablefordDelta = playerHandicap == null ? null : stablefordPoints - 36
+  const stablefordDelta = playerHandicap == null ? null : 36 - stablefordPoints
   const infoWidth = 80
 
   function select(hole: number, category: HoleCategory) {
