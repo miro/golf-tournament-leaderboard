@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useLeague } from '../contexts/LeagueContext'
 import type { Player } from '../lib/database.types'
-import type { EventPlayer, EventQuestion, EventRow } from '../lib/eventQueries'
+import { normalizeEventQuestion, type EventPlayer, type EventQuestion, type EventRow } from '../lib/eventQueries'
 import InitialsAvatar from '../components/shared/InitialsAvatar'
 import { playerImagePath } from '../lib/playerImage'
 import { getCurrentSeason, getLeaderboard } from '../lib/queries'
@@ -247,7 +247,7 @@ export default function PublicBetPage() {
         if (cancelled) return
         setEvent(loadedEvent)
         setEventPlayers((playerData ?? []) as unknown as EventPlayer[])
-        setQuestions((questionData ?? []) as unknown as EventQuestion[])
+        setQuestions((questionData ?? []).map(normalizeEventQuestion))
         try {
           const season = await getCurrentSeason()
           const standings = await getLeaderboard(season.id)

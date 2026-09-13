@@ -12,7 +12,7 @@ export type EventQuestion = { id: string; event_id: string; question_type_id: st
 export type EventParticipant = { id: string; event_id: string; display_name: string; emoji_pin: string | null; pin: string | null; identity_token: string | null; bettor_account_id: string | null; is_event_player: boolean; submitted_at: string; total_points_awarded: number }
 export type EventScore = { id: string; event_id: string; player_id: string; played_date: string; total_points: number; total_strokes: number | null; submitted_at: string; is_corrected: boolean; player?: Player; holes?: Array<{ id: string; event_score_id: string; hole_number: number; points: number }> }
 
-function canonicalQuestionTypeKey(row: any): string {
+export function canonicalQuestionTypeKey(row: any): string {
   if (typeof row.key === 'string' && row.key.trim()) return row.key
   if (typeof row.question_type_key === 'string' && row.question_type_key.trim()) return row.question_type_key
   if (typeof row.type_key === 'string' && row.type_key.trim()) return row.type_key
@@ -29,6 +29,16 @@ function canonicalQuestionTypeKey(row: any): string {
   if (text.includes('top 3') || text.includes('podium')) return 'podium_top3'
   if (text.includes('pää vastaan pää') || text.includes('kaksintaistelu')) return 'yes_no_head_to_head'
   return String(row.slug ?? row.display_name ?? '')
+}
+
+export function normalizeEventQuestion(row: any): EventQuestion {
+  return {
+    ...row,
+    question_type: {
+      ...row.question_type,
+      key: canonicalQuestionTypeKey(row.question_type ?? {}),
+    },
+  } as EventQuestion
 }
 
 export async function getLeagueEvents(): Promise<EventRow[]> {
@@ -58,7 +68,7 @@ export async function getActiveQuestionTypes(): Promise<QuestionType[]> {
 export async function getEventQuestions(eventId: string): Promise<EventQuestion[]> {
   const { data, error } = await scopedTable('betting_questions').select('*, question_type:betting_question_types(*), event:league_events!inner(league_id)').eq('event_id', eventId).order('display_order')
   if (error) throw error
-  return (data ?? []) as unknown as EventQuestion[]
+  return (data ?? []).map(normalizeEventQuestion)
 }
 
 export async function getEventParticipants(eventId: string): Promise<EventParticipant[]> {
