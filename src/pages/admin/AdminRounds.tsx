@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
 import { getCurrentSeason } from '../../lib/queries'
+import { scopedTable } from '../../lib/leagueClient'
 import type { RoundWithDetails } from '../../lib/database.types'
 
 export default function AdminRounds() {
@@ -12,8 +12,7 @@ export default function AdminRounds() {
 
   async function fetchRounds() {
     const season = await getCurrentSeason()
-    const { data } = await supabase
-      .from('rounds')
+    const { data } = await scopedTable('rounds')
       .select('*, player:players(*), course:courses(*)')
       .eq('season_id', season.id)
       .order('submitted_at', { ascending: false })
@@ -31,7 +30,7 @@ export default function AdminRounds() {
 
   async function handleCorrect(roundId: string) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('rounds') as any)
+    await scopedTable('rounds')
       .update({
         total_points: parseInt(editPoints),
         status: 'corrected',
@@ -45,7 +44,7 @@ export default function AdminRounds() {
   async function handleToggleStatus(round: RoundWithDetails) {
     const newStatus = round.status === 'published' ? 'draft' : 'published'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('rounds') as any).update({ status: newStatus }).eq('id', round.id)
+    await scopedTable('rounds').update({ status: newStatus }).eq('id', round.id)
     fetchRounds()
   }
 

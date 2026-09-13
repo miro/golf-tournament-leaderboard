@@ -1,7 +1,7 @@
 import type { InvitationalResult, LeaderboardEntry, Player } from '../../lib/database.types'
 
 /** Card frame colours cycle through the four season courses (Kajaani, Paltamo,
- * Nuas, Tenetti) by roster position; Liekkipoika holders override with amber. */
+ * Nuas, Tenetti) by roster position; league holders override with amber. */
 export const COURSE_COLORS = ['#2D6A4F', '#1B4FC4', '#C4791B', '#8B1BC4']
 export const AMBER = '#E8A820'
 
@@ -40,7 +40,7 @@ export interface ScratchWin {
 
 export interface RosterEntry {
   player: Player
-  /** Liekkipoika win years, most recent first. */
+  /** League win years, most recent first. */
   liekkipoikaYears: number[]
   /** Scratch wins, most recent first. */
   scratchWins: ScratchWin[]

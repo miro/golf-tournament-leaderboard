@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getCurrentSeason, getLeaderboard, getPlayerRounds } from '../lib/queries'
-import { supabase } from '../lib/supabase'
+import { scopedTable } from '../lib/leagueClient'
 import type { Player, LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
 
 export default function PersonalDashboard() {
@@ -16,8 +16,7 @@ export default function PersonalDashboard() {
   useEffect(() => {
     async function load() {
       if (!token) return
-      const { data: raw, error } = await supabase
-        .from('players')
+      const { data: raw, error } = await scopedTable('players')
         .select('*')
         .eq('personal_link_token', token)
         .single()

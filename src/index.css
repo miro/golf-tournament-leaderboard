@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 :root {
+  --league-primary: #E8A820;
+  --league-secondary: #E05218;
+  --league-primary-rgb: 232 168 32;
+  --league-secondary-rgb: 224 82 24;
+  --league-logo: url('/gc-logo.png');
   --font-display: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
 }
@@ -49,7 +54,7 @@
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    background-image: url('/gc-logo.png');
+    background-image: var(--league-logo);
     background-repeat: repeat;
     background-size: 120px 120px;
     background-position: 0 0;
@@ -77,7 +82,7 @@
     inset: -20%;
     z-index: 0;
     pointer-events: none;
-    background-image: url('/gc-logo.png');
+    background-image: var(--league-logo);
     background-repeat: repeat;
     background-size: 160px 160px;
     opacity: 0.09;

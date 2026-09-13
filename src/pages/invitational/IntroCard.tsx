@@ -1,4 +1,6 @@
 import { AMBER } from './roster'
+import LeagueLogo from '../../components/LeagueLogo'
+import { getLeagueBrand } from '../../lib/branding'
 
 interface Props {
   /** Size of this year's field, shown in the stats row. */
@@ -47,9 +49,8 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
         textAlign: 'center',
       }}
     >
-      <img
-        src="/gc-logo.png"
-        alt="GC"
+      <LeagueLogo
+        alt="League logo"
         style={{
           height: 80,
           width: 'auto',
@@ -114,8 +115,8 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16, marginBottom: 0, padding: '0 8px', textAlign: 'left', width: '100%', boxSizing: 'border-box' }}>
         <StatRow number={String(historyYears)} text="aikaisempaa mestaria" />
-        <StatRow number={String(playerCount)} text="kutsuttua. Yksi Liekkipaita." />
-        <StatRow number="IX" text="Golf Company Invitational" />
+        <StatRow number={String(playerCount)} text="kutsuttua. Yksi liigapaita." />
+        <StatRow number="IX" text={`${getLeagueBrand().name} Invitational`} />
       </div>
 
       <div
@@ -129,7 +130,7 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
           marginBottom: 0,
         }}
       >
-        Liekkipaita jaossa.
+        Liigapaita jaossa.
       </div>
 
       <div

@@ -1,6 +1,7 @@
 import type { Course, LeaderboardEntry, RoundWithDetails } from '../lib/database.types'
 import { buildStandingsFromRounds, buildRelevantStandingsList, findBracketTarget } from '../lib/standings'
 import PointsBar, { type SegmentData } from './shared/PointsBar'
+import { getLeagueBrand, leagueDomain, leagueShortName } from '../lib/branding'
 
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 const BG = '#1a1a18'
@@ -198,10 +199,10 @@ export default function PostRoundCard({ selectedRounds, cutoffTimestamp, allSeas
       {/* Header band */}
       <div style={{ background: themeColor, height: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 12px', width: '100%', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 1, minWidth: 0, overflow: 'hidden' }}>
-          <span style={{ color: 'white', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>GC</span>
+          <span style={{ color: 'white', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>{leagueShortName()}</span>
           <span style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
           <span style={{ color: 'rgba(255,255,255,0.80)', fontSize: 13, fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            Liekkipoika Kesäkisa 2026
+            {getLeagueBrand().tournament_name} 2026
           </span>
         </div>
         <div style={{
@@ -273,7 +274,7 @@ export default function PostRoundCard({ selectedRounds, cutoffTimestamp, allSeas
       {/* Footer */}
       <div style={{ padding: '8px 24px', borderTop: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
         <span className="font-sans" style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12, fontWeight: 400 }}>
-          liekkipoika.com · Liekkipoika Kesäkisa 2026
+            {leagueDomain()} · {getLeagueBrand().tournament_name} 2026
         </span>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Player } from '../../../lib/database.types'
 import { playerImagePath } from '../../../lib/playerImage'
 import InitialsAvatar from '../../../components/shared/InitialsAvatar'
+import LeagueLogo from '../../../components/LeagueLogo'
 import type { SeasonStanding } from './types'
 
 function PlayerPortrait({ name }: { name: string }) {
@@ -18,7 +19,7 @@ function PlayerPortrait({ name }: { name: string }) {
           className="w-full h-full object-cover object-center" />
       )}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-transparent to-black/10" />
-      <img src="/gc-logo.png" alt="" className="absolute top-3 left-3 h-7 w-auto invert drop-shadow-lg" />
+      <LeagueLogo alt="" className="absolute top-3 left-3 h-7 w-auto invert drop-shadow-lg" />
     </div>
   )
 }

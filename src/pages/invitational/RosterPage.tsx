@@ -13,6 +13,7 @@ import BackButton from './BackButton'
 import { AMBER, buildRoster, INVITATIONAL_ROSTER_2026, type KesakisaStats, type RosterEntry } from './roster'
 import RosterCard from './RosterCard'
 import IntroCard from './IntroCard'
+import LeagueLogo from '../../components/LeagueLogo'
 import StoryProgressBar from './StoryProgressBar'
 
 const SWIPE_THRESHOLD = 50
@@ -232,9 +233,8 @@ export default function InvitationalRosterPage() {
           gap: 16,
         }}
       >
-        <img
-          src="/gc-logo.png"
-          alt="GC"
+        <LeagueLogo
+          alt="League logo"
           className={loadError || roster ? undefined : 'animate-pulse'}
           style={{ height: 64, width: 'auto', filter: 'invert(1)' }}
         />

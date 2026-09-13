@@ -1,5 +1,6 @@
 import type { Player, Course, LeaderboardEntry, RoundWithDetails, HoleResult } from './database.types'
 import { buildStandingsFromRounds } from './standings'
+import { leagueDomain } from './branding'
 
 const COURSE_LOCATIVE: Record<string, string> = {
   kajaani: 'Kajaanille',
@@ -88,7 +89,7 @@ export function generateCaption(
 
   const skinsLine = skinsKing ? `${skinsKing.name} hallitsee ${genitive} skinejä — ${skinsKing.count} skiniä 👑` : ''
 
-  return [intro, ...standingsLines, tikkariLine, skinsLine, 'Seuraa tilannetta: liekkipoika.com'].filter(Boolean).join('\n')
+  return [intro, ...standingsLines, tikkariLine, skinsLine, `Seuraa tilannetta: ${leagueDomain()}`].filter(Boolean).join('\n')
 }
 
 export function generatePostRoundCaption(
@@ -159,5 +160,5 @@ export function generatePostRoundCaption(
       : `${afterLeader.player.full_name} johtaa ${afterLeader.total_points}p:llä.`)
     : ''
 
-  return [intro, ...resultLines, standingsLine, 'Sarjataulukko: liekkipoika.com'].filter(Boolean).join('\n')
+  return [intro, ...resultLines, standingsLine, `Sarjataulukko: ${leagueDomain()}`].filter(Boolean).join('\n')
 }

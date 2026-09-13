@@ -2,6 +2,7 @@ import { useState } from 'react'
 import InitialsAvatar from '../../components/shared/InitialsAvatar'
 import { playerImagePath } from '../../lib/playerImage'
 import { AMBER, type RosterEntry } from './roster'
+import LeagueLogo from '../../components/LeagueLogo'
 
 interface Props {
   entry: RosterEntry
@@ -107,9 +108,8 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
           }}
         />
 
-        <img
-          src="/gc-logo.png"
-          alt="GC"
+        <LeagueLogo
+              alt="League logo"
           style={{
             position: 'absolute',
             // Clears the story bar and the dot row that now sit above it.
@@ -172,7 +172,7 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
             whiteSpace: 'nowrap',
           }}
         >
-          GC INVITATIONAL 2026
+          INVITATIONAL 2026
         </div>
       </div>
 

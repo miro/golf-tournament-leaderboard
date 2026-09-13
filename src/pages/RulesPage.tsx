@@ -1,3 +1,5 @@
+import { getLeagueBrand, leagueShortName } from '../lib/branding'
+
 const GOLD = '#E8A820'
 
 interface Section {
@@ -6,10 +8,10 @@ interface Section {
   gold?: boolean
 }
 
-const sections: Section[] = [
+const makeSections = (league: ReturnType<typeof getLeagueBrand>): Section[] => [
   {
     title: 'Yleistä',
-    body: 'Golf Company Liekkipoika Kesäkisa 2026. Neljä kenttää, yksi kesä, yksi voittaja. Pistebogey. Keltainen boksi. Voittaja julkistetaan Tahkolla — jos olet siellä.',
+    body: '__LEAGUE_NAME__ __TOURNAMENT_NAME__ 2026. Neljä kenttää, yksi kesä, yksi voittaja. Pistebogey. Keltainen boksi. Voittaja julkistetaan Tahkolla — jos olet siellä.',
   },
   {
     title: 'Pelimuoto',
@@ -41,13 +43,13 @@ const sections: Section[] = [
     body: (
       <>
         <p className="text-gray-300 text-sm leading-relaxed mb-3">
-          Kisakierroksella on oltava vähintään 2 Golf Companyn miestä. Yksin pelaaminen ei kelpaa. Kaveri löytyy.
+          Kisakierroksella on oltava vähintään 2 {league.name}n miestä. Yksin pelaaminen ei kelpaa. Kaveri löytyy.
         </p>
         <p className="text-gray-300 text-sm leading-relaxed mb-3">
           Kierros merkataan GameBookiin:
         </p>
         <p className="text-sm font-mono text-gc-green bg-black/20 rounded px-3 py-2 mb-3">
-          "GC kesäkisa, [kenttä]"
+          "{leagueShortName()} kesäkisa, [kenttä]"
         </p>
         <p className="text-gray-300 text-sm leading-relaxed">
           Kierros pelataan tasoituskierroksena. Ei tasoituskierrosta — ei tulosta.
@@ -60,7 +62,7 @@ const sections: Section[] = [
     body: (
       <>
         <p className="text-gray-300 text-sm leading-relaxed mb-3">
-          Ennen kierroksen alkua viesti GC WhatsAppiin. Muoto:
+          Ennen kierroksen alkua viesti {leagueShortName()} WhatsAppiin. Muoto:
         </p>
         <p className="text-sm font-mono text-gc-green bg-black/20 rounded px-3 py-2 mb-3">
           "Tänään [Nimi] ja [Nimi] pelaa [kenttä]n kisakiekan."
@@ -90,20 +92,22 @@ const sections: Section[] = [
   },
   {
     title: 'Tulosten syöttö',
-    body: 'Tulokset syöttää turnauksen admin. Epäselvissä tilanteissa: ota yhteyttä GC:n porukalle. Selvissä tilanteissa: ei tarvitse ottaa yhteyttä.',
+    body: 'Tulokset syöttää turnauksen admin. Epäselvissä tilanteissa: ota yhteyttä liigan porukalle. Selvissä tilanteissa: ei tarvitse ottaa yhteyttä.',
   },
   {
-    title: '🔥👦 Liekkipaita',
+    title: '🔥👦 Liigapaita',
     gold: true,
     body: (
       <p className="text-gray-300 text-sm leading-relaxed">
-        Golf Companyn arvostetuin palkinto ratkaistaan vuosittaisessa Invitationalissa syyskuussa — erillisessä turnauksessa, jolla on oma historiansa. Kesäkisan voittaja kruunataan Tahkolla.
+          {league.name}n arvostetuin palkinto ratkaistaan vuosittaisessa Invitationalissa syyskuussa — erillisessä turnauksessa, jolla on oma historiansa. Kesäkisan voittaja kruunataan Tahkolla.
       </p>
     ),
   },
 ]
 
 export default function RulesPage() {
+  const league = getLeagueBrand()
+  const sections = makeSections(league)
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-white mb-8">Säännöt</h1>
@@ -121,7 +125,7 @@ export default function RulesPage() {
               {gold ? title : <span className="text-gc-gold">{title}</span>}
             </h2>
             {typeof body === 'string'
-              ? <p className="text-gray-300 text-sm leading-relaxed">{body}</p>
+              ? <p className="text-gray-300 text-sm leading-relaxed">{body.replace('__LEAGUE_NAME__', league.name).replace('__TOURNAMENT_NAME__', league.tournament_name)}</p>
               : body}
           </div>
         ))}

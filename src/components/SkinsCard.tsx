@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Course, RoundWithDetails } from '../lib/database.types'
 import HoleOwnerGrid from './shared/HoleOwnerGrid'
+import { getLeagueBrand, leagueDomain, leagueShortName } from '../lib/branding'
 
 const BG = '#1a1a18'
 const MUTED = 'rgba(255,255,255,0.4)'
@@ -48,10 +49,10 @@ export default function SkinsCard({ course, seasonId, courseRounds }: Props) {
       {/* Header band */}
       <div style={{ background: color, height: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 12px', width: '100%', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          <span style={{ color: 'white', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>GC</span>
+          <span style={{ color: 'white', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>{leagueShortName()}</span>
           <span style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
           <span style={{ color: 'rgba(255,255,255,0.80)', fontSize: 13, fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            Liekkipoika Kesäkisa 2026
+            {getLeagueBrand().tournament_name} 2026
           </span>
         </div>
         <div style={{ color: 'white', fontWeight: 800, fontSize: 'clamp(18px, 5vw, 28px)', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -127,7 +128,7 @@ export default function SkinsCard({ course, seasonId, courseRounds }: Props) {
       {/* Footer */}
       <div style={{ padding: '8px 24px', borderTop: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
         <span className="font-sans" style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12, fontWeight: 400 }}>
-          liekkipoika.com · Liekkipoika Kesäkisa 2026
+          {leagueDomain()} · {getLeagueBrand().tournament_name} 2026
         </span>
       </div>
     </div>

@@ -8,8 +8,8 @@ export default {
         gc: {
           dark:     '#17130F',   // warm near-black
           card:     '#221D17',   // warm dark brown
-          green:    '#E8A820',   // amber — primary accent
-          gold:     '#E05218',   // burnt orange — secondary
+          green:    'rgb(var(--league-primary-rgb) / <alpha-value>)',
+          gold:     'rgb(var(--league-secondary-rgb) / <alpha-value>)',
           red:      '#C12820',   // brick red
           burgundy: '#8A1C38',   // dark burgundy
           cream:    '#F0E8D0',   // off-white accent

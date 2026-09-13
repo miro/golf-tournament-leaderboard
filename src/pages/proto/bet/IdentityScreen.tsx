@@ -31,7 +31,7 @@ export default function IdentityScreen({ onStart }: Props) {
 
   return (
     <div>
-      <div className="label mb-2">GC EVENTS</div>
+      <div className="label mb-2">LEAGUE EVENTS</div>
       <h1 className="font-display font-extrabold text-3xl text-white mb-1">Kajaani · {dateLabel}</h1>
       <p className="text-gc-muted mb-6">Kuka sinä olet?</p>
 

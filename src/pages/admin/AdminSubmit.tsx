@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { getCurrentSeason, getActivePlayers, getCourses } from '../../lib/queries'
-import { supabase } from '../../lib/supabase'
+import { scopedTable, getActiveLeagueId } from '../../lib/leagueClient'
+import { getLeagueBrand } from '../../lib/branding'
 import type { Player, Course } from '../../lib/database.types'
 
 function buildPrompt(playerName: string): string {
-  return `You are processing a GameBook golf scorecard screenshot for the Golf Company Liekkipoika Kesäkisa 2026 tournament admin system.
+  const league = getLeagueBrand()
+  return `You are processing a GameBook golf scorecard screenshot for the ${league.name} ${league.tournament_name} 2026 tournament admin system.
 
 Return ONLY the following block, nothing else — no preamble, no markdown code fences, no explanation:
 
@@ -210,9 +212,6 @@ export default function AdminSubmit() {
     setIsBackfill(false)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!playerId || !courseId || !playedDate || !totalPoints) {
@@ -220,9 +219,9 @@ export default function AdminSubmit() {
     }
     setSubmitting(true); setError(null); setSuccess(false)
 
-    const { data: round, error: roundError } = await db
-      .from('rounds')
+    const { data: round, error: roundError } = await scopedTable('rounds')
       .insert({
+        league_id: getActiveLeagueId(),
         season_id: seasonId, course_id: courseId, player_id: playerId,
         played_date: playedDate,
         hcp_at_time: hcp ? parseFloat(hcp) : null,
@@ -238,7 +237,7 @@ export default function AdminSubmit() {
     if (roundError) { setError(roundError.message); setSubmitting(false); return }
 
     if (parsedHoles.length > 0 && round) {
-      await db.from('hole_results').insert(
+      await scopedTable('hole_results').insert(
         parsedHoles.map((h: ParsedHole) => ({
           round_id: (round as { id: string }).id,
           hole_number: h.hole, par: h.par, stroke_index: h.stroke_index,

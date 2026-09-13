@@ -3,6 +3,17 @@ export type Json = string | number | boolean | null | { [key: string]: Json } | 
 export type Database = {
   public: {
     Tables: {
+      leagues: {
+        Row: {
+          id: string; name: string; slug: string; tournament_name: string
+          primary_color: string; secondary_color: string; logo_url: string | null
+          domain: string | null; subdomain: string | null; active: boolean
+          features: { invitational: boolean; betting: boolean; hype_tools: boolean; skins: boolean }
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['leagues']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['leagues']['Insert']>
+      }
       players: {
         Row: {
           id: string
@@ -16,6 +27,8 @@ export type Database = {
           active: boolean
           created_at: string
           invitational_tagline: string | null
+          invitational_2026: boolean
+          league_id: string
         }
         // invitational_tagline is optional on insert — it is authored separately, not
         // supplied when a player is first created.
@@ -36,6 +49,7 @@ export type Database = {
           winner_player_id: string | null
           announced_at: string | null
           created_at: string
+          league_id: string
         }
         Insert: Omit<Database['public']['Tables']['seasons']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['seasons']['Insert']>
@@ -53,6 +67,7 @@ export type Database = {
           summary_text: string | null
           latitude: number | null
           longitude: number | null
+          league_id: string
         }
         Insert: Omit<Database['public']['Tables']['courses']['Row'], 'id'>
         Update: Partial<Database['public']['Tables']['courses']['Insert']>
@@ -74,6 +89,7 @@ export type Database = {
           email: string
           password_hash: string
           created_at: string
+          league_id: string
         }
         Insert: Omit<Database['public']['Tables']['admins']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['admins']['Insert']>
@@ -96,6 +112,7 @@ export type Database = {
           status: 'draft' | 'published' | 'corrected'
           correction_note: string | null
           is_backfill: boolean
+          league_id: string
         }
         Insert: Omit<Database['public']['Tables']['rounds']['Row'], 'id' | 'submitted_at'>
         Update: Partial<Database['public']['Tables']['rounds']['Insert']>
@@ -135,6 +152,7 @@ export type Database = {
           scratch_winner_player_id: string | null
           scratch_shots: number | null
           created_at: string
+          league_id: string | null
         }
         Insert: Omit<Database['public']['Tables']['invitational_results']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['invitational_results']['Insert']>
@@ -157,6 +175,7 @@ export type Database = {
           tee_times: string[] | null
           is_highlight: boolean
           created_at: string
+          league_id: string | null
         }
         Insert: Omit<Database['public']['Tables']['invitational_schedule']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['invitational_schedule']['Insert']>
@@ -179,6 +198,7 @@ export type RoundCard = Database['public']['Tables']['round_cards']['Row']
 export type Admin = Database['public']['Tables']['admins']['Row']
 export type InvitationalResult = Database['public']['Tables']['invitational_results']['Row']
 export type InvitationalScheduleEvent = Database['public']['Tables']['invitational_schedule']['Row']
+export type League = Database['public']['Tables']['leagues']['Row']
 
 // Enriched types used in UI
 export interface LeaderboardEntry {

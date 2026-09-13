@@ -1,5 +1,7 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import InvitationalBanner from '../components/InvitationalBanner'
+import LeagueLogo from '../components/LeagueLogo'
+import { useLeague } from '../contexts/LeagueContext'
 
 interface NavItem {
   to: string
@@ -17,6 +19,7 @@ const navItems: NavItem[] = [
 ]
 
 export default function PublicLayout() {
+  const league = useLeague()
   return (
     <div className="min-h-screen flex flex-col">
       {/* Nike-style stripe bar */}
@@ -27,9 +30,9 @@ export default function PublicLayout() {
       <header className="sticky top-0 z-40 bg-gc-dark/95 backdrop-blur border-b border-white/8">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
           <NavLink to="/" className="flex items-center gap-2.5">
-            <img src="/gc-logo.png" alt="GC" style={{ height: 36, width: 'auto', filter: 'invert(1)' }} />
+            <LeagueLogo alt={league.name} style={{ height: 36, width: 'auto', filter: 'invert(1)' }} />
             <span className="font-bold text-white text-[18px] hidden sm:block font-display" style={{ letterSpacing: '0.04em' }}>
-              Liekkipoika Kesäkisa 2026
+              {league.tournament_name} 2026
             </span>
           </NavLink>
 
@@ -61,7 +64,7 @@ export default function PublicLayout() {
       </main>
 
       <footer className="border-t border-white/8 py-6 text-center text-gc-muted text-xs">
-        Golf Company — Liekkipoika Kesäkisa 2026
+        {league.name} — {league.tournament_name} 2026
       </footer>
     </div>
   )

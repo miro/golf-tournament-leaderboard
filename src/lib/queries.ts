@@ -1,9 +1,9 @@
-import { supabase } from './supabase'
+import { scopedTable } from './leagueClient'
+import { getLeagueBrand } from './branding'
 import type { Season, Course, Player, LeaderboardEntry, RoundWithDetails, HoleResult, InvitationalResult, InvitationalScheduleEvent } from './database.types'
 
 export async function getCurrentSeason(): Promise<Season> {
-  const { data, error } = await supabase
-    .from('seasons')
+  const { data, error } = await scopedTable('seasons')
     .select('*')
     .eq('status', 'active')
     .order('year', { ascending: false })
@@ -14,9 +14,8 @@ export async function getCurrentSeason(): Promise<Season> {
 }
 
 export async function getSeasonCourses(seasonId: string): Promise<Array<{ id: string; season_id: string; course_id: string; display_order: number; course: Course }>> {
-  const { data, error } = await supabase
-    .from('season_courses')
-    .select('*, course:courses(*)')
+  const { data, error } = await scopedTable('season_courses')
+    .select('*, course:courses(*), season:seasons!inner(league_id)')
     .eq('season_id', seasonId)
     .order('display_order')
   if (error) throw error
@@ -24,8 +23,7 @@ export async function getSeasonCourses(seasonId: string): Promise<Array<{ id: st
 }
 
 export async function getLeaderboard(seasonId: string): Promise<LeaderboardEntry[]> {
-  const { data: rounds, error } = await supabase
-    .from('rounds')
+  const { data: rounds, error } = await scopedTable('rounds')
     .select('player_id, total_points, course_id, player:players(*)')
     .eq('season_id', seasonId)
     .eq('status', 'published')
@@ -60,8 +58,7 @@ export async function getLeaderboard(seasonId: string): Promise<LeaderboardEntry
 }
 
 export async function getRecentRounds(seasonId: string, limit = 10): Promise<RoundWithDetails[]> {
-  const { data, error } = await supabase
-    .from('rounds')
+  const { data, error } = await scopedTable('rounds')
     .select('*, player:players(*), course:courses(*)')
     .eq('season_id', seasonId)
     .eq('status', 'published')
@@ -76,8 +73,7 @@ export async function getRecentRounds(seasonId: string, limit = 10): Promise<Rou
 }
 
 export async function getAllSeasonRounds(seasonId: string): Promise<RoundWithDetails[]> {
-  const { data, error } = await supabase
-    .from('rounds')
+  const { data, error } = await scopedTable('rounds')
     .select('*, player:players(*), course:courses(*)')
     .eq('season_id', seasonId)
     .eq('status', 'published')
@@ -91,8 +87,7 @@ export async function getAllSeasonRounds(seasonId: string): Promise<RoundWithDet
 }
 
 export async function getActivePlayers(): Promise<Player[]> {
-  const { data, error } = await supabase
-    .from('players')
+  const { data, error } = await scopedTable('players')
     .select('*')
     .eq('active', true)
     .order('full_name')
@@ -101,8 +96,7 @@ export async function getActivePlayers(): Promise<Player[]> {
 }
 
 export async function getInvitationalResults(): Promise<InvitationalResult[]> {
-  const { data, error } = await supabase
-    .from('invitational_results')
+  const { data, error } = await scopedTable('invitational_results')
     .select('*')
     .order('year', { ascending: false })
   if (error) throw error
@@ -110,8 +104,7 @@ export async function getInvitationalResults(): Promise<InvitationalResult[]> {
 }
 
 export async function getInvitationalSchedule(year: number): Promise<InvitationalScheduleEvent[]> {
-  const { data, error } = await supabase
-    .from('invitational_schedule')
+  const { data, error } = await scopedTable('invitational_schedule')
     .select('*')
     .eq('year', year)
     .order('event_date')
@@ -121,8 +114,7 @@ export async function getInvitationalSchedule(year: number): Promise<Invitationa
 }
 
 export async function getCourses(): Promise<Course[]> {
-  const { data, error } = await supabase
-    .from('courses')
+  const { data, error } = await scopedTable('courses')
     .select('*')
     .order('name')
   if (error) throw error
@@ -130,8 +122,7 @@ export async function getCourses(): Promise<Course[]> {
 }
 
 export async function getPlayerBySlug(slug: string): Promise<Player> {
-  const { data, error } = await supabase
-    .from('players')
+  const { data, error } = await scopedTable('players')
     .select('*')
     .eq('slug', slug)
     .single()
@@ -140,8 +131,7 @@ export async function getPlayerBySlug(slug: string): Promise<Player> {
 }
 
 export async function getPlayerRounds(playerId: string, seasonId: string): Promise<RoundWithDetails[]> {
-  const { data, error } = await supabase
-    .from('rounds')
+  const { data, error } = await scopedTable('rounds')
     .select('*, player:players(*), course:courses(*)')
     .eq('player_id', playerId)
     .eq('season_id', seasonId)
@@ -156,8 +146,7 @@ export async function getPlayerRounds(playerId: string, seasonId: string): Promi
 }
 
 export async function getCourseBySlug(slug: string): Promise<Course> {
-  const { data, error } = await supabase
-    .from('courses')
+  const { data, error } = await scopedTable('courses')
     .select('*')
     .eq('slug', slug)
     .single()
@@ -166,8 +155,7 @@ export async function getCourseBySlug(slug: string): Promise<Course> {
 }
 
 export async function getCourseRounds(courseId: string, seasonId: string): Promise<RoundWithDetails[]> {
-  const { data, error } = await supabase
-    .from('rounds')
+  const { data, error } = await scopedTable('rounds')
     .select('*, player:players(*), course:courses(*)')
     .eq('course_id', courseId)
     .eq('season_id', seasonId)
@@ -183,17 +171,15 @@ export async function getCourseRounds(courseId: string, seasonId: string): Promi
 
 export async function getHoleResultsForRounds(roundIds: string[]): Promise<HoleResult[]> {
   if (roundIds.length === 0) return []
-  const { data, error } = await supabase
-    .from('hole_results')
-    .select('*')
+  const { data, error } = await scopedTable('hole_results')
+    .select('*, round:rounds!inner(league_id)')
     .in('round_id', roundIds)
   if (error) throw error
   return (data ?? []) as unknown as HoleResult[]
 }
 
 export async function getSeasonRoundAverages(seasonId: string): Promise<Record<string, number>> {
-  const { data, error } = await supabase
-    .from('rounds')
+  const { data, error } = await scopedTable('rounds')
     .select('course_id, total_points')
     .eq('season_id', seasonId)
     .eq('status', 'published')
@@ -229,10 +215,10 @@ export function generateWhatsAppText(
     `${rank}. sijalla`
   const backfillNote = isBackfill && playedDate ? ` (pelattiin ${playedDate})` : ''
   return (
-    `⛳ Golf Company Liekkipoika Kesäkisa 2026\n\n` +
+    `⛳ ${getLeagueBrand().name} ${getLeagueBrand().tournament_name} 2026\n\n` +
     `${playerName} pelasi kentällä ${courseName}${backfillNote}\n` +
     `Tulos: ${points} pistettä\n\n` +
     `${rankText} — ${rank}/${totalPlayers} pelaajaa\n\n` +
-    `#GolfCompany #Liekkipoika2026 #kesäkisa`
+    `#${getLeagueBrand().name.replace(/\s+/g, '')} #kesäkisa`
   )
 }

@@ -7,6 +7,8 @@ import {
 import type { LeaderboardEntry, RoundWithDetails, HoleResult, Player, Course } from '../lib/database.types'
 import RoundCard from '../components/RoundCard'
 import ProgressionChart from '../components/shared/ProgressionChart'
+import LeagueLogo from '../components/LeagueLogo'
+import { useLeague } from '../contexts/LeagueContext'
 
 const GOLD = '#FBBF24'
 const PAGE_BG = '#17130F'
@@ -282,6 +284,7 @@ function computeVaylamestariRanking(
 }
 
 export default function HomePage() {
+  const league = useLeague()
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [courses, setCourses] = useState<CourseInfo[]>([])
   const [seasonCoursesFull, setSeasonCoursesFull] = useState<Course[]>([])
@@ -355,11 +358,11 @@ export default function HomePage() {
 
       {/* ── HERO ── */}
       <div className="text-center space-y-3 pt-2">
-        <img src="/gc-logo.png" alt="Golf Company" style={{ height: 120, width: 'auto', filter: 'invert(1)', margin: '0 auto' }} />
+        <LeagueLogo alt={league.name} style={{ height: 120, width: 'auto', filter: 'invert(1)', margin: '0 auto' }} />
         <h1 className="text-[28px] sm:text-[36px] font-extrabold font-display" style={{ color: GOLD }}>
-          Liekkipoika Kesäkisa 2026
+          {league.tournament_name} 2026
         </h1>
-        <p className="text-gray-500 text-base">Golf Company</p>
+        <p className="text-gray-500 text-base">{league.name}</p>
         <div className="pt-2">
           <div className="text-[72px] sm:text-[96px] font-black tabular-nums font-display" style={{ color: daysColor, letterSpacing: '-0.02em' }}>
             {daysLeft}

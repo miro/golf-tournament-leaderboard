@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { AMBER, INVITATIONAL_DATE_RANGE } from '../pages/invitational/schedule'
+import { getLeagueBrand } from '../lib/branding'
 
 /** Slim strip under the main nav on every kesäkisa page — the only route into the
  * Invitational now that it has left the main navigation. */
@@ -14,7 +15,7 @@ export default function InvitationalBanner() {
         className="font-display"
         style={{ fontSize: 13, fontWeight: 700, color: AMBER, letterSpacing: '0.10em' }}
       >
-        🔥👦 GC INVITATIONAL 2026
+        🔥👦 {getLeagueBrand().name} INVITATIONAL 2026
       </span>
       <span style={{ color: 'rgba(255,255,255,0.40)' }}>&nbsp;—&nbsp;</span>
       <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.60)' }}>

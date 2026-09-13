@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { InvitationalScheduleEvent } from '../../lib/database.types'
 import { getInvitationalSchedule } from '../../lib/queries'
 import ScheduleEventCard from './ScheduleEventCard'
+import LeagueLogo from '../../components/LeagueLogo'
 import {
   AMBER,
   GREEN,
@@ -39,7 +40,7 @@ export default function SchedulePage() {
   if (!events) {
     return (
       <div className="flex justify-center py-16">
-        <img src="/gc-logo.png" alt="GC" className="animate-pulse" style={{ height: 48, width: 'auto', filter: 'invert(1)' }} />
+        <LeagueLogo alt="League logo" className="animate-pulse" style={{ height: 48, width: 'auto', filter: 'invert(1)' }} />
       </div>
     )
   }

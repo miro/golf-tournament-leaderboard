@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getInvitationalSchedule } from '../../lib/queries'
 import BackButton from './BackButton'
+import LeagueLogo from '../../components/LeagueLogo'
 import Icon from './icons'
 import { INVITATIONAL_ROSTER_2026 } from './roster'
 import {
@@ -89,9 +90,8 @@ export default function InvitationalLanding() {
         <BackButton to="/" label="Takaisin etusivulle" />
 
         <div className="relative py-12" style={{ zIndex: 2 }}>
-          <img
-            src="/gc-logo.png"
-            alt="Golf Company"
+          <LeagueLogo
+            alt="League logo"
             className="mx-auto"
             style={{
               height: 64,

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useLeague } from '../../contexts/LeagueContext'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
+  const league = useLeague()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +29,7 @@ export default function AdminLogin() {
       <div className="card p-8 w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">⛳</div>
-          <h1 className="text-xl font-bold text-white">GC Admin</h1>
+          <h1 className="text-xl font-bold text-white">{league.name} Admin</h1>
           <p className="text-gray-500 text-sm mt-1">Kirjaudu sisään</p>
         </div>
         <form onSubmit={handleLogin} className="space-y-4">

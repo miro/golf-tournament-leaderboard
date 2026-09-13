@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { LeaderboardEntry, Player, RoundWithDetails, Course, HoleResult } from '../lib/database.types'
 import PointsBar, { type SegmentData } from './shared/PointsBar'
+import { getLeagueBrand, leagueDomain } from '../lib/branding'
 
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 
@@ -199,7 +200,7 @@ export default function RoundCard({
             >
               {round.player?.full_name}
             </Link>
-            <div className="text-white/70 text-[13px] mt-0.5 font-sans">Liekkipoika Kesäkisa 2026</div>
+            <div className="text-white/70 text-[13px] mt-0.5 font-sans">{getLeagueBrand().tournament_name} 2026</div>
           </div>
           <div className="text-right leading-none shrink-0 ml-3">
             <div className="text-white/70 text-[14px] font-sans font-medium">{date}</div>
@@ -358,7 +359,7 @@ export default function RoundCard({
           style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
         >
           <span className="text-[12px] font-sans" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            liekkipoika.com · Liekkipoika Kesäkisa 2026
+            {leagueDomain()} · {getLeagueBrand().tournament_name} 2026
           </span>
           {showDaysLeft && (
             <span className="text-[12px] font-sans" style={{ color: daysColor }}>

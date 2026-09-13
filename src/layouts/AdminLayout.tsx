@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useLeague } from '../contexts/LeagueContext'
 
 const links = [
   { to: '/admin/dashboard', label: 'Dashboard' },
@@ -12,6 +13,7 @@ const links = [
 ]
 
 export default function AdminLayout() {
+  const league = useLeague()
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -23,7 +25,12 @@ export default function AdminLayout() {
       if (event === 'INITIAL_SESSION') {
         clearTimeout(fallback)
         if (session) {
-          setChecking(false)
+          ;(async () => {
+            const { data } = await (supabase as any).from('league_admins')
+              .select('league_id').eq('league_id', league.id).eq('user_id', session.user.id).maybeSingle()
+            if (data) setChecking(false)
+            else navigate('/admin', { replace: true })
+          })()
         } else {
           navigate('/admin', { replace: true })
         }
@@ -83,7 +90,7 @@ export default function AdminLayout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-56 bg-gc-card border-r border-white/8 flex-col p-4 gap-1 shrink-0">
-        <div className="text-gc-green font-black text-base mb-5 tracking-wide">GC ADMIN</div>
+        <div className="text-gc-green font-black text-base mb-5 tracking-wide">{league.name} ADMIN</div>
         {navLinks}
         <div className="mt-auto">{signOutButton}</div>
       </aside>
@@ -103,7 +110,7 @@ export default function AdminLayout() {
         }`}
       >
         <div className="flex items-center justify-between mb-5">
-          <div className="text-gc-green font-black text-base tracking-wide">GC ADMIN</div>
+          <div className="text-gc-green font-black text-base tracking-wide">{league.name} ADMIN</div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-1 rounded text-gray-500 hover:text-white transition-colors"
@@ -132,7 +139,7 @@ export default function AdminLayout() {
               <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
-          <span className="text-gc-green font-black text-sm tracking-wide">GC ADMIN</span>
+          <span className="text-gc-green font-black text-sm tracking-wide">{league.name} ADMIN</span>
         </header>
 
         <main className="flex-1 p-4 md:p-6 overflow-y-auto">

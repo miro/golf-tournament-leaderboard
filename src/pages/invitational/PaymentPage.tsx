@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './icons'
 import { AMBER, GREEN } from './schedule'
+import { getLeagueBrand } from '../../lib/branding'
 
 const MOBILEPAY_BLUE = '#5A78FF'
 const PAYMENT_NAME = 'Miro'
 const PAYMENT_AMOUNT = 260
-const PAYMENT_COMMENT = 'GC Invitational 2026'
+const PAYMENT_COMMENT = 'INVITATIONAL 2026'
 /** Bare scheme: it opens the app at its home screen and nothing more. Prefilling the
  * fields needs parameters MobilePay does not publicly document, which is why the
  * values below are offered on the clipboard instead. */
@@ -149,7 +150,7 @@ export default function PaymentPage() {
   return (
     <div>
       <h1 className="font-display text-[28px] font-extrabold text-white leading-tight">Ilmoittautuminen</h1>
-      <div className="text-[15px] text-gc-muted mb-6">Golf Company Invitational 2026</div>
+      <div className="text-[15px] text-gc-muted mb-6">{getLeagueBrand().name} Invitational 2026</div>
 
       <div className={`${CARD} p-8 text-center`}>
         <div className="font-display text-7xl font-black leading-none" style={{ color: AMBER }}>

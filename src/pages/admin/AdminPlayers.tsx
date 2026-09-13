@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { scopedTable, getActiveLeagueId } from '../../lib/leagueClient'
 import type { Player } from '../../lib/database.types'
 
 function slugify(name: string) {
@@ -25,11 +25,8 @@ export default function AdminPlayers() {
   const [error, setError] = useState<string | null>(null)
   const hcpInputRef = useRef<HTMLInputElement>(null)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any
-
   async function fetchPlayers() {
-    const { data } = await db.from('players').select('*').order('full_name')
+    const { data } = await scopedTable('players').select('*').order('full_name')
     setPlayers((data ?? []) as Player[])
     setLoading(false)
   }
@@ -40,7 +37,8 @@ export default function AdminPlayers() {
     e.preventDefault()
     setSaving(true)
     setError(null)
-    const { error } = await db.from('players').insert({
+    const { error } = await scopedTable('players').insert({
+      league_id: getActiveLeagueId(),
       full_name: newName.trim(),
       slug: slugify(newName.trim()),
       hcp_current: newHcp ? parseFloat(newHcp) : null,
@@ -60,13 +58,13 @@ export default function AdminPlayers() {
   }
 
   async function handleToggleActive(player: Player) {
-    await db.from('players').update({ active: !player.active }).eq('id', player.id)
+    await scopedTable('players').update({ active: !player.active }).eq('id', player.id)
     fetchPlayers()
   }
 
   async function handleSaveHcp(playerId: string) {
     const val = hcpInputRef.current?.value ?? ''
-    await db.from('players').update({ hcp_current: val ? parseFloat(val) : null }).eq('id', playerId)
+    await scopedTable('players').update({ hcp_current: val ? parseFloat(val) : null }).eq('id', playerId)
     setEditingId(null)
     fetchPlayers()
   }
