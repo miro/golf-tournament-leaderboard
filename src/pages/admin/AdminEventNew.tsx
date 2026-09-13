@@ -31,7 +31,7 @@ export default function AdminEventNew() {
   async function submit() {
     if (!valid) return
     setSaving(true); setError(null)
-    try { const id = await createEvent({ name: name.trim(), event_date: date, course_id: courseId || null, participant_code: participantCode.trim() || null, playerIds: selectedPlayers, questions: questions.map((q, i) => ({ question_type_id: q.id, question_type_key: q.key, display_order: i + 1, parameters: q.parameters })) }); navigate(`/admin/events/${id}`) } catch (e: any) { setError(e.message ?? 'Tapahtuman luonti epäonnistui') } finally { setSaving(false) }
+    try { const id = await createEvent({ name: name.trim(), event_date: date, course_id: courseId || null, participant_code: participantCode.trim() || null, playerIds: selectedPlayers, questions: questions.map((q, i) => ({ question_type_id: q.id, question_type_key: q.key, question_text: q.display_name, display_order: i + 1, parameters: q.parameters })) }); navigate(`/admin/events/${id}`) } catch (e: any) { setError(e.message ?? 'Tapahtuman luonti epäonnistui') } finally { setSaving(false) }
   }
   return <div className="max-w-5xl space-y-7">
     <div><h1 className="text-2xl font-bold text-white">Luo uusi tapahtuma</h1><p className="text-sm text-gray-500 mt-1">Rakenna tapahtuman veikkauspaketti.</p></div>

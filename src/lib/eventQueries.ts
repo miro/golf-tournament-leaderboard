@@ -80,7 +80,7 @@ export async function getEventScores(eventId: string): Promise<EventScore[]> {
   return [...byScore.values()]
 }
 
-export async function createEvent(payload: { name: string; event_date: string; course_id: string | null; participant_code: string | null; playerIds: string[]; questions: Array<{ question_type_id: string; question_type_key: string; display_order: number; parameters: Record<string, unknown> }> }) {
+export async function createEvent(payload: { name: string; event_date: string; course_id: string | null; participant_code: string | null; playerIds: string[]; questions: Array<{ question_type_id: string; question_type_key: string; question_text: string; display_order: number; parameters: Record<string, unknown> }> }) {
   const { data: event, error } = await scopedTable('league_events').insert({ league_id: getActiveLeagueId(), name: payload.name, event_date: payload.event_date, course_id: payload.course_id, participant_code: payload.participant_code, status: 'draft' }).select().single()
   if (error) throw error
   const eventId = (event as any).id as string
@@ -89,7 +89,7 @@ export async function createEvent(payload: { name: string; event_date: string; c
     const { error: playerError } = await scopedTable('league_event_players').insert(players)
     if (playerError) throw playerError
   }
-  const { error: questionError } = await scopedTable('betting_questions').insert(payload.questions.map(q => ({ event_id: eventId, question_type_id: q.question_type_id, question_type_key: q.question_type_key, display_order: q.display_order, parameters: q.parameters })))
+  const { error: questionError } = await scopedTable('betting_questions').insert(payload.questions.map(q => ({ event_id: eventId, question_type_id: q.question_type_id, question_type_key: q.question_type_key, question_text: q.question_text, display_order: q.display_order, parameters: q.parameters })))
   if (questionError) throw questionError
   return eventId
 }
