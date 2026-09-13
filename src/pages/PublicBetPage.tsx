@@ -393,6 +393,14 @@ export default function PublicBetPage() {
   }, [answers, currentQuestion, event, stage])
 
   useEffect(() => {
+    if (stage !== 'questions' || !questions.length) return
+    const firstIncompleteIndex = questions.findIndex(question => answers[question.id] == null)
+    if (firstIncompleteIndex < 0 || currentQuestion <= firstIncompleteIndex) return
+    const resumeIndex = combinedQuestionIndexSet.has(firstIncompleteIndex) ? combinedStartIndex : firstIncompleteIndex
+    if (resumeIndex >= 0 && resumeIndex !== currentQuestion) setCurrentQuestion(resumeIndex)
+  }, [answers, combinedQuestionIndexSet, combinedStartIndex, currentQuestion, questions, stage])
+
+  useEffect(() => {
     let cancelled = false
     async function load() {
       if (!token) { setMessage('Tapahtumaa ei löydy'); setStage('message'); return }
