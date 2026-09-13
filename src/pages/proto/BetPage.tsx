@@ -165,7 +165,7 @@ export default function BetPage() {
           <QuestionShell
             index={0}
             questionText={`Kuinka monta bogeypistettä ${playerA.full_name} tekee?`}
-            context={`HCP ${playerA.hcp_current ?? '–'} · Kajaani Par ${course.par_total}`}
+            context={`HCP ${playerA.hcp_fallback ?? '–'} · Kajaani Par ${course.par_total}`}
             lockDisabled={answers.q1Score === null}
             onLock={commit}
             transitioningOut={transitioningOut}
@@ -178,7 +178,7 @@ export default function BetPage() {
           <QuestionShell
             index={1}
             questionText={`Miten ${playerB.full_name}:n kierros menee?`}
-            context={`HCP ${playerB.hcp_current ?? '–'} · Kajaani Par ${course.par_total}`}
+            context={`HCP ${playerB.hcp_fallback ?? '–'} · Kajaani Par ${course.par_total}`}
             lockDisabled={q2Total !== 18}
             lockLabel={<>
               <span className="block normal-case text-xl leading-tight break-words">{playerB.full_name} {q2DeltaLabel}</span>

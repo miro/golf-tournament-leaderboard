@@ -9,9 +9,9 @@ const TOTAL_QUESTIONS = 9
 
 function sortForCarousel(players: Player[]): Player[] {
   return [...players].sort((a, b) => {
-    if (a.hcp_current !== null && b.hcp_current !== null) return a.hcp_current - b.hcp_current
-    if (a.hcp_current !== null) return -1
-    if (b.hcp_current !== null) return 1
+    if (a.hcp_fallback !== null && b.hcp_fallback !== null) return a.hcp_fallback - b.hcp_fallback
+    if (a.hcp_fallback !== null) return -1
+    if (b.hcp_fallback !== null) return 1
     return a.full_name.localeCompare(b.full_name)
   })
 }
@@ -189,7 +189,7 @@ export default function BeatTheLeaderQuestion({
                 {p.full_name}
               </div>
               <div className="text-gc-muted mt-1" style={{ fontSize: 14 }}>
-                HCP {p.hcp_current ?? '—'}
+                HCP {p.hcp_fallback ?? '—'}
               </div>
               {standing && (
                 <>

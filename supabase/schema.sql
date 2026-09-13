@@ -4,7 +4,7 @@ create table players (
   full_name text not null,
   slug text not null unique,
   personal_link_token uuid not null default gen_random_uuid(),
-  hcp_current numeric(4,1),
+  hcp_fallback numeric(4,1),
   hcp_history jsonb not null default '[]',
   titles jsonb not null default '[]',
   avatar_url text,

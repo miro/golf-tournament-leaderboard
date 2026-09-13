@@ -27,7 +27,7 @@ export type Database = {
           full_name: string
           slug: string
           personal_link_token: string
-          hcp_current: number | null
+          hcp_fallback: number | null
           hcp_history: Json
           titles: Json
           avatar_url: string | null

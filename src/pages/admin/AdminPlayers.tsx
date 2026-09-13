@@ -41,7 +41,7 @@ export default function AdminPlayers() {
       league_id: getActiveLeagueId(),
       full_name: newName.trim(),
       slug: slugify(newName.trim()),
-      hcp_current: newHcp ? parseFloat(newHcp) : null,
+      hcp_fallback: newHcp ? parseFloat(newHcp) : null,
       hcp_history: [],
       titles: [],
       active: true,
@@ -64,7 +64,7 @@ export default function AdminPlayers() {
 
   async function handleSaveHcp(playerId: string) {
     const val = hcpInputRef.current?.value ?? ''
-    await scopedTable('players').update({ hcp_current: val ? parseFloat(val) : null }).eq('id', playerId)
+    await scopedTable('players').update({ hcp_fallback: val ? parseFloat(val) : null }).eq('id', playerId)
     setEditingId(null)
     fetchPlayers()
   }
@@ -79,6 +79,7 @@ export default function AdminPlayers() {
           + Lisää pelaaja
         </button>
       </div>
+      <p className="text-sm text-gray-500">HCP fallbackia käytetään veikkauksissa vain, jos pelaajalla ei ole kauden kierrokselta tallennettua HCP:tä.</p>
 
       {error && <div className="text-red-400 text-sm">{error}</div>}
 
@@ -99,7 +100,7 @@ export default function AdminPlayers() {
             step="0.1"
             value={newHcp}
             onChange={e => setNewHcp(e.target.value)}
-            placeholder="HCP (valinnainen)"
+            placeholder="HCP fallback (valinnainen)"
             className={inputClass}
           />
           <div className="flex gap-2">
@@ -136,7 +137,7 @@ export default function AdminPlayers() {
                   ref={hcpInputRef}
                   type="number"
                   step="0.1"
-                  defaultValue={p.hcp_current ?? ''}
+                  defaultValue={p.hcp_fallback ?? ''}
                   className="w-20 bg-gc-dark border border-white/10 rounded px-2 py-1 text-white text-sm"
                   autoFocus
                 />
@@ -148,7 +149,7 @@ export default function AdminPlayers() {
                 onClick={() => setEditingId(p.id)}
                 className="text-sm text-gray-400 hover:text-white whitespace-nowrap"
               >
-                HCP {p.hcp_current ?? '–'}
+                HCP fallback {p.hcp_fallback ?? '–'}
               </button>
             )}
 

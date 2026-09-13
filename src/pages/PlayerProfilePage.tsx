@@ -424,8 +424,8 @@ export default function PlayerProfilePage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white font-display">{player.full_name}</h1>
-        {player.hcp_current != null && (
-          <p className="text-gray-400 mt-1">HCP {player.hcp_current}</p>
+        {player.hcp_fallback != null && (
+          <p className="text-gray-400 mt-1">HCP fallback {player.hcp_fallback}</p>
         )}
       </div>
 
