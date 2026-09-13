@@ -46,6 +46,7 @@ export default function CompositionQuestion({ value, onChange, playerHandicap = 
   const scratch = value.holes.reduce<number>((sum, category, hole) => sum + (category ? strokeCountForHole(holePars[hole] ?? COMPOSITION_HOLE_PARS[hole], category) : 0), 0)
   const stablefordPoints = value.holes.reduce<number>((sum, category, hole) => sum + (stablefordForHole(category, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1) ?? 0), 0)
   const delta = 36 - points
+  const stablefordDelta = playerHandicap == null ? null : stablefordPoints - 36
   const infoWidth = 80
 
   function select(hole: number, category: HoleCategory) {
@@ -94,9 +95,20 @@ export default function CompositionQuestion({ value, onChange, playerHandicap = 
       <div className="sticky top-0 z-10 border-b border-white/10" style={{ background: 'var(--bg-dark)' }}>
         <div className="flex items-center justify-between gap-2 py-3">
           <div className="text-gc-muted text-[13px]"><span className="block text-white font-display font-bold text-xl">{scratch} lyöntiä</span>Scratch</div>
-          <span className={`font-display font-black text-[28px] ${delta < 0 ? 'text-gc-red' : 'text-white'}`}>{delta === 0 ? 'E' : delta > 0 ? `+${delta}` : delta}</span>
+          <div className="text-center">
+            <span className={`block font-display font-black text-[42px] leading-none ${showStablefordPreview && stablefordDelta != null && stablefordDelta > 0 ? 'text-gc-red' : 'text-white'}`}>
+              {showStablefordPreview
+                ? stablefordDelta == null ? '–' : stablefordDelta === 0 ? 'E' : stablefordDelta > 0 ? `+${stablefordDelta}` : stablefordDelta
+                : delta === 0 ? 'E' : delta > 0 ? `+${delta}` : delta}
+            </span>
+            <span className="mt-1 block text-[11px] uppercase tracking-wide text-gc-muted">
+              {showStablefordPreview
+                ? stablefordDelta == null ? 'par-tulos' : stablefordDelta === 0 ? 'par' : stablefordDelta > 0 ? 'yli parin' : 'alle parin'
+                : 'suhteessa pariin'}
+            </span>
+          </div>
           {showStablefordPreview
-            ? <span className="text-gc-muted text-right text-[13px]"><span className="block font-display font-bold text-xl text-white">{playerHandicap == null ? '–' : `${stablefordPoints}p`}</span>{playerHandicap == null ? 'HCP puuttuu' : 'arvioitu Stableford'}</span>
+            ? <span className="text-gc-muted text-right text-[12px]"><span className="block font-display font-bold text-lg text-white">{playerHandicap == null ? '–' : `${stablefordPoints}p`}</span>{playerHandicap == null ? 'HCP puuttuu' : 'Stableford'}</span>
             : <span className="text-gc-muted text-[13px]">{points}p stableford</span>}
         </div>
         <div className="flex items-center text-[11px] font-display font-semibold">
