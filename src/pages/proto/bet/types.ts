@@ -73,6 +73,26 @@ export const COMPOSITION_HOLE_PARS = [4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 
 
 export const EMPTY_COMPOSITION: CompositionAnswer = { holes: [...Array<HoleCategory>(17).fill('par'), null] }
 
+/**
+ * Start a player's line at two Stableford points per hole, based on their
+ * handicap strokes and the course's stroke indexes. The final hole stays
+ * empty so the bettor must complete the line before submitting it.
+ */
+export function initialCompositionForHandicap(handicap: number | null | undefined, holeHandicapIndexes: number[] = Array.from({ length: 18 }, (_, index) => index + 1)): CompositionAnswer {
+  const playingHandicap = handicap == null || !Number.isFinite(handicap) ? 0 : Math.max(0, Math.round(handicap))
+  const holes: (HoleCategory | null)[] = []
+  for (let index = 0; index < 18; index++) {
+    if (index === 17) {
+      holes.push(null)
+      continue
+    }
+    const strokeIndex = holeHandicapIndexes[index] ?? index + 1
+    const handicapStrokes = Math.floor(playingHandicap / 18) + (strokeIndex <= playingHandicap % 18 ? 1 : 0)
+    holes.push(CATEGORY_ORDER[Math.min(CATEGORY_ORDER.length - 1, handicapStrokes + 1)])
+  }
+  return { holes }
+}
+
 export interface CompositionLineAnswer {
   type: 'composition_line'
   featured_player_id: string

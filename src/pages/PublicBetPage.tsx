@@ -8,7 +8,7 @@ import InitialsAvatar from '../components/shared/InitialsAvatar'
 import { playerImagePath } from '../lib/playerImage'
 import { getCurrentSeason, getLeaderboard } from '../lib/queries'
 import CompositionQuestion from './proto/bet/CompositionQuestion'
-import { COMPOSITION_HOLE_PARS, EMPTY_COMPOSITION, compositionPoints, lockComposition, type CompositionAnswer as PrototypeCompositionAnswer, type CompositionLineAnswer as PrototypeCompositionLineAnswer } from './proto/bet/types'
+import { COMPOSITION_HOLE_PARS, compositionPoints, initialCompositionForHandicap, lockComposition, type CompositionAnswer as PrototypeCompositionAnswer, type CompositionLineAnswer as PrototypeCompositionLineAnswer } from './proto/bet/types'
 import CombinedPlayerPickScreen, { type BetKey, type CombinedAssignments } from './proto/bet/CombinedPlayerPickScreen'
 
 const db = supabase as any
@@ -187,7 +187,7 @@ function QuestionCard({ question, index, total, answer, players, event, seasonSt
   const configuredHeadToHeadPlayers = [playerA, playerB].filter((player): player is Player => Boolean(player))
   const headToHeadPlayers = configuredHeadToHeadPlayers.length === 2 ? configuredHeadToHeadPlayers : players.slice(0, 2)
   const stats = { ...seasonStats, ...((parameters.player_stats ?? {}) as Record<string, { rank?: unknown; points?: unknown }>) }
-  const compositionAnswer = isCompositionAnswer(answer) && !('type' in answer) ? answer : EMPTY_COMPOSITION
+  const compositionAnswer = isCompositionAnswer(answer) && !('type' in answer) ? answer : initialCompositionForHandicap(targetHandicap, holeGuide.map(hole => hole.stroke_index))
   const valid = key === 'podium_top3' ? !!answer && (answer as PodiumAnswer).first != null && (answer as PodiumAnswer).second != null && (answer as PodiumAnswer).third != null : key === 'composition_player_line' ? compositionAnswer.holes.length === 18 && compositionAnswer.holes.every(category => category != null) : answer !== null
   let context = ''
   if (key === 'slider_player_points') context = `HCP ${targetHandicap ?? '–'} · ${event.course?.name ?? 'Kenttä'} Par ${event.course?.par_total ?? 72}`
