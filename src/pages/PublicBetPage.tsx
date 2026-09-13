@@ -103,7 +103,7 @@ function answerLabel(question: EventQuestion, answer: Answer | null | undefined,
 }
 
 function MainShell({ children, onLogout }: { children: ReactNode; onLogout?: () => void }) {
-  return <main className="min-h-screen px-4 py-7 sm:py-10" style={{ background: 'var(--bg-dark)', color: 'white' }}><div className="mx-auto w-full max-w-[560px]">{onLogout && <div className="mb-4 flex justify-end"><button type="button" onClick={onLogout} className="rounded-lg border px-3 py-2 text-xs font-semibold text-white" style={{ borderColor: 'var(--border-accent)' }}>Kirjaudu ulos</button></div>}{children}</div></main>
+  return <main className="min-h-screen px-4 py-7 sm:py-10" style={{ background: 'var(--bg-dark)', color: 'white' }}><div className="mx-auto w-full max-w-[560px]">{children}{onLogout && <div className="mt-8 flex justify-center"><button type="button" onClick={onLogout} className="px-2 py-1 text-[11px] text-white/40 transition-colors hover:text-white/70">Kirjaudu ulos</button></div>}</div></main>
 }
 
 function PageMessage({ children, action }: { children: ReactNode; action?: ReactNode }) {
