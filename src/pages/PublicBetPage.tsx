@@ -224,8 +224,9 @@ function PodiumPicker({ players, value, onChange, seasonalHandicaps = {} }: { pl
       <div className="mb-5 grid grid-cols-3 gap-2">
         {slots.map((id, index) => {
           const player = players.find(item => item.id === id)
+          const linkedToDepartingCard = departingSelection?.phase === 'medal' && departingSelection.slot === index
           return (
-            <div key={index} className={'relative flex min-h-[110px] flex-col items-center justify-center rounded-xl p-2 text-center ' + (recentSelection?.slot === index ? 'animate-podium-slot-in' : '')} style={{ background: player ? 'color-mix(in srgb, var(--league-primary) 12%, var(--bg-card))' : 'var(--bg-card)', border: '1px solid ' + (player ? 'var(--league-primary)' : 'var(--border-muted)') }}>
+            <div key={index} className={'relative flex min-h-[110px] flex-col items-center justify-center rounded-xl p-2 text-center ' + (recentSelection?.slot === index ? 'animate-podium-slot-in' : '') + (linkedToDepartingCard ? ' animate-podium-rank-link' : '')} style={{ background: player ? 'color-mix(in srgb, var(--league-primary) 12%, var(--bg-card))' : 'var(--bg-card)', border: (linkedToDepartingCard ? '2px' : '1px') + ' solid ' + (player ? 'var(--league-primary)' : 'var(--border-muted)') }}>
               <span className="text-2xl">{medals[index]}</span>
               <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{index + 1}. SIJA</span>
               {player ? <>
@@ -239,7 +240,7 @@ function PodiumPicker({ players, value, onChange, seasonalHandicaps = {} }: { pl
       <div className="mb-2 min-h-[16px] text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }} aria-live="polite">{recentPlayer && recentSelection ? <span className="inline-block normal-case tracking-normal text-league-primary animate-podium-selection">{recentPlayer.full_name} → {recentSelection.slot + 1}. sija</span> : 'Valitse pelaajat'}</div>
       <div className="grid max-h-[38vh] grid-cols-2 gap-2 overflow-y-auto">
         {gridPlayers.map(player => departingSelection?.playerId === player.id && departingSelection.phase === 'medal'
-          ? <div key={player.id} className="flex min-h-[118px] flex-col items-center justify-center rounded-xl border border-league-primary bg-league-primary/10 animate-podium-rank-reveal"><span className="text-4xl">{medals[departingSelection.slot]}</span><span className="mt-1 text-xs font-semibold text-league-primary">{departingSelection.slot + 1}. sija</span></div>
+          ? <div key={player.id} className="flex min-h-[118px] flex-col items-center justify-center rounded-xl border-2 border-league-primary bg-league-primary/10 animate-podium-rank-reveal"><span className="text-4xl">{medals[departingSelection.slot]}</span><span className="mt-1 text-xs font-semibold text-league-primary">{departingSelection.slot + 1}. sija</span></div>
           : <PlayerCard key={player.id} player={player} hcpOverride={seasonalHandicaps[player.id]} compact confirming={departingSelection?.playerId === player.id && departingSelection.phase === 'card'} onClick={() => selectPlayer(player.id)} />)}
       </div>
     </div>
