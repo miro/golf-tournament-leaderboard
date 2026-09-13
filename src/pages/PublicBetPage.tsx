@@ -474,6 +474,16 @@ export default function PublicBetPage() {
           setCurrentQuestion(Math.min(Math.max(savedDraft.current_question ?? 0, 0), Math.max(loadedQuestions.length - 1, 0)))
         }
         if (loadedEvent.status === 'draft') { setMessage('Veikkaukset eivät ole vielä auki'); setStage('message'); return }
+        if (savedSubmission?.submitted) {
+          setParticipantId(savedSubmission.participant_id)
+          const loadedResult = await loadResults(loadedEvent.id, savedSubmission.participant_id)
+          if (loadedEvent.status === 'betting_open' && savedIdentity && loadedResult.bets.length === 0) {
+            setStage('returning')
+            return
+          }
+          if (!cancelled) setStage('results')
+          return
+        }
         if (savedIdentity) {
           const { data: matchingParticipants, error: matchingParticipantError } = await db.from('betting_participants')
             .select('*')
@@ -497,16 +507,6 @@ export default function PublicBetPage() {
             }
             if (loadedEvent.status === 'betting_open') { setStage('questions'); return }
           }
-        }
-        if (savedSubmission?.submitted) {
-          setParticipantId(savedSubmission.participant_id)
-          const loadedResult = await loadResults(loadedEvent.id, savedSubmission.participant_id)
-          if (loadedEvent.status === 'betting_open' && savedIdentity && loadedResult.bets.length === 0) {
-            setStage('returning')
-            return
-          }
-          if (!cancelled) setStage('results')
-          return
         }
         if (loadedEvent.status !== 'betting_open') { setMessage('Veikkaukset on suljettu'); setStage('message'); return }
         setStage(savedIdentity ? 'returning' : 'identity')
