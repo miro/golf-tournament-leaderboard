@@ -355,6 +355,7 @@ export default function PublicBetPage() {
     const all = (participants ?? []) as unknown as Participant[]
     const loadedResult = { current: all.find(participant => participant.id === currentParticipantId) ?? null, bets: (bets ?? []) as unknown as BetRow[], participants: all }
     setResult(loadedResult)
+    if (loadedResult.bets.length) clearDraft(eventId)
     return loadedResult
   }
 
@@ -556,7 +557,6 @@ export default function PublicBetPage() {
       if (betsInsert.error) throw betsInsert.error
       const submission: Submission = { submitted: true, participant_id: participantId, submitted_at: submittedAt }
       writeStorage(submissionKey(event.id), submission)
-      clearDraft(event.id)
       const participant = { id: participantId, event_id: event.id, display_name: identity?.display_name ?? '', pin: identity?.pin ?? null, identity_token: identity?.identity_token ?? null, bettor_account_id: null, is_event_player: isEventPlayer, submitted_at: submittedAt, total_points_awarded: 0 }
       setResult({ current: participant, participants: [participant], bets: rows as BetRow[] })
       setAnswers(submittedAnswers)
