@@ -174,12 +174,56 @@ function PlayerCarousel({ players, selectedId, onSelect, stats, seasonalHandicap
 }
 
 function PodiumPicker({ players, value, onChange, seasonalHandicaps = {} }: { players: Player[]; value: PodiumAnswer; onChange: (value: PodiumAnswer) => void; seasonalHandicaps?: Record<string, number> }) {
+  const [recentSelection, setRecentSelection] = useState<{ playerId: string; slot: number } | null>(null)
+  const selectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const slots = [value.first, value.second, value.third]
-  const medals = ['🥇', '🥈', '🥉']
-  const remove = (index: number) => { const next = [...slots]; next[index] = null; onChange({ first: next[0], second: next[1], third: next[2] }) }
-  return <div><div className="mb-5 grid grid-cols-3 gap-2">{slots.map((id, index) => { const player = players.find(item => item.id === id); return <div key={index} className="relative flex min-h-[110px] flex-col items-center justify-center rounded-xl p-2 text-center" style={{ background: player ? 'color-mix(in srgb, var(--league-primary) 12%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${player ? 'var(--league-primary)' : 'var(--border-muted)'}` }}><span className="text-2xl">{medals[index]}</span><span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{index + 1}. SIJA</span>{player ? <><button type="button" aria-label={`Poista ${index + 1}. sijan valinta`} onClick={() => remove(index)} className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full text-2xl font-bold leading-none transition-colors" style={{ background: 'color-mix(in srgb, var(--bg-dark) 70%, transparent)', border: '1px solid var(--border-accent)', color: 'white' }}>×</button><span className="mt-1 w-full truncate text-xs font-semibold text-white">{player.full_name}</span></> : <span className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>Tyhjä</span>}</div>})}</div><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Valitse pelaajat</div><div className="grid max-h-[38vh] grid-cols-2 gap-2 overflow-y-auto">{players.filter(player => !slots.includes(player.id)).map(player => <PlayerCard key={player.id} player={player} hcpOverride={seasonalHandicaps[player.id]} compact onClick={() => { const index = slots.findIndex(slot => slot === null); if (index < 0) return; const next = [...slots]; next[index] = player.id; onChange({ first: next[0], second: next[1], third: next[2] }) }} />)}</div></div>
-}
+  const medals = ['\u{1F947}', '\u{1F948}', '\u{1F949}']
 
+  useEffect(() => () => { if (selectionTimer.current) clearTimeout(selectionTimer.current) }, [])
+
+  const remove = (index: number) => {
+    const next = [...slots]
+    next[index] = null
+    onChange({ first: next[0], second: next[1], third: next[2] })
+  }
+
+  const selectPlayer = (playerId: string) => {
+    const slot = slots.findIndex(value => value === null)
+    if (slot < 0) return
+    const next = [...slots]
+    next[slot] = playerId
+    setRecentSelection({ playerId, slot })
+    if (selectionTimer.current) clearTimeout(selectionTimer.current)
+    selectionTimer.current = setTimeout(() => setRecentSelection(null), 650)
+    onChange({ first: next[0], second: next[1], third: next[2] })
+  }
+
+  const recentPlayer = recentSelection ? players.find(player => player.id === recentSelection.playerId) : null
+  return (
+    <div>
+      <div className="mb-5 grid grid-cols-3 gap-2">
+        {slots.map((id, index) => {
+          const player = players.find(item => item.id === id)
+          return (
+            <div key={index} className={'relative flex min-h-[110px] flex-col items-center justify-center rounded-xl p-2 text-center ' + (recentSelection?.slot === index ? 'animate-podium-slot-in' : '')} style={{ background: player ? 'color-mix(in srgb, var(--league-primary) 12%, var(--bg-card))' : 'var(--bg-card)', border: '1px solid ' + (player ? 'var(--league-primary)' : 'var(--border-muted)') }}>
+              <span className="text-2xl">{medals[index]}</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{index + 1}. SIJA</span>
+              {player ? <>
+                <button type="button" aria-label={'Poista ' + (index + 1) + '. sijan valinta'} onClick={() => remove(index)} className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full text-2xl font-bold leading-none transition-colors" style={{ background: 'color-mix(in srgb, var(--bg-dark) 70%, transparent)', border: '1px solid var(--border-accent)', color: 'white' }}>{'\u00d7'}</button>
+                <span className="mt-1 w-full truncate text-xs font-semibold text-white">{player.full_name}</span>
+              </> : <span className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>Tyhjä</span>}
+            </div>
+          )
+        })}
+      </div>
+      {recentPlayer && recentSelection && <p className="mb-3 text-center text-xs font-semibold text-league-primary animate-podium-selection" aria-live="polite">{recentPlayer.full_name} → {recentSelection.slot + 1}. sija</p>}
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Valitse pelaajat</div>
+      <div className="grid max-h-[38vh] grid-cols-2 gap-2 overflow-y-auto">
+        {players.filter(player => !slots.includes(player.id)).map(player => <PlayerCard key={player.id} player={player} hcpOverride={seasonalHandicaps[player.id]} compact onClick={() => selectPlayer(player.id)} />)}
+      </div>
+    </div>
+  )
+}
 function Progress({ index, total }: { index: number; total: number }) {
   return <div className="mb-7"><div className="h-[3px] w-full overflow-hidden rounded-full" style={{ background: 'var(--border-muted)' }}><div className="h-full transition-all" style={{ width: `${(index / total) * 100}%`, background: 'var(--league-primary)' }} /></div><div className="mt-2 text-right text-xs" style={{ color: 'var(--text-muted)' }}>{index}/{total}</div></div>
 }
