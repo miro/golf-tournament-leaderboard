@@ -21,14 +21,32 @@ function Symbol({ category }: { category: HoleCategory }) {
 interface Props {
   value: CompositionAnswer
   onChange: (value: CompositionAnswer) => void
+  playerHandicap?: number | null
+  holePars?: number[]
+  holeHandicapIndexes?: number[]
+  showStablefordPreview?: boolean
 }
 
-export default function CompositionQuestion({ value, onChange }: Props) {
+function handicapStrokes(handicap: number | null | undefined, strokeIndex: number) {
+  if (handicap == null || !Number.isFinite(handicap)) return 0
+  const playingHandicap = Math.max(0, Math.round(handicap))
+  return Math.floor(playingHandicap / 18) + (strokeIndex <= playingHandicap % 18 ? 1 : 0)
+}
+
+function stablefordForHole(category: HoleCategory | null, handicap: number | null | undefined, strokeIndex: number) {
+  if (!category || handicap == null) return null
+  const netToPar = CATEGORY_META[category].strokeOffset - handicapStrokes(handicap, strokeIndex)
+  return Math.max(0, 2 - netToPar)
+}
+
+export default function CompositionQuestion({ value, onChange, playerHandicap = null, holePars = COMPOSITION_HOLE_PARS, holeHandicapIndexes = Array.from({ length: 18 }, (_, index) => index + 1), showStablefordPreview = false }: Props) {
   const gesture = useRef<{ id: number; hole: number; x: number; y: number; mode: 'pending' | 'horizontal' | 'vertical' } | null>(null)
   const [drag, setDrag] = useState<{ hole: number; x: number } | null>(null)
   const points = compositionPoints(value)
-  const scratch = value.holes.reduce<number>((sum, category, hole) => sum + (category ? strokeCountForHole(COMPOSITION_HOLE_PARS[hole], category) : 0), 0)
+  const scratch = value.holes.reduce<number>((sum, category, hole) => sum + (category ? strokeCountForHole(holePars[hole] ?? COMPOSITION_HOLE_PARS[hole], category) : 0), 0)
+  const stablefordPoints = value.holes.reduce<number>((sum, category, hole) => sum + (stablefordForHole(category, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1) ?? 0), 0)
   const delta = 36 - points
+  const infoWidth = showStablefordPreview ? 88 : 80
 
   function select(hole: number, category: HoleCategory) {
     onChange({ holes: value.holes.map((current, index) => index === hole ? category : current) })
@@ -77,25 +95,27 @@ export default function CompositionQuestion({ value, onChange }: Props) {
         <div className="flex items-center justify-between gap-2 py-3">
           <div className="text-gc-muted text-[13px]"><span className="block text-white font-display font-bold text-xl">{scratch} lyöntiä</span>Scratch</div>
           <span className={`font-display font-black text-[28px] ${delta < 0 ? 'text-gc-red' : 'text-white'}`}>{delta === 0 ? 'E' : delta > 0 ? `+${delta}` : delta}</span>
-          <span className="text-gc-muted text-[13px]">{points}p stableford</span>
+          {showStablefordPreview
+            ? <span className="text-gc-muted text-right text-[13px]"><span className="block font-display font-bold text-xl text-white">{playerHandicap == null ? '–' : `${stablefordPoints}p`}</span>{playerHandicap == null ? 'HCP puuttuu' : 'arvioitu Stableford'}</span>
+            : <span className="text-gc-muted text-[13px]">{points}p stableford</span>}
         </div>
         <div className="flex items-center text-[11px] font-display font-semibold">
           <span className="w-9 shrink-0 text-center text-white/60">Väylä</span>
-          <span className="ml-1 w-8 shrink-0 text-center text-league-primary">Par</span>
+          <span className={`ml-1 ${showStablefordPreview ? 'w-10' : 'w-8'} shrink-0 text-center text-league-primary`}>{showStablefordPreview ? 'Par / SI' : 'Par'}</span>
           <div className="ml-2 flex-1 min-w-0 grid grid-cols-6 text-center text-white/50">{LABELS.map((label, index) => (
             <span key={label} className={`py-2 ${index === 1 ? 'bg-white/[0.05] border-x border-white/[0.12] text-white/80' : ''}`}>{label}</span>
           ))}</div>
         </div>
       </div>
       <div className="relative w-full select-none">
-        <div aria-hidden="true" className="absolute inset-y-0 right-0 grid grid-cols-6 pointer-events-none" style={{ left: 80 }}>
+        <div aria-hidden="true" className="absolute inset-y-0 right-0 grid grid-cols-6 pointer-events-none" style={{ left: infoWidth }}>
           {CATEGORY_ORDER.map((category, index) => (
             <div key={category} className={category === 'par'
               ? 'bg-white/[0.05] border-x border-white/[0.12]'
               : index > 2 ? 'border-l border-white/[0.04]' : ''} />
           ))}
         </div>
-        <svg className="absolute top-0 pointer-events-none" style={{ left: 80, width: 'calc(100% - 80px)', height: 1296 }} viewBox="0 0 100 1296" preserveAspectRatio="none" aria-hidden="true">
+        <svg className="absolute top-0 pointer-events-none" style={{ left: infoWidth, width: `calc(100% - ${infoWidth}px)`, height: 1296 }} viewBox="0 0 100 1296" preserveAspectRatio="none" aria-hidden="true">
           <polyline points={linePoints} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
         </svg>
         {value.holes.map((category, hole) => {
@@ -104,11 +124,11 @@ export default function CompositionQuestion({ value, onChange }: Props) {
           return (
             <div key={hole} className="flex items-center h-[72px]">
               <span className="w-9 shrink-0 text-center font-display text-xl font-semibold text-white/70">{hole + 1}</span>
-              <span className="ml-1 w-8 shrink-0 text-center font-display text-xl font-bold text-league-primary">{COMPOSITION_HOLE_PARS[hole]}</span>
+              <span className={`ml-1 flex ${showStablefordPreview ? 'w-10' : 'w-8'} shrink-0 flex-col items-center justify-center text-center font-display font-bold text-league-primary`}><span className="text-xl leading-none">{holePars[hole] ?? COMPOSITION_HOLE_PARS[hole]}</span>{showStablefordPreview && <><span className="mt-1 text-[9px] leading-none text-white/50">SI {holeHandicapIndexes[hole] ?? hole + 1}</span><span className="mt-1 text-[10px] leading-none text-white/70">{stablefordForHole(shownCategory, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1) == null ? '–' : `${stablefordForHole(shownCategory, playerHandicap, holeHandicapIndexes[hole] ?? hole + 1)}p`}</span></>}</span>
               <div
                 className="relative ml-2 flex-1 min-w-0 h-full cursor-ew-resize focus-visible:outline focus-visible:outline-2 focus-visible:outline-league-primary"
                 style={{ touchAction: 'pan-y pinch-zoom' }}
-                role="slider" tabIndex={0} aria-label={`Väylä ${hole + 1}, par ${COMPOSITION_HOLE_PARS[hole]}`}
+                role="slider" tabIndex={0} aria-label={`Väylä ${hole + 1}, par ${holePars[hole] ?? COMPOSITION_HOLE_PARS[hole]}`}
                 aria-valuemin={0} aria-valuemax={5} aria-valuenow={category ? CATEGORY_ORDER.indexOf(category) : 1}
                 aria-valuetext={category ? CATEGORY_META[category].fullLabel : 'Aseta viimeinen väylä'}
                 onPointerDown={e => start(e, hole)} onPointerMove={move} onPointerUp={end}

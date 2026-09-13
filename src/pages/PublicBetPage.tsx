@@ -8,7 +8,7 @@ import InitialsAvatar from '../components/shared/InitialsAvatar'
 import { playerImagePath } from '../lib/playerImage'
 import { getCurrentSeason, getLeaderboard } from '../lib/queries'
 import CompositionQuestion from './proto/bet/CompositionQuestion'
-import { EMPTY_COMPOSITION, compositionPoints, lockComposition, type CompositionAnswer as PrototypeCompositionAnswer, type CompositionLineAnswer as PrototypeCompositionLineAnswer } from './proto/bet/types'
+import { COMPOSITION_HOLE_PARS, EMPTY_COMPOSITION, compositionPoints, lockComposition, type CompositionAnswer as PrototypeCompositionAnswer, type CompositionLineAnswer as PrototypeCompositionLineAnswer } from './proto/bet/types'
 
 const db = supabase as any
 
@@ -23,6 +23,7 @@ type Participant = {
   bettor_account_id: string | null; is_event_player: boolean; submitted_at: string; total_points_awarded: number
 }
 type ResultData = { current: Participant | null; bets: BetRow[]; participants: Participant[] }
+type HoleGuide = { par: number; stroke_index: number }
 type PageStage = 'identity' | 'returning' | 'wrong-code' | 'questions' | 'complete' | 'results' | 'message' | 'submit-error'
 
 const IDENTITY_KEY = 'betting_identity'
@@ -135,10 +136,10 @@ function WrongCodeNotice({ onRetry, onContinue }: { onRetry: () => void; onConti
   return <MainShell><div className="flex min-h-[80vh] flex-col items-center justify-center text-center"><div className="mb-5 text-6xl" aria-hidden="true">⚠️</div><h1 className="font-display text-[22px] font-extrabold text-white">Osallistujakoodi ei täsmännyt</h1><p className="mt-4 max-w-sm text-[15px] leading-[1.5]" style={{ color: 'var(--text-muted)' }}>Syöttämäsi osallistujakoodi ei täsmännyt.<br />Sinut on merkitty katsojaksi, mutta voit silti osallistua veikkaukseen.</p><div className="mt-8 w-full space-y-3"><button type="button" onClick={onRetry} className="w-full rounded-xl border py-3 font-display font-semibold text-white" style={{ borderColor: 'var(--border-accent)' }}>Kokeile uudelleen</button><button type="button" onClick={onContinue} className="w-full rounded-xl py-3 font-display text-lg font-bold" style={{ background: 'var(--league-primary)', color: 'var(--bg-dark)' }}>JATKA VEIKKAAMISTA →</button></div></div></MainShell>
 }
 
-function PlayerCard({ player, selected = false, onClick, rank, points, compact = false }: { player: Player; selected?: boolean; onClick?: () => void; rank?: unknown; points?: unknown; compact?: boolean }) {
+function PlayerCard({ player, selected = false, onClick, rank, points, compact = false, hcpOverride }: { player: Player; selected?: boolean; onClick?: () => void; rank?: unknown; points?: unknown; compact?: boolean; hcpOverride?: number | null }) {
   const [failed, setFailed] = useState(false)
   const image = player.avatar_url ?? playerImagePath(player.full_name)
-  const body = <><div className={`relative overflow-hidden ${compact ? 'h-16' : 'h-28'}`} style={{ background: 'var(--bg-dark)' }}>{failed ? <div className="flex h-full items-center justify-center"><InitialsAvatar name={player.full_name} size={compact ? 42 : 64} color="var(--league-primary)" /></div> : <img src={image} alt="" onError={() => setFailed(true)} className="h-full w-full object-cover" />}<div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" /></div><div className="p-3 text-left"><div className="truncate font-display font-bold text-white">{player.full_name}</div><div className="mt-1 flex gap-2 text-xs" style={{ color: 'var(--text-muted)' }}><span>HCP {player.hcp_current ?? '–'}</span>{rank != null && <span>#{String(rank)}</span>}{points != null && <span>{String(points)}p</span>}</div></div></>
+  const body = <><div className={`relative overflow-hidden ${compact ? 'h-16' : 'h-28'}`} style={{ background: 'var(--bg-dark)' }}>{failed ? <div className="flex h-full items-center justify-center"><InitialsAvatar name={player.full_name} size={compact ? 42 : 64} color="var(--league-primary)" /></div> : <img src={image} alt="" onError={() => setFailed(true)} className="h-full w-full object-cover" />}<div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" /></div><div className="p-3 text-left"><div className="truncate font-display font-bold text-white">{player.full_name}</div><div className="mt-1 flex gap-2 text-xs" style={{ color: 'var(--text-muted)' }}><span>HCP {hcpOverride ?? player.hcp_current ?? '–'}</span>{rank != null && <span>#{String(rank)}</span>}{points != null && <span>{String(points)}p</span>}</div></div></>
   if (!onClick) return <div className="overflow-hidden rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-muted)' }}>{body}</div>
   return <button type="button" onClick={onClick} className="w-full overflow-hidden rounded-xl text-left transition-all" style={{ background: selected ? 'color-mix(in srgb, var(--league-primary) 14%, var(--bg-card))' : 'var(--bg-card)', border: `${selected ? 2 : 1}px solid ${selected ? 'var(--league-primary)' : 'var(--border-muted)'}` }}>{body}</button>
 }
@@ -169,11 +170,12 @@ function Progress({ index, total }: { index: number; total: number }) {
   return <div className="mb-7"><div className="h-[3px] w-full overflow-hidden rounded-full" style={{ background: 'var(--border-muted)' }}><div className="h-full transition-all" style={{ width: `${(index / total) * 100}%`, background: 'var(--league-primary)' }} /></div><div className="mt-2 text-right text-xs" style={{ color: 'var(--text-muted)' }}>{index}/{total}</div></div>
 }
 
-function QuestionCard({ question, index, total, answer, players, event, seasonStats, onChange, onLock, moving, submitting }: { question: EventQuestion; index: number; total: number; answer: Answer | null; players: Player[]; event: EventRow; seasonStats: Record<string, { rank?: unknown; points?: unknown }>; onChange: (answer: Answer) => void; onLock: () => void; moving: boolean; submitting: boolean }) {
+function QuestionCard({ question, index, total, answer, players, event, seasonStats, playerHandicaps, holeGuide, onChange, onLock, moving, submitting }: { question: EventQuestion; index: number; total: number; answer: Answer | null; players: Player[]; event: EventRow; seasonStats: Record<string, { rank?: unknown; points?: unknown }>; playerHandicaps: Record<string, number>; holeGuide: HoleGuide[]; onChange: (answer: Answer) => void; onLock: () => void; moving: boolean; submitting: boolean }) {
   const key = question.question_type.key
   const parameters = question.parameters
   const configuredTarget = playerFrom(parameters, 'player_id', players) ?? playerFrom(parameters, 'target_player_id', players)
   const target = configuredTarget ?? (key === 'slider_player_points' || key === 'beat_the_leader' || key === 'composition_player_line' ? players[0] ?? null : null)
+  const targetHandicap = target?.hcp_current ?? (target ? playerHandicaps[target.id] : null) ?? null
   const playerA = playerFrom(parameters, 'player_a_id', players)
   const playerB = playerFrom(parameters, 'player_b_id', players)
   const configuredHeadToHeadPlayers = [playerA, playerB].filter((player): player is Player => Boolean(player))
@@ -190,7 +192,7 @@ function QuestionCard({ question, index, total, answer, players, event, seasonSt
   if (key === 'beat_the_leader') context = 'Valitse haastajan voittava pelaaja'
   if (key === 'composition_player_line') context = 'Arvioi pelaajan kierros väylä kerrallaan'
   const currentSlider = typeof answer === 'number' ? answer : 36
-  return <div className={`transition-all duration-200 ${moving ? '-translate-x-8 opacity-0' : 'translate-x-0 opacity-100'}`}><Progress index={index} total={total} /><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>VEIKKAUS {index + 1}/{total}</div><h2 className="font-display text-[26px] font-extrabold leading-tight text-white">{key === 'beat_the_leader' ? 'Kuka päihittää heidät?' : questionTitle(question, players)}</h2>{context && <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>{context}</p>}<div className="mb-8 mt-7">{key === 'slider_player_points' && <div>{target && <div className="mb-5"><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>KOHDEPELAAJA</div><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} /></div>}<div className="mb-5 text-center font-display text-[72px] font-black leading-none" style={{ color: 'var(--league-primary)' }}>{currentSlider}</div><input type="range" min="18" max="54" value={currentSlider} onChange={eventChange => onChange(Number(eventChange.target.value))} className="h-2 w-full cursor-pointer appearance-none rounded-full" style={{ background: `linear-gradient(to right, var(--league-primary) 0%, var(--league-primary) ${((currentSlider - 18) / 36) * 100}%, var(--border-muted) ${((currentSlider - 18) / 36) * 100}%, var(--border-muted) 100%)`, accentColor: 'var(--league-primary)' }} /><div className="mt-2 flex justify-between text-sm" style={{ color: 'var(--text-muted)' }}><span>18</span><span>54</span></div></div>}{key === 'composition_player_line' && <div>{target && <div className="mb-5"><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>KOHDEPELAAJA</div><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} /></div>}<CompositionQuestion value={compositionAnswer} onChange={value => onChange(value)} /></div>}{key.startsWith('player_pick_') && <PlayerCarousel players={players} selectedId={typeof answer === 'string' ? answer : null} onSelect={onChange} stats={stats} />}{key.startsWith('yes_no_') && key !== 'yes_no_head_to_head' && <div className="flex flex-col gap-3"><button type="button" onClick={() => onChange(true)} className="rounded-xl py-5 font-display text-xl font-bold text-white" style={{ background: answer === true ? 'color-mix(in srgb, var(--status-positive) 20%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${answer === true ? 'var(--status-positive)' : 'var(--border-muted)'}` }}>KYLLÄ ✓</button><button type="button" onClick={() => onChange(false)} className="rounded-xl py-5 font-display text-xl font-bold text-white" style={{ background: answer === false ? 'color-mix(in srgb, var(--status-negative) 20%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${answer === false ? 'var(--status-negative)' : 'var(--border-muted)'}` }}>EI ✗</button></div>}{key === 'yes_no_head_to_head' && <div className="grid grid-cols-2 gap-3">{headToHeadPlayers.map(player => <PlayerCard key={player.id} player={player} selected={answer === player.id} onClick={() => onChange(player.id)} />)}</div>}{key === 'podium_top3' && <PodiumPicker players={players} value={(answer as PodiumAnswer) ?? { first: null, second: null, third: null }} onChange={onChange as (value: PodiumAnswer) => void} />}{key === 'beat_the_leader' && <div>{target && <><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>HAASTETTAVA</div><div className="mb-5"><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} /></div></>}<PlayerCarousel players={players.filter(player => player.id !== target?.id)} selectedId={typeof answer === 'string' ? answer : null} onSelect={onChange} stats={stats} /></div>}</div><button type="button" disabled={!valid || submitting} onClick={onLock} className="w-full rounded-xl py-3 font-display text-lg font-bold transition-opacity disabled:cursor-not-allowed disabled:opacity-30" style={{ background: 'var(--league-primary)', color: 'var(--bg-dark)' }}>{submitting ? 'LÄHETETÄÄN…' : 'LUKITSE VEIKKAUS →'}</button></div>
+  return <div className={`transition-all duration-200 ${moving ? '-translate-x-8 opacity-0' : 'translate-x-0 opacity-100'}`}><Progress index={index} total={total} /><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>VEIKKAUS {index + 1}/{total}</div><h2 className="font-display text-[26px] font-extrabold leading-tight text-white">{key === 'beat_the_leader' ? 'Kuka päihittää heidät?' : questionTitle(question, players)}</h2>{context && <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>{context}</p>}<div className="mb-8 mt-7">{key === 'slider_player_points' && <div>{target && <div className="mb-5"><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>KOHDEPELAAJA</div><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} hcpOverride={targetHandicap} /></div>}<div className="mb-5 text-center font-display text-[72px] font-black leading-none" style={{ color: 'var(--league-primary)' }}>{currentSlider}</div><input type="range" min="18" max="54" value={currentSlider} onChange={eventChange => onChange(Number(eventChange.target.value))} className="h-2 w-full cursor-pointer appearance-none rounded-full" style={{ background: `linear-gradient(to right, var(--league-primary) 0%, var(--league-primary) ${((currentSlider - 18) / 36) * 100}%, var(--border-muted) ${((currentSlider - 18) / 36) * 100}%, var(--border-muted) 100%)`, accentColor: 'var(--league-primary)' }} /><div className="mt-2 flex justify-between text-sm" style={{ color: 'var(--text-muted)' }}><span>18</span><span>54</span></div></div>}{key === 'composition_player_line' && <div>{target && <div className="mb-5"><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>KOHDEPELAAJA</div><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} hcpOverride={targetHandicap} /></div>}<CompositionQuestion value={compositionAnswer} onChange={value => onChange(value)} showStablefordPreview playerHandicap={targetHandicap} holePars={holeGuide.map(hole => hole.par)} holeHandicapIndexes={holeGuide.map(hole => hole.stroke_index)} /></div>}{key.startsWith('player_pick_') && <PlayerCarousel players={players} selectedId={typeof answer === 'string' ? answer : null} onSelect={onChange} stats={stats} />}{key.startsWith('yes_no_') && key !== 'yes_no_head_to_head' && <div className="flex flex-col gap-3"><button type="button" onClick={() => onChange(true)} className="rounded-xl py-5 font-display text-xl font-bold text-white" style={{ background: answer === true ? 'color-mix(in srgb, var(--status-positive) 20%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${answer === true ? 'var(--status-positive)' : 'var(--border-muted)'}` }}>KYLLÄ ✓</button><button type="button" onClick={() => onChange(false)} className="rounded-xl py-5 font-display text-xl font-bold text-white" style={{ background: answer === false ? 'color-mix(in srgb, var(--status-negative) 20%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${answer === false ? 'var(--status-negative)' : 'var(--border-muted)'}` }}>EI ✗</button></div>}{key === 'yes_no_head_to_head' && <div className="grid grid-cols-2 gap-3">{headToHeadPlayers.map(player => <PlayerCard key={player.id} player={player} selected={answer === player.id} onClick={() => onChange(player.id)} />)}</div>}{key === 'podium_top3' && <PodiumPicker players={players} value={(answer as PodiumAnswer) ?? { first: null, second: null, third: null }} onChange={onChange as (value: PodiumAnswer) => void} />}{key === 'beat_the_leader' && <div>{target && <><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>HAASTETTAVA</div><div className="mb-5"><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} hcpOverride={targetHandicap} /></div></>}<PlayerCarousel players={players.filter(player => player.id !== target?.id)} selectedId={typeof answer === 'string' ? answer : null} onSelect={onChange} stats={stats} /></div>}</div><button type="button" disabled={!valid || submitting} onClick={onLock} className="w-full rounded-xl py-3 font-display text-lg font-bold transition-opacity disabled:cursor-not-allowed disabled:opacity-30" style={{ background: 'var(--league-primary)', color: 'var(--bg-dark)' }}>{submitting ? 'LÄHETETÄÄN…' : 'LUKITSE VEIKKAUS →'}</button></div>
 }
 
 function IdentityBadge({ identity, isEventPlayer, compact = false }: { identity: Identity; isEventPlayer: boolean; compact?: boolean }) {
@@ -228,6 +230,8 @@ export default function PublicBetPage() {
   const [participantId, setParticipantId] = useState<string | null>(null)
   const [isEventPlayer, setIsEventPlayer] = useState(false)
   const [seasonStats, setSeasonStats] = useState<Record<string, { rank?: unknown; points?: unknown }>>({})
+  const [playerHandicaps, setPlayerHandicaps] = useState<Record<string, number>>({})
+  const [holeGuide, setHoleGuide] = useState<HoleGuide[]>(COMPOSITION_HOLE_PARS.map((par, index) => ({ par, stroke_index: index + 1 })))
   const [answers, setAnswers] = useState<Record<string, Answer>>({})
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [moving, setMoving] = useState(false)
@@ -263,9 +267,53 @@ export default function PublicBetPage() {
         if (playerError) throw playerError
         if (questionError) throw questionError
         if (cancelled) return
+        const loadedEventPlayers = (playerData ?? []) as unknown as EventPlayer[]
+        const loadedQuestions: EventQuestion[] = (questionData ?? []).map(normalizeEventQuestion)
         setEvent(loadedEvent)
-        setEventPlayers((playerData ?? []) as unknown as EventPlayer[])
-        setQuestions((questionData ?? []).map(normalizeEventQuestion))
+        setEventPlayers(loadedEventPlayers)
+        setQuestions(loadedQuestions)
+        const compositionQuestion = loadedQuestions.find(question => question.question_type.key === 'composition_player_line')
+        const parameterPars: number[] = Array.isArray(compositionQuestion?.parameters.hole_pars) && compositionQuestion.parameters.hole_pars.length === 18
+          ? compositionQuestion.parameters.hole_pars.map(Number)
+          : COMPOSITION_HOLE_PARS
+        const parameterIndexes: number[] = Array.isArray(compositionQuestion?.parameters.hole_handicap_indexes) && compositionQuestion.parameters.hole_handicap_indexes.length === 18
+          ? compositionQuestion.parameters.hole_handicap_indexes.map(Number)
+          : parameterPars.map((_, index) => index + 1)
+        setHoleGuide(parameterPars.map((par, index) => ({ par, stroke_index: parameterIndexes[index] ?? index + 1 })))
+        if (loadedEvent.course_id) {
+          try {
+            const { data: rounds, error: roundsError } = await db.from('rounds')
+              .select('id, player_id, hcp_at_time, played_date, submitted_at')
+              .eq('league_id', loadedEvent.league_id)
+              .eq('course_id', loadedEvent.course_id)
+              .eq('status', 'published')
+              .order('played_date', { ascending: false })
+              .order('submitted_at', { ascending: false })
+              .limit(200)
+            if (!roundsError && rounds?.length) {
+              const eventPlayerIds = new Set(loadedEventPlayers.map(item => item.player_id))
+              const fallbackHcps: Record<string, number> = {}
+              for (const round of rounds as Array<{ id: string; player_id: string; hcp_at_time: number | null }>) {
+                if (eventPlayerIds.has(round.player_id) && round.hcp_at_time != null && fallbackHcps[round.player_id] == null) fallbackHcps[round.player_id] = Number(round.hcp_at_time)
+              }
+              setPlayerHandicaps(fallbackHcps)
+              const sampleRoundId = (rounds[0] as { id: string }).id
+              const { data: holes, error: holesError } = await db.from('hole_results')
+                .select('hole_number, par, stroke_index')
+                .eq('round_id', sampleRoundId)
+                .order('hole_number')
+              if (!holesError && holes?.length) {
+                const byHole = new Map((holes as Array<{ hole_number: number; par: number; stroke_index: number }>).map(hole => [hole.hole_number, hole]))
+                setHoleGuide(parameterPars.map((par, index) => {
+                  const hole = byHole.get(index + 1)
+                  return { par: Number(hole?.par ?? par), stroke_index: Number(hole?.stroke_index ?? parameterIndexes[index] ?? index + 1) }
+                }))
+              }
+            }
+          } catch {
+            // Hole metadata is optional. The line editor retains its course defaults if it is unavailable.
+          }
+        }
         try {
           const season = await getCurrentSeason()
           const standings = await getLeaderboard(season.id)
@@ -349,7 +397,7 @@ export default function PublicBetPage() {
         if (question.question_type.key === 'composition_player_line' && isCompositionAnswer(rawAnswer) && !('type' in rawAnswer)) {
           const target = playerFrom(question.parameters, 'player_id', players) ?? playerFrom(question.parameters, 'target_player_id', players) ?? players[0]
           if (!target) throw new Error('Tälle kysymykselle ei ole kohdepelaajaa')
-          answer = lockComposition(rawAnswer, target.id)
+          answer = lockComposition(rawAnswer, target.id, holeGuide.map(hole => hole.par))
         }
         return { participant_id: participantId, question_id: question.id, answer, points_awarded: null }
       })
@@ -379,7 +427,7 @@ export default function PublicBetPage() {
   if (stage === 'identity') return <IdentityForm event={event} initialIdentity={identity} onSubmit={createOrRecoverParticipant} busy={identityBusy} />
   if (stage === 'returning' && identity) return <ReturningIdentity event={event} identity={identity} onContinue={(code) => createOrRecoverParticipant(identity.display_name, identity.pin, code)} onChangeIdentity={changeIdentity} busy={identityBusy} />
   if (stage === 'wrong-code') return <WrongCodeNotice onRetry={retryParticipantCode} onContinue={() => setStage('questions')} />
-  if (stage === 'questions' && questions[currentQuestion]) return <MainShell><QuestionCard question={questions[currentQuestion]} index={currentQuestion} total={questions.length} answer={answers[questions[currentQuestion].id] ?? null} players={players} event={event} seasonStats={seasonStats} moving={moving} submitting={submitting} onChange={answer => setAnswers(current => ({ ...current, [questions[currentQuestion].id]: answer }))} onLock={lockQuestion} /></MainShell>
+  if (stage === 'questions' && questions[currentQuestion]) return <MainShell><QuestionCard question={questions[currentQuestion]} index={currentQuestion} total={questions.length} answer={answers[questions[currentQuestion].id] ?? null} players={players} event={event} seasonStats={seasonStats} playerHandicaps={playerHandicaps} holeGuide={holeGuide} moving={moving} submitting={submitting} onChange={answer => setAnswers(current => ({ ...current, [questions[currentQuestion].id]: answer }))} onLock={lockQuestion} /></MainShell>
   if (stage === 'complete' && identity) return <Completion event={event} questions={questions} players={players} answers={answers} identity={identity} isEventPlayer={isEventPlayer} />
   if (stage === 'results' && result) return <Results event={event} questions={questions} players={players} data={result} identity={identity} />
   return <PageMessage>{submitting ? 'Lähetetään…' : 'Ladataan…'}</PageMessage>

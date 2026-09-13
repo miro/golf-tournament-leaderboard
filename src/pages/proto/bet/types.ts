@@ -80,7 +80,7 @@ export interface CompositionLineAnswer {
   summary: Record<HoleCategory, number> & { predicted_points: number; stbl_delta: number }
 }
 
-export function lockComposition(value: CompositionAnswer, playerId: string): CompositionLineAnswer {
+export function lockComposition(value: CompositionAnswer, playerId: string, holePars = COMPOSITION_HOLE_PARS): CompositionLineAnswer {
   if (value.holes.length !== 18 || value.holes.some(category => category === null)) {
     throw new Error('All 18 holes must be set before locking')
   }
@@ -88,7 +88,7 @@ export function lockComposition(value: CompositionAnswer, playerId: string): Com
   return {
     type: 'composition_line',
     featured_player_id: playerId,
-    holes: value.holes.map((category, index) => ({ hole: index + 1, category: category!, par: COMPOSITION_HOLE_PARS[index] })),
+    holes: value.holes.map((category, index) => ({ hole: index + 1, category: category!, par: holePars[index] ?? COMPOSITION_HOLE_PARS[index] })),
     summary: { ...compositionCounts(value), predicted_points, stbl_delta: 36 - predicted_points },
   }
 }
