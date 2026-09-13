@@ -162,7 +162,7 @@ export default function RoundCard({
   // ── Days remaining ──
   const daysLeft = Math.ceil((DEADLINE.getTime() - Date.now()) / 86400000)
   const showDaysLeft = daysLeft > 0
-  const daysColor = daysLeft < 7 ? '#C12820' : daysLeft < 14 ? '#E05218' : 'rgba(255,255,255,0.25)'
+  const daysColor = daysLeft < 7 ? '#C12820' : daysLeft < 14 ? 'var(--league-secondary)' : 'rgba(255,255,255,0.25)'
 
   // ── Section 2: overall standings ──
   const overallRows = buildList(leaderboard, e => e.player.id === round.player_id)
@@ -258,7 +258,7 @@ export default function RoundCard({
                 <span style={{ fontSize: 13, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
                   {gapStat.label}{' '}
                 </span>
-                <span style={{ fontSize: 28, fontWeight: 800, color: gapStat.positive ? color : '#E05218', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+                <span style={{ fontSize: 28, fontWeight: 800, color: gapStat.positive ? color : 'var(--league-secondary)', textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
                   {gapStat.value}
                 </span>
               </div>
@@ -277,8 +277,8 @@ export default function RoundCard({
         <div
           className="px-6 py-3"
           style={{
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            borderTop: '1px solid var(--border-muted)',
+            borderBottom: '1px solid var(--border-muted)',
           }}
         >
           <div className="grid grid-cols-4">

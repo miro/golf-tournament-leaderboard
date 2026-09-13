@@ -40,7 +40,7 @@ export default function SliderQuestion({ value, onChange }: Props) {
           [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg
           [&::-moz-range-thumb]:cursor-pointer"
         style={{
-          background: `linear-gradient(to right, #E8A820 0%, #E8A820 ${((current - MIN) / (MAX - MIN)) * 100}%, rgba(255,255,255,0.1) ${((current - MIN) / (MAX - MIN)) * 100}%, rgba(255,255,255,0.1) 100%)`,
+          background: `linear-gradient(to right, var(--league-primary) 0%, var(--league-primary) ${((current - MIN) / (MAX - MIN)) * 100}%, rgba(255,255,255,0.1) ${((current - MIN) / (MAX - MIN)) * 100}%, rgba(255,255,255,0.1) 100%)`,
         }}
       />
 

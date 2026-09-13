@@ -8,6 +8,8 @@ export type Database = {
           id: string; name: string; slug: string; tournament_name: string
           primary_color: string; secondary_color: string; logo_url: string | null
           domain: string | null; subdomain: string | null; active: boolean
+          bg_dark: string; bg_card: string; bg_card_hover: string; text_muted: string
+          border_muted: string; border_accent: string
           features: { invitational: boolean; betting: boolean; hype_tools: boolean; skins: boolean }
           created_at: string
         }
@@ -67,7 +69,6 @@ export type Database = {
           summary_text: string | null
           latitude: number | null
           longitude: number | null
-          league_id: string
         }
         Insert: Omit<Database['public']['Tables']['courses']['Row'], 'id'>
         Update: Partial<Database['public']['Tables']['courses']['Insert']>

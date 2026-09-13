@@ -73,7 +73,7 @@ export default function CompositionQuestion({ value, onChange }: Props) {
   return (
     <div className="w-full min-w-0">
       <p className="text-gc-muted text-sm italic mb-4">Valitse tulos jokaiselle väylälle. Viimeinen väylä avaa lukituksen.</p>
-      <div className="sticky top-0 z-10 border-b border-white/10" style={{ background: '#17130F' }}>
+      <div className="sticky top-0 z-10 border-b border-white/10" style={{ background: 'var(--bg-dark)' }}>
         <div className="flex items-center justify-between gap-2 py-3">
           <div className="text-gc-muted text-[13px]"><span className="block text-white font-display font-bold text-xl">{scratch} lyöntiä</span>Scratch</div>
           <span className={`font-display font-black text-[28px] ${delta < 0 ? 'text-gc-red' : 'text-white'}`}>{delta === 0 ? 'E' : delta > 0 ? `+${delta}` : delta}</span>
@@ -81,7 +81,7 @@ export default function CompositionQuestion({ value, onChange }: Props) {
         </div>
         <div className="flex items-center text-[11px] font-display font-semibold">
           <span className="w-9 shrink-0 text-center text-white/60">Väylä</span>
-          <span className="ml-1 w-8 shrink-0 text-center text-[#E8A820]">Par</span>
+          <span className="ml-1 w-8 shrink-0 text-center text-league-primary">Par</span>
           <div className="ml-2 flex-1 min-w-0 grid grid-cols-6 text-center text-white/50">{LABELS.map((label, index) => (
             <span key={label} className={`py-2 ${index === 1 ? 'bg-white/[0.05] border-x border-white/[0.12] text-white/80' : ''}`}>{label}</span>
           ))}</div>
@@ -104,9 +104,9 @@ export default function CompositionQuestion({ value, onChange }: Props) {
           return (
             <div key={hole} className="flex items-center h-[72px]">
               <span className="w-9 shrink-0 text-center font-display text-xl font-semibold text-white/70">{hole + 1}</span>
-              <span className="ml-1 w-8 shrink-0 text-center font-display text-xl font-bold text-[#E8A820]">{COMPOSITION_HOLE_PARS[hole]}</span>
+              <span className="ml-1 w-8 shrink-0 text-center font-display text-xl font-bold text-league-primary">{COMPOSITION_HOLE_PARS[hole]}</span>
               <div
-                className="relative ml-2 flex-1 min-w-0 h-full cursor-ew-resize focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E8A820]"
+                className="relative ml-2 flex-1 min-w-0 h-full cursor-ew-resize focus-visible:outline focus-visible:outline-2 focus-visible:outline-league-primary"
                 style={{ touchAction: 'pan-y pinch-zoom' }}
                 role="slider" tabIndex={0} aria-label={`Väylä ${hole + 1}, par ${COMPOSITION_HOLE_PARS[hole]}`}
                 aria-valuemin={0} aria-valuemax={5} aria-valuenow={category ? CATEGORY_ORDER.indexOf(category) : 1}

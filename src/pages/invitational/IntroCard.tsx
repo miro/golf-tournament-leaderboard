@@ -38,8 +38,8 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
         border: `4px solid ${AMBER}`,
         // Inset for the same reason as the player cards: the card fills the viewport,
         // so an outer glow would fall off-screen entirely.
-        boxShadow: 'inset 0 0 24px rgba(232,168,32,0.25)',
-        backgroundColor: '#17130F',
+        boxShadow: 'inset 0 0 24px rgba(var(--league-primary-rgb),0.25)',
+        backgroundColor: 'var(--bg-dark)',
         backgroundImage: NOISE,
         display: 'flex',
         flexDirection: 'column',
@@ -54,7 +54,7 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
         style={{
           height: 80,
           width: 'auto',
-          filter: 'invert(1) drop-shadow(0 4px 16px rgba(232,168,32,0.20))',
+          filter: 'invert(1) drop-shadow(0 4px 16px rgba(var(--league-primary-rgb),0.20))',
           marginBottom: 24,
         }}
       />
@@ -78,7 +78,7 @@ export default function IntroCard({ playerCount, historyYears }: Props) {
           color: AMBER,
           letterSpacing: '0.06em',
           lineHeight: 1,
-          textShadow: '0 4px 20px rgba(232,168,32,0.35)',
+          textShadow: '0 4px 20px rgba(var(--league-primary-rgb),0.35)',
         }}
       >
         INVITATIONAL

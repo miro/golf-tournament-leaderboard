@@ -5,15 +5,21 @@ export default {
   theme: {
     extend: {
       colors: {
+        'league-primary': 'var(--league-primary)',
+        'league-secondary': 'var(--league-secondary)',
+        'bg-dark': 'var(--bg-dark)',
+        'bg-card': 'var(--bg-card)',
+        'bg-card-hover': 'var(--bg-card-hover)',
+        'text-muted': 'var(--text-muted)',
         gc: {
-          dark:     '#17130F',   // warm near-black
-          card:     '#221D17',   // warm dark brown
+          dark:     'var(--bg-dark)',
+          card:     'var(--bg-card)',
           green:    'rgb(var(--league-primary-rgb) / <alpha-value>)',
           gold:     'rgb(var(--league-secondary-rgb) / <alpha-value>)',
           red:      '#C12820',   // brick red
           burgundy: '#8A1C38',   // dark burgundy
           cream:    '#F0E8D0',   // off-white accent
-          muted:    '#9A8870',   // warm muted text
+          muted:    'var(--text-muted)',
         },
       },
       fontFamily: {

@@ -1,6 +1,6 @@
 import type { InvitationalScheduleEvent } from '../../lib/database.types'
 
-export const AMBER = '#E8A820'
+export const AMBER = 'var(--league-primary)'
 export const GREEN = '#2D6A4F'
 
 export const INVITATIONAL_YEAR = 2026

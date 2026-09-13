@@ -292,7 +292,7 @@ export default function HoleOwnerGrid({
         <div style={{ minWidth: 64 + 18 * 44, padding: 16, paddingBottom: 12 }}>
 
           {/* Row 1: Hole numbers */}
-          <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex" style={{ borderBottom: '1px solid var(--border-muted)' }}>
             <div style={{ width: 64, minWidth: 64, height: 32, letterSpacing: '0.08em' }} className="text-[12px] uppercase text-gray-600 font-semibold flex items-center">
               Reikä
             </div>

@@ -283,7 +283,7 @@ export default function AdminHype() {
   const jkPreviewCourses = jkPreview
     ? [...new Map(jkPreview.rounds.map(r => [r.course_id, r.course])).values()]
     : []
-  const jkPreviewColor = jkPreviewCourses.length > 1 ? '#E8A820' : (jkPreviewCourses[0]?.color_hex ?? '#2D6A4F')
+  const jkPreviewColor = jkPreviewCourses.length > 1 ? 'var(--league-primary)' : (jkPreviewCourses[0]?.color_hex ?? '#2D6A4F')
   const postRoundCaption = jkPreview
     ? generatePostRoundCaption(jkPreview.rounds, jkPreview.cutoffTimestamp, allSeasonRounds, leaderboard)
     : ''
@@ -359,7 +359,7 @@ export default function AdminHype() {
                   type="button"
                   onClick={() => setDropdownOpen(o => !o)}
                   className="font-sans w-full bg-gc-dark border border-white/15 rounded-lg px-3 py-2 text-sm text-left flex items-center justify-between transition-colors focus:outline-none focus:border-white/30"
-                  style={{ color: selectedPlayerIds.length === 0 ? '#9A8870' : 'white' }}
+                  style={{ color: selectedPlayerIds.length === 0 ? 'var(--text-muted)' : 'white' }}
                 >
                   {selectedPlayerIds.length === 0
                     ? 'Valitse pelaajat...'
@@ -389,7 +389,7 @@ export default function AdminHype() {
                         >
                           <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-gc-green border-gc-green' : 'border-white/20'}`}>
                             {isSelected && (
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#17130F" strokeWidth="3.5">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--bg-dark)" strokeWidth="3.5">
                                 <polyline points="20 6 9 17 4 12" />
                               </svg>
                             )}
@@ -484,7 +484,7 @@ export default function AdminHype() {
       </div>
 
       <div className="card p-6 mt-8">
-        <div className="label mb-1" style={{ color: '#E8A820' }}>KIERROKSEN JÄLKEEN</div>
+        <div className="label mb-1" style={{ color: 'var(--league-primary)' }}>KIERROKSEN JÄLKEEN</div>
         <p className="font-sans text-gray-500 text-sm mb-6">Luo jälkikortti kierroksen tuloksista</p>
 
         {!jkPreview ? (
@@ -497,7 +497,7 @@ export default function AdminHype() {
                   type="button"
                   onClick={() => setJkDropdownOpen(o => !o)}
                   className="font-sans w-full bg-gc-dark border border-white/15 rounded-lg px-3 py-2 text-sm text-left flex items-center justify-between transition-colors focus:outline-none focus:border-white/30"
-                  style={{ color: jkRoundIds.length === 0 ? '#9A8870' : 'white' }}
+                  style={{ color: jkRoundIds.length === 0 ? 'var(--text-muted)' : 'white' }}
                 >
                   {jkRoundIds.length === 0
                     ? 'Valitse kierrokset...'
@@ -527,7 +527,7 @@ export default function AdminHype() {
                         >
                           <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-gc-green border-gc-green' : 'border-white/20'}`}>
                             {isSelected && (
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#17130F" strokeWidth="3.5">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--bg-dark)" strokeWidth="3.5">
                                 <polyline points="20 6 9 17 4 12" />
                               </svg>
                             )}

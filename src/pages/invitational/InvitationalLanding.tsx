@@ -136,7 +136,7 @@ export default function InvitationalLanding() {
             <Link
               key={card.to}
               to={card.to}
-              className="group flex items-center rounded-2xl transition-colors duration-150 border border-white/6 hover:border-white/14 bg-gc-card hover:bg-[#271F18]"
+              className="group flex items-center rounded-2xl transition-colors duration-150 border border-white/6 hover:border-white/14 bg-gc-card hover:bg-bg-card-hover"
               style={{ padding: 20 }}
             >
               <span

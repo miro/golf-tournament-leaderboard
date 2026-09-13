@@ -1,6 +1,6 @@
 import { getLeagueBrand, leagueShortName } from '../lib/branding'
 
-const GOLD = '#E8A820'
+const GOLD = 'var(--league-primary)'
 
 interface Section {
   title: string

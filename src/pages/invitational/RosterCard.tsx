@@ -46,7 +46,7 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
         border: `${entry.borderWidth}px solid ${entry.borderColor}`,
         // Inset rather than outer: the card fills the viewport, so an outer glow
         // would fall entirely outside the screen and never be seen.
-        boxShadow: entry.glow ? 'inset 0 0 24px rgba(232,168,32,0.25)' : undefined,
+        boxShadow: entry.glow ? 'inset 0 0 24px rgba(var(--league-primary-rgb),0.25)' : undefined,
         background: entry.panelBase,
       }}
     >
@@ -60,7 +60,7 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
           overflow: 'hidden',
           borderTopLeftRadius: 8,
           borderTopRightRadius: 8,
-          background: 'linear-gradient(160deg, #221D17 0%, #17130F 100%)',
+          background: 'linear-gradient(160deg, var(--bg-card) 0%, var(--bg-dark) 100%)',
         }}
       >
         {photoFailed ? (
@@ -165,7 +165,7 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
             fontWeight: 800,
             letterSpacing: '0.10em',
             color: entry.borderColor,
-            background: '#17130F',
+            background: 'var(--bg-dark)',
             border: `1px solid ${entry.borderColor}`,
             borderRadius: 12,
             padding: '5px 14px',
@@ -226,8 +226,8 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '8px 0',
-              borderTop: '1px solid rgba(255,255,255,0.08)',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              borderTop: '1px solid var(--border-muted)',
+              borderBottom: '1px solid var(--border-muted)',
               marginBottom: 16,
             }}
           >
@@ -270,9 +270,9 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
               marginBottom: 12,
               padding: '10px 20px',
               background:
-                'linear-gradient(135deg, rgba(232,168,32,0.25) 0%, rgba(232,168,32,0.15) 50%, rgba(232,168,32,0.25) 100%)',
-              borderTop: '1px solid rgba(232,168,32,0.40)',
-              borderBottom: '1px solid rgba(232,168,32,0.40)',
+                'linear-gradient(135deg, rgba(var(--league-primary-rgb),0.25) 0%, rgba(var(--league-primary-rgb),0.15) 50%, rgba(var(--league-primary-rgb),0.25) 100%)',
+              borderTop: '1px solid rgba(var(--league-primary-rgb),0.40)',
+              borderBottom: '1px solid rgba(var(--league-primary-rgb),0.40)',
               // Label sits left; the first year shares its row, further years stack
               // beneath it flush right.
               display: 'flex',
@@ -291,7 +291,7 @@ export default function RosterCard({ entry, position, total, showHint }: Props) 
                     fontWeight: 900,
                     color: AMBER,
                     lineHeight: 1,
-                    textShadow: '0 2px 12px rgba(232,168,32,0.30)',
+                    textShadow: '0 2px 12px rgba(var(--league-primary-rgb),0.30)',
                   }}
                 >
                   {year}

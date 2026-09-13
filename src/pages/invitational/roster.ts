@@ -3,7 +3,7 @@ import type { InvitationalResult, LeaderboardEntry, Player } from '../../lib/dat
 /** Card frame colours cycle through the four season courses (Kajaani, Paltamo,
  * Nuas, Tenetti) by roster position; league holders override with amber. */
 export const COURSE_COLORS = ['#2D6A4F', '#1B4FC4', '#C4791B', '#8B1BC4']
-export const AMBER = '#E8A820'
+export const AMBER = 'var(--league-primary)'
 
 /** The 2026 Invitational field, by player slug. Deliberately separate from
  * players.active: the Kesäkisa series and the Invitational are different fields, so
@@ -31,7 +31,7 @@ const PANEL_BY_COLOR: Record<string, { tint: string; base: string }> = {
   '#C4791B': { tint: 'rgba(196,121,27,0.15)', base: '#1F1B17' },
   '#8B1BC4': { tint: 'rgba(139,27,196,0.15)', base: '#1C171F' },
 }
-const AMBER_PANEL = { tint: 'rgba(232,168,32,0.12)', base: '#221D17' }
+const AMBER_PANEL = { tint: 'rgba(var(--league-primary-rgb),0.12)', base: 'var(--bg-card)' }
 
 export interface ScratchWin {
   year: number

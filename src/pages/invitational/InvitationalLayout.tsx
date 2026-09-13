@@ -10,7 +10,7 @@ export default function InvitationalLayout() {
   return (
     <div
       className="invitational-shell flex justify-center w-full"
-      style={{ minHeight: '100dvh', backgroundColor: '#0F0B08' }}
+      style={{ minHeight: '100dvh', backgroundColor: 'color-mix(in srgb, var(--bg-dark) 70%, black)' }}
     >
       <div
         className="relative w-full"
@@ -18,7 +18,7 @@ export default function InvitationalLayout() {
           zIndex: 1,
           maxWidth: 430,
           minHeight: '100dvh',
-          backgroundColor: '#17130F',
+          backgroundColor: 'var(--bg-dark)',
           // border-box is on globally, so these sit inside the 430px rather than
           // pushing the column two pixels wider than the viewport on a phone.
           borderLeft: '1px solid rgba(255,255,255,0.06)',

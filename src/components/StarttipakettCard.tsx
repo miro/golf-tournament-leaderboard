@@ -37,7 +37,7 @@ function GapRow() {
 
 function SectionLabel({ text }: { text: string }) {
   return (
-    <div style={{ color: '#9A8870', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, marginBottom: 8 }}>
+    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, marginBottom: 8 }}>
       {text}
     </div>
   )
@@ -247,7 +247,7 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
       </div>
 
       {/* Sarjatilanne */}
-      <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border-muted)' }}>
         <SectionLabel text="SARJATILANNE" />
         {overallRows.map((e, i) => {
           if (e === 'gap') return <GapRow key={`gap-${i}`} />
@@ -291,7 +291,7 @@ export default function StarttipakettCard({ course, selectedPlayers, date, leade
       </div>
 
       {/* Mitä tarvitaan? */}
-      <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border-muted)' }}>
         <SectionLabel text="MITÄ TARVITAAN?" />
         {selectedPlayers.map(player => renderMitaTarvitaan(player))}
       </div>

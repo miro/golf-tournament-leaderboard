@@ -11,7 +11,7 @@ import LeagueLogo from '../components/LeagueLogo'
 import { useLeague } from '../contexts/LeagueContext'
 
 const GOLD = '#FBBF24'
-const PAGE_BG = '#17130F'
+const PAGE_BG = 'var(--bg-dark)'
 
 function VaylamestariRankingSection({
   ranking,

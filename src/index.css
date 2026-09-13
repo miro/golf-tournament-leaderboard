@@ -5,6 +5,12 @@
 :root {
   --league-primary: #E8A820;
   --league-secondary: #E05218;
+  --bg-dark: #17130F;
+  --bg-card: #221D17;
+  --bg-card-hover: #271F18;
+  --text-muted: #9A8870;
+  --border-muted: rgba(255,255,255,0.08);
+  --border-accent: rgba(255,255,255,0.15);
   --league-primary-rgb: 232 168 32;
   --league-secondary-rgb: 224 82 24;
   --league-logo: url('/gc-logo.png');
@@ -14,14 +20,15 @@
 
 @layer base {
   body {
-    @apply bg-gc-dark text-white font-sans;
+    background-color: var(--bg-dark);
+    @apply text-white font-sans;
   }
 
   ::-webkit-scrollbar {
     width: 6px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-gc-dark;
+    background-color: var(--bg-dark);
   }
   ::-webkit-scrollbar-thumb {
     @apply bg-gc-green/60 rounded-full;
@@ -77,7 +84,7 @@
     position: relative;
     /* Clips the ::before, which is deliberately oversized. */
     overflow: hidden;
-    background-color: #17130F;
+    background-color: var(--bg-dark);
   }
   .invitational-hero::before {
     content: '';
@@ -103,8 +110,8 @@
       ellipse 70% 80% at 50% 45%,
       transparent 0%,
       transparent 35%,
-      rgba(15, 11, 8, 0.6) 65%,
-      rgba(15, 11, 8, 0.9) 100%
+      color-mix(in srgb, var(--bg-dark) 60%, black) 65%,
+      color-mix(in srgb, var(--bg-dark) 25%, black) 100%
     );
   }
 

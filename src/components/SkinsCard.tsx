@@ -20,7 +20,7 @@ function fmtDelta(delta: number): { text: string; color: string } {
 
 function SectionLabel({ text }: { text: string }) {
   return (
-    <div style={{ color: '#9A8870', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, marginBottom: 8 }}>
+    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, marginBottom: 8 }}>
       {text}
     </div>
   )
@@ -95,7 +95,7 @@ export default function SkinsCard({ course, seasonId, courseRounds }: Props) {
             </div>
           </div>
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+          <div style={{ borderTop: '1px solid var(--border-muted)' }} />
 
           {/* Skins grid */}
           <div style={{ padding: '16px 24px' }}>

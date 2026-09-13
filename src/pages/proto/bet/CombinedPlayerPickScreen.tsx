@@ -220,8 +220,8 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
                 borderRadius: 12,
                 borderWidth: 2,
                 borderStyle: 'solid',
-                borderColor: isActive ? '#E8A820' : isAssigned ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.12)',
-                background: isActive ? 'rgba(232,168,32,0.2)' : '#2a2520',
+                borderColor: isActive ? 'var(--league-primary)' : isAssigned ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.12)',
+                background: isActive ? 'rgba(var(--league-primary-rgb),0.2)' : 'var(--bg-card-hover)',
               }}
             >
               <div className="flex min-w-0 items-center" style={{ gap: 6 }}>
@@ -286,8 +286,8 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
           const hasChips = assignedKeys.length > 0
           const allFour = assignedKeys.length === 4
 
-          const cardBg = allFour ? '#2D2010' : hasChips ? '#281F14' : '#221D17'
-          const cardBorderColor = allFour ? 'rgba(232,168,32,0.50)' : hasChips ? 'rgba(232,168,32,0.25)' : 'rgba(255,255,255,0.08)'
+          const cardBg = allFour ? 'color-mix(in srgb, var(--league-primary) 18%, var(--bg-card))' : hasChips ? 'var(--bg-card-hover)' : 'var(--bg-card)'
+          const cardBorderColor = allFour ? 'rgba(var(--league-primary-rgb),0.50)' : hasChips ? 'rgba(var(--league-primary-rgb),0.25)' : 'var(--border-muted)'
           const cardBorderWidth = allFour ? 2 : 1
 
           return (
@@ -329,7 +329,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
 
               {orderedChips.length > 0 && (
                 <div className="w-full animate-totem-divider-in" style={{ marginTop: 16 }}>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', margin: '0 12px' }} />
+                  <div style={{ borderTop: '1px solid var(--border-muted)', margin: '0 12px' }} />
                   <div className="flex flex-col" style={{ padding: '8px 0 0' }}>
                     {orderedChips.map(bet => {
                       const isEntering = enteringChip?.key === bet.key && enteringChip.playerId === p.id
@@ -345,8 +345,8 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
                             minHeight: 44,
                             padding: '6px 10px',
                             borderRadius: 6,
-                            background: 'rgba(232,168,32,0.12)',
-                            border: '1px solid rgba(232,168,32,0.30)',
+                            background: 'rgba(var(--league-primary-rgb),0.12)',
+                            border: '1px solid rgba(var(--league-primary-rgb),0.30)',
                             marginBottom: 6,
                           }}
                         >

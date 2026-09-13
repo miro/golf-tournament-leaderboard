@@ -52,7 +52,7 @@ function RankTable({
       ) : (
         <div>
           <div className="grid grid-cols-[20px_1fr_auto_auto] max-[480px]:grid-cols-[20px_1fr_auto] gap-x-2 pb-1.5 mb-1.5"
-               style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+               style={{ borderBottom: '1px solid var(--border-muted)' }}>
             <span className="text-[12px] uppercase text-gray-600 font-medium" style={{ letterSpacing: '0.08em' }}>#</span>
             <span className="text-[12px] uppercase text-gray-600 font-medium" style={{ letterSpacing: '0.08em' }}>Pelaaja</span>
             <span className="text-[12px] uppercase text-gray-600 font-medium text-right pr-2" style={{ letterSpacing: '0.08em' }}>{colPrimary}</span>

@@ -4,7 +4,7 @@ import { getCurrentSeason, getLeaderboard, getActivePlayers, getSeasonCourses } 
 import type { LeaderboardEntry, Player, Course } from '../lib/database.types'
 
 const GOLD = '#FBBF24'
-const CARD_BG = '#221D17'
+const CARD_BG = 'var(--bg-card)'
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 
 interface CourseInfo { id: string; slug: string; name: string; color_hex: string | null }

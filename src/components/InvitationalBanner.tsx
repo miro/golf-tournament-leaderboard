@@ -8,8 +8,8 @@ export default function InvitationalBanner() {
   return (
     <Link
       to="/invitational"
-      className="flex items-center justify-center w-full transition-colors duration-150 bg-[rgba(232,168,32,0.12)] hover:bg-[rgba(232,168,32,0.18)]"
-      style={{ height: 44, borderBottom: '1px solid rgba(232,168,32,0.25)' }}
+      className="flex items-center justify-center w-full transition-colors duration-150"
+      style={{ height: 44, background: 'rgba(var(--league-primary-rgb),0.12)', borderBottom: '1px solid rgba(var(--league-primary-rgb),0.25)' }}
     >
       <span
         className="font-display"

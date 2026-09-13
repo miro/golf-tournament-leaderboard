@@ -7,7 +7,7 @@ function FeedSeparator() {
   return (
     <div className="relative flex items-center justify-center" style={{ margin: '32px 0' }}>
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }} />
-      <span className="relative text-sm px-2" style={{ background: '#17130F' }}>⛳</span>
+      <span className="relative text-sm px-2" style={{ background: 'var(--bg-dark)' }}>⛳</span>
     </div>
   )
 }

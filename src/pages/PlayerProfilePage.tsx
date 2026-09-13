@@ -235,7 +235,7 @@ function VaylamestariSection({
                   <div style={{ minWidth: 64 + 18 * 44, padding: 16, paddingBottom: 12 }}>
 
                     {/* Row 1: Hole numbers */}
-                    <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div className="flex" style={{ borderBottom: '1px solid var(--border-muted)' }}>
                       <RowLabel>Reikä</RowLabel>
                       {HOLES.map(h => (
                         <div

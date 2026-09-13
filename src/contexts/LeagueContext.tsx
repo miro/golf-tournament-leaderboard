@@ -18,6 +18,33 @@ export interface League extends Omit<DatabaseLeague, 'features'> {
 
 export const LeagueContext = createContext<League | null>(null)
 
+function applyLeagueTheme(league: League) {
+  const theme = {
+    bg_dark: league.bg_dark ?? '#17130F',
+    bg_card: league.bg_card ?? '#221D17',
+    bg_card_hover: league.bg_card_hover ?? '#271F18',
+    text_muted: league.text_muted ?? '#9A8870',
+    border_muted: league.border_muted ?? 'rgba(255,255,255,0.08)',
+    border_accent: league.border_accent ?? 'rgba(255,255,255,0.15)',
+  }
+  document.documentElement.style.setProperty('--league-primary', league.primary_color)
+  document.documentElement.style.setProperty('--league-secondary', league.secondary_color)
+  document.documentElement.style.setProperty('--bg-dark', theme.bg_dark)
+  document.documentElement.style.setProperty('--bg-card', theme.bg_card)
+  document.documentElement.style.setProperty('--bg-card-hover', theme.bg_card_hover)
+  document.documentElement.style.setProperty('--text-muted', theme.text_muted)
+  document.documentElement.style.setProperty('--border-muted', theme.border_muted)
+  document.documentElement.style.setProperty('--border-accent', theme.border_accent)
+  document.documentElement.style.setProperty('--league-logo', `url(${league.logo_url ?? '/gc-logo.png'})`)
+  document.body.style.backgroundColor = theme.bg_dark
+  const rgb = (hex: string) => {
+    const value = hex.replace('#', '')
+    return value.length === 6 ? `${parseInt(value.slice(0, 2), 16)} ${parseInt(value.slice(2, 4), 16)} ${parseInt(value.slice(4, 6), 16)}` : '232 168 32'
+  }
+  document.documentElement.style.setProperty('--league-primary-rgb', rgb(league.primary_color))
+  document.documentElement.style.setProperty('--league-secondary-rgb', rgb(league.secondary_color))
+}
+
 export function LeagueProvider({ children }: { children: ReactNode }) {
   const slug = useLeagueSlug()
   const [league, setLeague] = useState<League | null>(null)
@@ -36,6 +63,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
         else if (!data) setLeague(null)
         else {
           const loaded = data as League
+          applyLeagueTheme(loaded)
           setActiveLeagueId(loaded.id)
           setActiveLeagueBrand(loaded)
           setLeague(loaded)
@@ -48,15 +76,7 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!league) return
-    document.documentElement.style.setProperty('--league-primary', league.primary_color)
-    document.documentElement.style.setProperty('--league-secondary', league.secondary_color)
-    document.documentElement.style.setProperty('--league-logo', `url(${league.logo_url ?? '/gc-logo.png'})`)
-    const rgb = (hex: string) => {
-      const value = hex.replace('#', '')
-      return value.length === 6 ? `${parseInt(value.slice(0, 2), 16)} ${parseInt(value.slice(2, 4), 16)} ${parseInt(value.slice(4, 6), 16)}` : '232 168 32'
-    }
-    document.documentElement.style.setProperty('--league-primary-rgb', rgb(league.primary_color))
-    document.documentElement.style.setProperty('--league-secondary-rgb', rgb(league.secondary_color))
+    applyLeagueTheme(league)
   }, [league])
 
   if (loading) return <div className="min-h-screen bg-gc-dark" />

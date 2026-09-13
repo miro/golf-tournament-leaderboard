@@ -64,7 +64,7 @@ function HighlightCard({ event }: { event: InvitationalScheduleEvent }) {
                 <div
                   key={time}
                   className="rounded-lg px-4 py-2.5"
-                  style={{ background: 'rgba(232,168,32,0.20)', border: '1px solid rgba(232,168,32,0.50)' }}
+                  style={{ background: 'rgba(var(--league-primary-rgb),0.20)', border: '1px solid rgba(var(--league-primary-rgb),0.50)' }}
                 >
                   <span className="font-display text-2xl font-black" style={{ color: AMBER }}>
                     {formatTime(time)}
@@ -90,7 +90,7 @@ function StandardCard({ event }: { event: InvitationalScheduleEvent }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <CategoryIcon category={event.category} size={16} color="#9A8870" />
+          <CategoryIcon category={event.category} size={16} color="var(--text-muted)" />
           <h3 className="font-display text-[17px] font-bold text-white leading-tight">{event.title}</h3>
         </div>
 

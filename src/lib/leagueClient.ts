@@ -15,7 +15,7 @@ export function leagueQuery(table: string, leagueId: string) {
     if (table === 'league_event_players' || table === 'betting_questions' || table === 'betting_participants' || table === 'event_scores') return query.eq('event.league_id', leagueId)
     if (table === 'event_hole_results') return query.eq('score.event.league_id', leagueId)
     if (table === 'bets') return query.eq('participant.event.league_id', leagueId)
-    if (table === 'betting_question_types') return query
+    if (table === 'betting_question_types' || table === 'courses') return query
     return query.eq('league_id', leagueId)
   }
   return {
@@ -23,14 +23,14 @@ export function leagueQuery(table: string, leagueId: string) {
       return applyScope(base.select(columns, options))
     },
     insert(values: any) {
-      if (table === 'season_courses' || table === 'hole_results' || table === 'round_cards' || table === 'league_event_players' || table === 'betting_questions' || table === 'betting_participants' || table === 'bets' || table === 'event_scores' || table === 'event_hole_results' || table === 'betting_question_types') {
+      if (table === 'season_courses' || table === 'hole_results' || table === 'round_cards' || table === 'league_event_players' || table === 'betting_questions' || table === 'betting_participants' || table === 'bets' || table === 'event_scores' || table === 'event_hole_results' || table === 'betting_question_types' || table === 'courses') {
         return base.insert(values)
       }
       const addLeague = (value: any) => ({ ...value, league_id: value?.league_id ?? leagueId })
       return base.insert(Array.isArray(values) ? values.map(addLeague) : addLeague(values))
     },
     upsert(values: any, options?: any) {
-      if (table === 'season_courses' || table === 'hole_results' || table === 'round_cards' || table === 'league_event_players' || table === 'betting_questions' || table === 'betting_participants' || table === 'bets' || table === 'event_scores' || table === 'event_hole_results' || table === 'betting_question_types') return base.upsert(values, options)
+      if (table === 'season_courses' || table === 'hole_results' || table === 'round_cards' || table === 'league_event_players' || table === 'betting_questions' || table === 'betting_participants' || table === 'bets' || table === 'event_scores' || table === 'event_hole_results' || table === 'betting_question_types' || table === 'courses') return base.upsert(values, options)
       const addLeague = (value: any) => ({ ...value, league_id: value?.league_id ?? leagueId })
       return applyScope(base.upsert(Array.isArray(values) ? values.map(addLeague) : addLeague(values), options))
     },

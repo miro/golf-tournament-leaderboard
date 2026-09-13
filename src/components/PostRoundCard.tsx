@@ -5,7 +5,7 @@ import { getLeagueBrand, leagueDomain, leagueShortName } from '../lib/branding'
 
 const DOT_SLUGS = ['kajaani', 'nuas', 'tenetti', 'paltamo'] as const
 const BG = '#1a1a18'
-const AMBER = '#E8A820'
+const AMBER = 'var(--league-primary)'
 const GREEN = '#2D6A4F'
 const RED = '#E8453C'
 const MUTED_RED = 'rgba(232,69,60,0.65)'
@@ -40,7 +40,7 @@ function fmtStbl(delta: number): string {
 
 function SectionLabel({ text }: { text: string }) {
   return (
-    <div style={{ color: '#9A8870', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, marginBottom: 8 }}>
+    <div style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, marginBottom: 8 }}>
       {text}
     </div>
   )
@@ -230,7 +230,7 @@ export default function PostRoundCard({ selectedRounds, cutoffTimestamp, allSeas
       </div>
 
       {/* Kierroksen tulokset */}
-      <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border-muted)' }}>
         <SectionLabel text="KIERROKSEN TULOKSET" />
         {isMulti
           ? selectedCourses.map(c => (
@@ -245,14 +245,14 @@ export default function PostRoundCard({ selectedRounds, cutoffTimestamp, allSeas
       </div>
 
       {/* Sarjataulukko */}
-      <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border-muted)' }}>
         <SectionLabel text="SARJATAULUKKO" />
         {relevantRows.map((e, i) => e === 'gap' ? <GapRow key={`gap-${i}`} /> : renderStandingsRow(e))}
       </div>
 
       {/* Tavoite */}
       {tavoiteRows.length > 0 && (
-        <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border-muted)' }}>
           <SectionLabel text="TAVOITE" />
           {tavoiteRows.map(t => (
             <div key={t.player.id} style={{ fontSize: 14, lineHeight: 1.6, padding: '4px 0' }}>

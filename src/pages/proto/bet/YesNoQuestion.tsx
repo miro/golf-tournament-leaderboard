@@ -12,7 +12,7 @@ export default function YesNoQuestion({ value, onChange }: Props) {
         style={{
           height: 80,
           fontSize: 20,
-          background: value === 'yes' ? 'rgba(34,197,94,0.2)' : '#221D17',
+          background: value === 'yes' ? 'rgba(34,197,94,0.2)' : 'var(--bg-card)',
           borderColor: value === 'yes' ? 'rgb(34,197,94)' : 'rgba(255,255,255,0.1)',
         }}
       >
@@ -24,7 +24,7 @@ export default function YesNoQuestion({ value, onChange }: Props) {
         style={{
           height: 80,
           fontSize: 20,
-          background: value === 'no' ? 'rgba(193,40,32,0.2)' : '#221D17',
+          background: value === 'no' ? 'rgba(193,40,32,0.2)' : 'var(--bg-card)',
           borderColor: value === 'no' ? '#C12820' : 'rgba(255,255,255,0.1)',
         }}
       >

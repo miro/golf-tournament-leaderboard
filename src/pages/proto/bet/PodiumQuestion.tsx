@@ -3,7 +3,7 @@ import type { Player } from '../../../lib/database.types'
 import InitialsAvatar from '../../../components/shared/InitialsAvatar'
 
 const MEDALS = ['🥇', '🥈', '🥉']
-const SLOT_TINTS = ['#E8A820', '#C7C7C7', '#C6763D']
+const SLOT_TINTS = ['var(--league-primary)', '#C7C7C7', '#C6763D']
 const HOLD_MS = 300
 const MOVE_CANCEL_PX = 10
 
@@ -133,7 +133,7 @@ export default function PodiumQuestion({ players, podium, onChange }: Props) {
               ref={slotRefs[i]}
               className="flex-1 card p-2 flex flex-col items-center gap-1 relative min-h-[104px] justify-center"
               style={{
-                borderColor: isHover ? '#E8A820' : undefined,
+                borderColor: isHover ? 'var(--league-primary)' : undefined,
                 borderWidth: isHover ? 2 : 1,
                 background: player ? `${SLOT_TINTS[i]}22` : undefined,
               }}
@@ -186,7 +186,7 @@ export default function PodiumQuestion({ players, podium, onChange }: Props) {
       {dragPlayer && dragPos && (
         <div
           className="fixed z-50 pointer-events-none card px-3 py-2 flex items-center gap-2 shadow-2xl"
-          style={{ left: dragPos.x - 60, top: dragPos.y - 28, width: 120, borderColor: '#E8A820', borderWidth: 2 }}
+          style={{ left: dragPos.x - 60, top: dragPos.y - 28, width: 120, borderColor: 'var(--league-primary)', borderWidth: 2 }}
         >
           <InitialsAvatar name={dragPlayer.full_name} size={24} />
           <span className="text-white text-xs font-semibold truncate">{dragPlayer.full_name}</span>

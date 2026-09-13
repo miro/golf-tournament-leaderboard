@@ -118,12 +118,12 @@ export default function BeatTheLeaderQuestion({
 
       <div className="label mb-2">VEIKKAUS {QUESTION_INDEX + 1}/{TOTAL_QUESTIONS}</div>
 
-      <div className="label mb-2" style={{ color: '#E8A820' }}>
+      <div className="label mb-2" style={{ color: 'var(--league-primary)' }}>
         HAASTETTAVA
       </div>
       <div
         className="flex items-center justify-between mb-6"
-        style={{ background: '#221D17', border: '2px solid rgba(232,168,32,0.4)', borderRadius: 12, padding: 16, minHeight: 100 }}
+        style={{ background: 'var(--bg-card)', border: '2px solid rgba(var(--league-primary-rgb),0.4)', borderRadius: 12, padding: 16, minHeight: 100 }}
       >
         <div className="flex items-center gap-3">
           <InitialsAvatar name={targetPlayer.full_name} size={48} color={KAJAANI_GREEN} />
@@ -133,8 +133,8 @@ export default function BeatTheLeaderQuestion({
             </div>
             {targetStanding && (
               <>
-                <div style={{ color: '#E8A820', fontSize: 14 }}>{targetStanding.rank}. sija</div>
-                <div style={{ color: '#E8A820', fontSize: 16, fontWeight: 700 }}>{targetStanding.points}p</div>
+                <div style={{ color: 'var(--league-primary)', fontSize: 14 }}>{targetStanding.rank}. sija</div>
+                <div style={{ color: 'var(--league-primary)', fontSize: 16, fontWeight: 700 }}>{targetStanding.points}p</div>
               </>
             )}
           </div>
@@ -169,8 +169,8 @@ export default function BeatTheLeaderQuestion({
               onClick={() => handleCardTap(i)}
               className="shrink-0 snap-center relative flex flex-col items-center justify-center text-center w-[65%] aspect-[3/4] rounded-2xl p-6 cursor-pointer"
               style={{
-                background: selected ? 'rgba(232,168,32,0.08)' : '#221D17',
-                border: selected ? '2px solid #E8A820' : '1px solid rgba(255,255,255,0.10)',
+                background: selected ? 'rgba(var(--league-primary-rgb),0.08)' : 'var(--bg-card)',
+                border: selected ? '2px solid var(--league-primary)' : '1px solid rgba(255,255,255,0.10)',
                 opacity,
                 transform: `scale(${scale})`,
                 transition: 'transform 200ms ease, opacity 200ms ease',
@@ -179,7 +179,7 @@ export default function BeatTheLeaderQuestion({
               {selected && (
                 <span
                   className="absolute flex items-center justify-center text-white"
-                  style={{ top: 8, right: 8, width: 24, height: 24, borderRadius: '50%', background: '#E8A820', fontSize: 14 }}
+                  style={{ top: 8, right: 8, width: 24, height: 24, borderRadius: '50%', background: 'var(--league-primary)', fontSize: 14 }}
                 >
                   ✓
                 </span>

@@ -57,8 +57,8 @@ export default function IdentityScreen({ onStart }: Props) {
               style={{
                 width: 52,
                 height: 52,
-                borderColor: selected ? '#E8A820' : 'rgba(255,255,255,0.1)',
-                background: selected ? 'rgba(232,168,32,0.2)' : '#221D17',
+                borderColor: selected ? 'var(--league-primary)' : 'rgba(255,255,255,0.1)',
+                background: selected ? 'rgba(var(--league-primary-rgb),0.2)' : 'var(--bg-card)',
               }}
             >
               {emoji}

@@ -27,7 +27,7 @@ export default function PublicLayout() {
         <span /><span /><span /><span />
       </div>
 
-      <header className="sticky top-0 z-40 bg-gc-dark/95 backdrop-blur border-b border-white/8">
+      <header className="sticky top-0 z-40 backdrop-blur" style={{ backgroundColor: 'color-mix(in srgb, var(--bg-dark) 95%, transparent)', borderBottom: '1px solid var(--border-muted)' }}>
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
           <NavLink to="/" className="flex items-center gap-2.5">
             <LeagueLogo alt={league.name} style={{ height: 36, width: 'auto', filter: 'invert(1)' }} />
