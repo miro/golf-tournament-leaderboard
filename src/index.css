@@ -214,6 +214,13 @@
 }
 .animate-podium-selection { animation: podium-selection 240ms ease-out both; }
 
+@keyframes player-pick-confirm {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-8px) scale(1.04); }
+  100% { transform: translateY(0) scale(1); }
+}
+.animate-player-pick-confirm { animation: player-pick-confirm 300ms ease-out both; }
+
 @media (prefers-reduced-motion: reduce) {
-  .composition-pending, .composition-lock-in, .animate-podium-slot-in, .animate-podium-selection { animation: none; }
+  .composition-pending, .composition-lock-in, .animate-podium-slot-in, .animate-podium-selection, .animate-player-pick-confirm { animation: none; }
 }
