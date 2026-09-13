@@ -20,6 +20,7 @@ import AdminEvents from './pages/admin/AdminEvents'
 import AdminEventNew from './pages/admin/AdminEventNew'
 import AdminEventDetail from './pages/admin/AdminEventDetail'
 import BetPage from './pages/proto/BetPage'
+import PublicBetPage from './pages/PublicBetPage'
 import InvitationalRosterPage from './pages/invitational/RosterPage'
 import InvitationalLanding from './pages/invitational/InvitationalLanding'
 import InvitationalLayout from './pages/invitational/InvitationalLayout'
@@ -56,6 +57,9 @@ export default function App() {
 
       {/* Prototypes — no chrome, no auth, not linked from nav */}
       <Route path="/proto/bet" element={<BetPage />} />
+
+      {/* Public event betting */}
+      <Route path="/bet/:token" element={<PublicBetPage />} />
 
       {/* Admin */}
       <Route path="/admin">

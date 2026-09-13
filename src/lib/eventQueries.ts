@@ -4,12 +4,12 @@ import type { Course, Player } from './database.types'
 export type EventStatus = 'draft' | 'betting_open' | 'betting_closed' | 'scoring' | 'results_ready' | 'presented'
 export type EventRow = {
   id: string; league_id: string; name: string; event_date: string; course_id: string | null
-  status: EventStatus; betting_url_token: string; created_at: string; course?: Pick<Course, 'name'> | null
+  status: EventStatus; betting_url_token: string; participant_code: string | null; created_at: string; course?: Pick<Course, 'name' | 'par_total'> | null
 }
 export type EventPlayer = { event_id: string; player_id: string; display_order: number; player: Player }
 export type QuestionType = { id: string; key: string; display_name: string; description: string; max_points: number; requires_target_player: boolean; active: boolean }
-export type EventQuestion = { id: string; event_id: string; question_type_id: string; display_order: number; parameters: Record<string, unknown>; correct_answer: unknown; question_type: QuestionType }
-export type EventParticipant = { id: string; event_id: string; display_name: string; emoji_pin: string | null; submitted_at: string; total_points_awarded: number }
+export type EventQuestion = { id: string; event_id: string; question_type_id: string; display_order: number; question_text: string | null; parameters: Record<string, unknown>; correct_answer: unknown; question_type: QuestionType }
+export type EventParticipant = { id: string; event_id: string; display_name: string; emoji_pin: string | null; pin: string | null; identity_token: string | null; bettor_account_id: string | null; is_event_player: boolean; submitted_at: string; total_points_awarded: number }
 export type EventScore = { id: string; event_id: string; player_id: string; played_date: string; total_points: number; total_strokes: number | null; submitted_at: string; is_corrected: boolean; player?: Player; holes?: Array<{ id: string; event_score_id: string; hole_number: number; points: number }> }
 
 export async function getLeagueEvents(): Promise<EventRow[]> {

@@ -13,6 +13,8 @@
   --border-accent: rgba(255,255,255,0.15);
   --league-primary-rgb: 232 168 32;
   --league-secondary-rgb: 224 82 24;
+  --status-positive: #22c55e;
+  --status-negative: #ef4444;
   --league-logo: url('/gc-logo.png');
   --font-display: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
