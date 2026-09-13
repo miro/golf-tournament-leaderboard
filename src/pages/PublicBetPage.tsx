@@ -216,8 +216,7 @@ function PodiumPicker({ players, value, onChange, seasonalHandicaps = {} }: { pl
           )
         })}
       </div>
-      {recentPlayer && recentSelection && <p className="mb-3 text-center text-xs font-semibold text-league-primary animate-podium-selection" aria-live="polite">{recentPlayer.full_name} → {recentSelection.slot + 1}. sija</p>}
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Valitse pelaajat</div>
+      <div className="mb-2 min-h-[16px] text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }} aria-live="polite">{recentPlayer && recentSelection ? <span className="inline-block normal-case tracking-normal text-league-primary animate-podium-selection">{recentPlayer.full_name} → {recentSelection.slot + 1}. sija</span> : 'Valitse pelaajat'}</div>
       <div className="grid max-h-[38vh] grid-cols-2 gap-2 overflow-y-auto">
         {players.filter(player => !slots.includes(player.id)).map(player => <PlayerCard key={player.id} player={player} hcpOverride={seasonalHandicaps[player.id]} compact onClick={() => selectPlayer(player.id)} />)}
       </div>
