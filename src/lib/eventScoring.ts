@@ -1,13 +1,45 @@
 import { scopedTable } from './leagueClient'
 import { getEventQuestions, getEventScores, getEventParticipants, type EventQuestion, type EventScore } from './eventQueries'
+import { COMPOSITION_HOLE_PARS, compositionCounts, compositionPoints, type CompositionLineAnswer, type HoleCategory } from '../pages/proto/bet/types'
 
 const value = (answer: any) => answer && typeof answer === 'object' && 'value' in answer ? answer.value : answer
 const same = (a: any, b: any) => JSON.stringify(value(a)) === JSON.stringify(value(b))
+
+function compositionCategory(points: number): HoleCategory {
+  if (points >= 3) return 'birdie'
+  if (points === 2) return 'par'
+  if (points === 1) return 'bogey'
+  return 'worse'
+}
+
+function compositionCorrect(question: EventQuestion, scores: EventScore[]): CompositionLineAnswer | null {
+  const target = String(question.parameters.player_id ?? question.parameters.target_player_id ?? '')
+  const score = scores.find(item => item.player_id === target)
+  const holePars = Array.isArray(question.parameters.hole_pars) && question.parameters.hole_pars.length === 18
+    ? question.parameters.hole_pars.map(Number)
+    : COMPOSITION_HOLE_PARS
+  if (!target || !score?.holes || score.holes.length < 18) return null
+  const holes = holePars.map((par, index) => {
+    const result = score.holes?.find(hole => hole.hole_number === index + 1)
+    return result ? { hole: index + 1, category: compositionCategory(result.points), par } : null
+  })
+  if (holes.some(hole => hole === null)) return null
+  const completeHoles = holes as { hole: number; category: HoleCategory; par: number }[]
+  const categoryAnswer = { holes: completeHoles.map(hole => hole.category) } as any
+  const predicted_points = compositionPoints(categoryAnswer)
+  return {
+    type: 'composition_line',
+    featured_player_id: target,
+    holes: completeHoles,
+    summary: { ...compositionCounts(categoryAnswer), predicted_points, stbl_delta: 36 - predicted_points },
+  }
+}
 
 function derive(question: EventQuestion, scores: EventScore[]): any {
   const key = question.question_type.key
   const sorted = [...scores].sort((a, b) => b.total_points - a.total_points || a.submitted_at.localeCompare(b.submitted_at))
   const target = String(question.parameters.player_id ?? question.parameters.target_player_id ?? '')
+  if (key === 'composition_player_line') return compositionCorrect(question, scores)
   if (key === 'slider_player_points') return scores.find(s => s.player_id === target)?.total_points ?? null
   if (key === 'player_pick_best_total') return sorted[0]?.player_id ?? null
   if (key === 'player_pick_best_scratch') return [...scores].sort((a, b) => (a.total_strokes ?? 999) - (b.total_strokes ?? 999) || a.submitted_at.localeCompare(b.submitted_at))[0]?.player_id ?? null
@@ -35,6 +67,13 @@ function derive(question: EventQuestion, scores: EventScore[]): any {
 function pointsFor(question: EventQuestion, answer: any, correct: any): number {
   const key = question.question_type.key
   if (key === 'slider_player_points') { const diff = Math.abs(Number(value(answer)) - Number(correct)); return diff <= 2 ? 5 : diff <= 5 ? 2 : 0 }
+  if (key === 'composition_player_line') {
+    const predicted = value(answer)?.holes
+    const actual = value(correct)?.holes
+    if (!Array.isArray(predicted) || !Array.isArray(actual) || actual.length !== 18) return 0
+    const exact = actual.filter((hole: any, index: number) => predicted[index]?.category === hole.category).length
+    return Math.round(exact / 18 * question.question_type.max_points)
+  }
   if (key === 'podium_top3') {
     const a = value(answer) ?? {}; const c = value(correct) ?? {}; const positions = ['first', 'second', 'third']; const exact = positions.filter(p => a[p] === c[p]).length; const any = positions.filter(p => Object.values(c).includes(a[p])).length
     return exact === 3 ? 8 : any === 3 ? 4 : any === 2 ? 2 : any === 1 ? 1 : 0

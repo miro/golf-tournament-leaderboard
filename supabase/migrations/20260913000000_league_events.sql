@@ -85,6 +85,7 @@ create index if not exists event_scores_event_idx on public.event_scores (event_
 insert into public.betting_question_types (key, display_name, description, max_points, requires_target_player)
 values
   ('slider_player_points', 'Pisteet: kohdepelaaja', 'Arvaa kohdepelaajan pistebogey-tulos.', 5, true),
+  ('composition_player_line', 'Yksittäisen pelaajan tuloskortti', 'Arvioi yhden pelaajan tulos väylä kerrallaan.', 8, true),
   ('player_pick_best_total', 'Kuka tekee parhaan tuloksen?', 'Valitse pelaaja, jolla on eniten pisteitä.', 3, false),
   ('player_pick_best_front', 'Paras etuysi', 'Valitse etuysin paras pelaaja.', 3, false),
   ('player_pick_best_back', 'Paras takaysi', 'Valitse takaysin paras pelaaja.', 3, false),

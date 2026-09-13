@@ -7,13 +7,16 @@ import { normalizeEventQuestion, type EventPlayer, type EventQuestion, type Even
 import InitialsAvatar from '../components/shared/InitialsAvatar'
 import { playerImagePath } from '../lib/playerImage'
 import { getCurrentSeason, getLeaderboard } from '../lib/queries'
+import CompositionQuestion from './proto/bet/CompositionQuestion'
+import { EMPTY_COMPOSITION, compositionPoints, lockComposition, type CompositionAnswer as PrototypeCompositionAnswer, type CompositionLineAnswer as PrototypeCompositionLineAnswer } from './proto/bet/types'
 
 const db = supabase as any
 
 type Identity = { display_name: string; pin: string; identity_token: string }
 type Submission = { submitted: true; participant_id: string; submitted_at: string }
 type PodiumAnswer = { first: string | null; second: string | null; third: string | null }
-type Answer = number | boolean | string | PodiumAnswer
+type CompositionAnswer = PrototypeCompositionAnswer | PrototypeCompositionLineAnswer
+type Answer = number | boolean | string | PodiumAnswer | CompositionAnswer
 type BetRow = { id: string; participant_id: string; question_id: string; answer: Answer; points_awarded: number | null }
 type Participant = {
   id: string; event_id: string; display_name: string; pin: string | null; identity_token: string | null
@@ -51,10 +54,15 @@ function playerFrom(parameters: Record<string, unknown>, key: string, players: P
   return players.find(player => player.id === id) ?? null
 }
 
+function isCompositionAnswer(answer: Answer | null | undefined): answer is CompositionAnswer {
+  return Boolean(answer && typeof answer === 'object' && 'holes' in answer)
+}
+
 function questionTitle(question: EventQuestion, players: Player[]) {
   const key = question.question_type.key
   const target = playerFrom(question.parameters, 'player_id', players) ?? playerFrom(question.parameters, 'target_player_id', players)
   if (key === 'slider_player_points') return target ? `Kuinka monta pistettä ${target.full_name} tekee?` : 'Kuinka monta pistettä kohdepelaaja tekee?'
+  if (key === 'composition_player_line') return target ? `Miten ${target.full_name} pelaa kierroksen?` : 'Miten kohdepelaaja pelaa kierroksen?'
   if (question.question_text?.trim()) return question.question_text
   if (key === 'player_pick_best_total') return 'Kuka tekee parhaan tuloksen?'
   if (key === 'player_pick_best_front') return 'Kuka tekee parhaan etuysin?'
@@ -73,6 +81,11 @@ function answerLabel(question: EventQuestion, answer: Answer | null | undefined,
   if (answer == null) return '–'
   const key = question.question_type.key
   if (key === 'slider_player_points') return `${answer}p`
+  if (key === 'composition_player_line' && isCompositionAnswer(answer)) {
+    const target = playerFrom(question.parameters, 'player_id', players) ?? playerFrom(question.parameters, 'target_player_id', players)
+    const predictedPoints = 'summary' in answer && typeof answer.summary.predicted_points === 'number' ? answer.summary.predicted_points : compositionPoints(answer)
+    return `${target?.full_name ?? 'Pelaaja'} · ${predictedPoints}p`
+  }
   if (key.startsWith('yes_no_')) return answer === true ? 'Kyllä' : 'Ei'
   if (key === 'podium_top3') {
     const podium = answer as PodiumAnswer
@@ -160,13 +173,14 @@ function QuestionCard({ question, index, total, answer, players, event, seasonSt
   const key = question.question_type.key
   const parameters = question.parameters
   const configuredTarget = playerFrom(parameters, 'player_id', players) ?? playerFrom(parameters, 'target_player_id', players)
-  const target = configuredTarget ?? (key === 'slider_player_points' || key === 'beat_the_leader' ? players[0] ?? null : null)
+  const target = configuredTarget ?? (key === 'slider_player_points' || key === 'beat_the_leader' || key === 'composition_player_line' ? players[0] ?? null : null)
   const playerA = playerFrom(parameters, 'player_a_id', players)
   const playerB = playerFrom(parameters, 'player_b_id', players)
   const configuredHeadToHeadPlayers = [playerA, playerB].filter((player): player is Player => Boolean(player))
   const headToHeadPlayers = configuredHeadToHeadPlayers.length === 2 ? configuredHeadToHeadPlayers : players.slice(0, 2)
   const stats = { ...seasonStats, ...((parameters.player_stats ?? {}) as Record<string, { rank?: unknown; points?: unknown }>) }
-  const valid = key === 'podium_top3' ? !!answer && (answer as PodiumAnswer).first != null && (answer as PodiumAnswer).second != null && (answer as PodiumAnswer).third != null : answer !== null
+  const compositionAnswer = isCompositionAnswer(answer) && !('type' in answer) ? answer : EMPTY_COMPOSITION
+  const valid = key === 'podium_top3' ? !!answer && (answer as PodiumAnswer).first != null && (answer as PodiumAnswer).second != null && (answer as PodiumAnswer).third != null : key === 'composition_player_line' ? compositionAnswer.holes.length === 18 && compositionAnswer.holes.every(category => category != null) : answer !== null
   let context = ''
   if (key === 'slider_player_points') context = `HCP ${target?.hcp_current ?? '–'} · ${event.course?.name ?? 'Kenttä'} Par ${event.course?.par_total ?? 72}`
   if (key.startsWith('player_pick_')) context = 'Valitse tapahtuman pelaajista yksi'
@@ -174,8 +188,9 @@ function QuestionCard({ question, index, total, answer, players, event, seasonSt
   if (key === 'yes_no_head_to_head') context = `${headToHeadPlayers[0]?.full_name ?? 'Pelaaja A'} vastaan ${headToHeadPlayers[1]?.full_name ?? 'Pelaaja B'}`
   if (key === 'podium_top3') context = 'Järjestä kolme pelaajaa oikeaan järjestykseen'
   if (key === 'beat_the_leader') context = 'Valitse haastajan voittava pelaaja'
+  if (key === 'composition_player_line') context = 'Arvioi pelaajan kierros väylä kerrallaan'
   const currentSlider = typeof answer === 'number' ? answer : 36
-  return <div className={`transition-all duration-200 ${moving ? '-translate-x-8 opacity-0' : 'translate-x-0 opacity-100'}`}><Progress index={index} total={total} /><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>VEIKKAUS {index + 1}/{total}</div><h2 className="font-display text-[26px] font-extrabold leading-tight text-white">{key === 'beat_the_leader' ? 'Kuka päihittää heidät?' : questionTitle(question, players)}</h2>{context && <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>{context}</p>}<div className="mb-8 mt-7">{key === 'slider_player_points' && <div>{target && <div className="mb-5"><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>KOHDEPELAAJA</div><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} /></div>}<div className="mb-5 text-center font-display text-[72px] font-black leading-none" style={{ color: 'var(--league-primary)' }}>{currentSlider}</div><input type="range" min="18" max="54" value={currentSlider} onChange={eventChange => onChange(Number(eventChange.target.value))} className="h-2 w-full cursor-pointer appearance-none rounded-full" style={{ background: `linear-gradient(to right, var(--league-primary) 0%, var(--league-primary) ${((currentSlider - 18) / 36) * 100}%, var(--border-muted) ${((currentSlider - 18) / 36) * 100}%, var(--border-muted) 100%)`, accentColor: 'var(--league-primary)' }} /><div className="mt-2 flex justify-between text-sm" style={{ color: 'var(--text-muted)' }}><span>18</span><span>54</span></div></div>}{key.startsWith('player_pick_') && <PlayerCarousel players={players} selectedId={typeof answer === 'string' ? answer : null} onSelect={onChange} stats={stats} />}{key.startsWith('yes_no_') && key !== 'yes_no_head_to_head' && <div className="flex flex-col gap-3"><button type="button" onClick={() => onChange(true)} className="rounded-xl py-5 font-display text-xl font-bold text-white" style={{ background: answer === true ? 'color-mix(in srgb, var(--status-positive) 20%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${answer === true ? 'var(--status-positive)' : 'var(--border-muted)'}` }}>KYLLÄ ✓</button><button type="button" onClick={() => onChange(false)} className="rounded-xl py-5 font-display text-xl font-bold text-white" style={{ background: answer === false ? 'color-mix(in srgb, var(--status-negative) 20%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${answer === false ? 'var(--status-negative)' : 'var(--border-muted)'}` }}>EI ✗</button></div>}{key === 'yes_no_head_to_head' && <div className="grid grid-cols-2 gap-3">{headToHeadPlayers.map(player => <PlayerCard key={player.id} player={player} selected={answer === player.id} onClick={() => onChange(player.id)} />)}</div>}{key === 'podium_top3' && <PodiumPicker players={players} value={(answer as PodiumAnswer) ?? { first: null, second: null, third: null }} onChange={onChange as (value: PodiumAnswer) => void} />}{key === 'beat_the_leader' && <div>{target && <><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>HAASTETTAVA</div><div className="mb-5"><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} /></div></>}<PlayerCarousel players={players.filter(player => player.id !== target?.id)} selectedId={typeof answer === 'string' ? answer : null} onSelect={onChange} stats={stats} /></div>}</div><button type="button" disabled={!valid || submitting} onClick={onLock} className="w-full rounded-xl py-3 font-display text-lg font-bold transition-opacity disabled:cursor-not-allowed disabled:opacity-30" style={{ background: 'var(--league-primary)', color: 'var(--bg-dark)' }}>{submitting ? 'LÄHETETÄÄN…' : 'LUKITSE VEIKKAUS →'}</button></div>
+  return <div className={`transition-all duration-200 ${moving ? '-translate-x-8 opacity-0' : 'translate-x-0 opacity-100'}`}><Progress index={index} total={total} /><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>VEIKKAUS {index + 1}/{total}</div><h2 className="font-display text-[26px] font-extrabold leading-tight text-white">{key === 'beat_the_leader' ? 'Kuka päihittää heidät?' : questionTitle(question, players)}</h2>{context && <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>{context}</p>}<div className="mb-8 mt-7">{key === 'slider_player_points' && <div>{target && <div className="mb-5"><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>KOHDEPELAAJA</div><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} /></div>}<div className="mb-5 text-center font-display text-[72px] font-black leading-none" style={{ color: 'var(--league-primary)' }}>{currentSlider}</div><input type="range" min="18" max="54" value={currentSlider} onChange={eventChange => onChange(Number(eventChange.target.value))} className="h-2 w-full cursor-pointer appearance-none rounded-full" style={{ background: `linear-gradient(to right, var(--league-primary) 0%, var(--league-primary) ${((currentSlider - 18) / 36) * 100}%, var(--border-muted) ${((currentSlider - 18) / 36) * 100}%, var(--border-muted) 100%)`, accentColor: 'var(--league-primary)' }} /><div className="mt-2 flex justify-between text-sm" style={{ color: 'var(--text-muted)' }}><span>18</span><span>54</span></div></div>}{key === 'composition_player_line' && <div>{target && <div className="mb-5"><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>KOHDEPELAAJA</div><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} /></div>}<CompositionQuestion value={compositionAnswer} onChange={value => onChange(value)} /></div>}{key.startsWith('player_pick_') && <PlayerCarousel players={players} selectedId={typeof answer === 'string' ? answer : null} onSelect={onChange} stats={stats} />}{key.startsWith('yes_no_') && key !== 'yes_no_head_to_head' && <div className="flex flex-col gap-3"><button type="button" onClick={() => onChange(true)} className="rounded-xl py-5 font-display text-xl font-bold text-white" style={{ background: answer === true ? 'color-mix(in srgb, var(--status-positive) 20%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${answer === true ? 'var(--status-positive)' : 'var(--border-muted)'}` }}>KYLLÄ ✓</button><button type="button" onClick={() => onChange(false)} className="rounded-xl py-5 font-display text-xl font-bold text-white" style={{ background: answer === false ? 'color-mix(in srgb, var(--status-negative) 20%, var(--bg-card))' : 'var(--bg-card)', border: `1px solid ${answer === false ? 'var(--status-negative)' : 'var(--border-muted)'}` }}>EI ✗</button></div>}{key === 'yes_no_head_to_head' && <div className="grid grid-cols-2 gap-3">{headToHeadPlayers.map(player => <PlayerCard key={player.id} player={player} selected={answer === player.id} onClick={() => onChange(player.id)} />)}</div>}{key === 'podium_top3' && <PodiumPicker players={players} value={(answer as PodiumAnswer) ?? { first: null, second: null, third: null }} onChange={onChange as (value: PodiumAnswer) => void} />}{key === 'beat_the_leader' && <div>{target && <><div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--league-primary)' }}>HAASTETTAVA</div><div className="mb-5"><PlayerCard player={target} rank={parameters.target_rank} points={parameters.target_points} /></div></>}<PlayerCarousel players={players.filter(player => player.id !== target?.id)} selectedId={typeof answer === 'string' ? answer : null} onSelect={onChange} stats={stats} /></div>}</div><button type="button" disabled={!valid || submitting} onClick={onLock} className="w-full rounded-xl py-3 font-display text-lg font-bold transition-opacity disabled:cursor-not-allowed disabled:opacity-30" style={{ background: 'var(--league-primary)', color: 'var(--bg-dark)' }}>{submitting ? 'LÄHETETÄÄN…' : 'LUKITSE VEIKKAUS →'}</button></div>
 }
 
 function IdentityBadge({ identity, isEventPlayer, compact = false }: { identity: Identity; isEventPlayer: boolean; compact?: boolean }) {
@@ -328,7 +343,16 @@ export default function PublicBetPage() {
     setSubmitting(true)
     try {
       const submittedAt = new Date().toISOString()
-      const rows = questions.map(question => ({ participant_id: participantId, question_id: question.id, answer: answers[question.id], points_awarded: null }))
+      const rows = questions.map(question => {
+        const rawAnswer = answers[question.id]
+        let answer = rawAnswer
+        if (question.question_type.key === 'composition_player_line' && isCompositionAnswer(rawAnswer) && !('type' in rawAnswer)) {
+          const target = playerFrom(question.parameters, 'player_id', players) ?? playerFrom(question.parameters, 'target_player_id', players) ?? players[0]
+          if (!target) throw new Error('Tälle kysymykselle ei ole kohdepelaajaa')
+          answer = lockComposition(rawAnswer, target.id)
+        }
+        return { participant_id: participantId, question_id: question.id, answer, points_awarded: null }
+      })
       const betsInsert = await db.rpc('submit_public_bets', { p_event_id: event.id, p_participant_id: participantId, p_identity_token: identity?.identity_token, p_bets: rows.map(row => ({ question_id: row.question_id, answer: row.answer })) })
       if (betsInsert.error) throw betsInsert.error
       const submission: Submission = { submitted: true, participant_id: participantId, submitted_at: submittedAt }
