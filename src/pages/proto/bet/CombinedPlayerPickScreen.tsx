@@ -35,8 +35,8 @@ const BET_TYPES: Array<{ key: BetKey; icon: string; label: string }> = [
   { key: 'best_scratch', icon: '📊', label: 'Paras scratch' },
 ]
 
-function firstUnassigned(assignments: CombinedAssignments): BetKey | null {
-  return BET_TYPES.find(b => !assignments[b.key])?.key ?? null
+function firstUnassigned(assignments: CombinedAssignments, betTypes: Array<{ key: BetKey }>): BetKey | null {
+  return betTypes.find(b => !assignments[b.key])?.key ?? null
 }
 
 function sortForCarousel(players: Player[], seasonalHandicaps: Record<string, number>): Player[] {
@@ -60,16 +60,18 @@ interface Props {
   seasonalHandicaps?: Record<string, number>
   questionStartIndex?: number
   totalQuestions?: number
+  activeBetKeys?: BetKey[]
 }
 
-export default function CombinedPlayerPickScreen({ players, standingsByPlayer, assignments, onAssign, onLock, transitioningOut, seasonalHandicaps = {}, questionStartIndex = 2, totalQuestions = 9 }: Props) {
+export default function CombinedPlayerPickScreen({ players, standingsByPlayer, assignments, onAssign, onLock, transitioningOut, seasonalHandicaps = {}, questionStartIndex = 2, totalQuestions = 9, activeBetKeys }: Props) {
+  const activeBetTypes = BET_TYPES.filter(bet => !activeBetKeys || activeBetKeys.includes(bet.key))
   const sorted = sortForCarousel(players, seasonalHandicaps)
   const playersById = new Map(players.map(p => [p.id, p]))
   const containerRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const rafRef = useRef<number | null>(null)
   const [centeredIndex, setCenteredIndex] = useState(0)
-  const [activeBet, setActiveBet] = useState<BetKey | null>(() => firstUnassigned(assignments))
+  const [activeBet, setActiveBet] = useState<BetKey | null>(() => firstUnassigned(assignments, activeBetTypes))
   const [flash, setFlash] = useState(false)
 
   const prevAssignmentsRef = useRef(assignments)
@@ -80,7 +82,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
 
   useEffect(() => {
     const prev = prevAssignmentsRef.current
-    for (const bet of BET_TYPES) {
+    for (const bet of activeBetTypes) {
       if (prev[bet.key] !== assignments[bet.key]) {
         if (prev[bet.key]) {
           const removedFrom = prev[bet.key] as string
@@ -153,7 +155,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
     }
     onAssign(activeBet, player.id)
     const nextAssignments = { ...assignments, [activeBet]: player.id }
-    setActiveBet(firstUnassigned(nextAssignments))
+    setActiveBet(firstUnassigned(nextAssignments, activeBetTypes))
   }
 
   function handleCardTap(i: number) {
@@ -169,8 +171,8 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
     setActiveBet(key)
   }
 
-  const assignedCount = BET_TYPES.filter(b => assignments[b.key]).length
-  const allAssigned = assignedCount === 4
+  const assignedCount = activeBetTypes.filter(b => assignments[b.key]).length
+  const allAssigned = assignedCount === activeBetTypes.length
   const filledCount = questionStartIndex + assignedCount
   const centeredPlayer = sorted[centeredIndex]
 
@@ -180,7 +182,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
   } else if (activeBet !== null) {
     instruction = centeredPlayer
       ? { text: `Napauta korttia valitaksesi ${centeredPlayer.full_name}` }
-      : { text: `Selaa pelaajia ja valitse ${BET_TYPES.find(b => b.key === activeBet)!.label}` }
+      : { text: `Selaa pelaajia ja valitse ${activeBetTypes.find(b => b.key === activeBet)!.label}` }
   } else {
     instruction = { text: 'Valitse veikkaus yllä, sitten pelaaja alla' }
   }
@@ -200,7 +202,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
             }`}
           />
         ))}
-        <span className="label ml-2 shrink-0">{questionStartIndex + 1}–{questionStartIndex + BET_TYPES.length}/{totalQuestions}</span>
+        <span className="label ml-2 shrink-0">{questionStartIndex + 1}–{questionStartIndex + activeBetTypes.length}/{totalQuestions}</span>
       </div>
 
       <h2 className="font-display font-bold text-3xl text-white leading-tight mb-1">Valitse veikkauksesi</h2>
@@ -209,7 +211,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
       </p>
 
       <div className="grid grid-cols-2 gap-2 mb-3">
-        {BET_TYPES.map(bet => {
+        {activeBetTypes.map(bet => {
           const assignedPlayerId = assignments[bet.key]
           const assignedPlayer = assignedPlayerId ? playersById.get(assignedPlayerId) : null
           const isActive = activeBet === bet.key
@@ -280,12 +282,12 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
           const scale = diff === 0 ? 1 : diff === 1 ? 0.94 : 0.88
           const standing = standingsByPlayer.get(p.id)
 
-          const assignedKeys = BET_TYPES.filter(b => assignments[b.key] === p.id).map(b => b.key)
+          const assignedKeys = activeBetTypes.filter(b => assignments[b.key] === p.id).map(b => b.key)
           const chipKeys = [...assignedKeys]
           if (exitingChip && exitingChip.playerId === p.id && !chipKeys.includes(exitingChip.key)) {
             chipKeys.push(exitingChip.key)
           }
-          const orderedChips = BET_TYPES.filter(b => chipKeys.includes(b.key)).sort(
+          const orderedChips = activeBetTypes.filter(b => chipKeys.includes(b.key)).sort(
             (a, b) => (assignOrder[b.key] ?? 0) - (assignOrder[a.key] ?? 0),
           )
           const hasChips = assignedKeys.length > 0
@@ -394,7 +396,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
         disabled={!allAssigned}
         onClick={onLock}
       >
-        {allAssigned ? 'LUKITSE VEIKKAUKSET →' : `Veikkaa vielä ${4 - assignedCount} tulosta`}
+        {allAssigned ? 'LUKITSE VEIKKAUKSET →' : `Veikkaa vielä ${activeBetTypes.length - assignedCount} tulosta`}
       </button>
     </div>
   )

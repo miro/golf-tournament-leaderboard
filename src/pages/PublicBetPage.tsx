@@ -352,11 +352,12 @@ export default function PublicBetPage() {
     [combinedPlayerQuestions, questions],
   )
   const combinedQuestionIndexSet = useMemo(
-    () => combinedPlayerQuestions.length === 4 ? new Set(combinedQuestionIndexes) : new Set<number>(),
+    () => combinedPlayerQuestions.length >= 1 && combinedPlayerQuestions.length <= 4 ? new Set(combinedQuestionIndexes) : new Set<number>(),
     [combinedPlayerQuestions.length, combinedQuestionIndexes],
   )
-  const combinedStartIndex = combinedPlayerQuestions.length === 4 ? Math.min(...combinedQuestionIndexes) : -1
-  const combinedEndIndex = combinedPlayerQuestions.length === 4 ? Math.max(...combinedQuestionIndexes) : -1
+  const combinedStartIndex = combinedQuestionIndexSet.size ? Math.min(...combinedQuestionIndexes) : -1
+  const combinedEndIndex = combinedQuestionIndexSet.size ? Math.max(...combinedQuestionIndexes) : -1
+  const combinedBetKeys = combinedPlayerQuestions.map(question => COMBINED_KEY_BY_QUESTION[question.question_type.key])
   const standingsByPlayer = useMemo(() => {
     const entries: Array<[string, { rank: number; points: number }]> = []
     players.forEach(player => {
@@ -704,7 +705,7 @@ export default function PublicBetPage() {
   if (stage === 'wrong-code') return <WrongCodeNotice onRetry={retryParticipantCode} onContinue={() => setStage('questions')} onLogout={logout} />
   if (stage === 'questions' && combinedStartIndex >= 0 && combinedQuestionIndexSet.has(currentQuestion)) {
     const assignments = Object.fromEntries(combinedPlayerQuestions.map(question => [COMBINED_KEY_BY_QUESTION[question.question_type.key], typeof answers[question.id] === 'string' ? answers[question.id] : null])) as CombinedAssignments
-    return <MainShell onLogout={logout}><CombinedPlayerPickScreen players={players} standingsByPlayer={standingsByPlayer} assignments={assignments} onAssign={assignCombined} onLock={lockCombined} transitioningOut={moving} seasonalHandicaps={playerHandicaps} questionStartIndex={combinedStartIndex} totalQuestions={questions.length} /></MainShell>
+    return <MainShell onLogout={logout}><CombinedPlayerPickScreen players={players} standingsByPlayer={standingsByPlayer} assignments={assignments} onAssign={assignCombined} onLock={lockCombined} transitioningOut={moving} seasonalHandicaps={playerHandicaps} questionStartIndex={combinedStartIndex} totalQuestions={questions.length} activeBetKeys={combinedBetKeys} /></MainShell>
   }
   if (stage === 'questions' && questions[currentQuestion]) return <MainShell onLogout={logout}><QuestionCard question={questions[currentQuestion]} index={currentQuestion} total={questions.length} answer={answers[questions[currentQuestion].id] ?? null} players={players} event={event} seasonStats={seasonStats} playerHandicaps={playerHandicaps} holeGuide={holeGuide} moving={moving} submitting={submitting} onChange={answer => setAnswers(current => ({ ...current, [questions[currentQuestion].id]: answer }))} onLock={lockQuestion} /></MainShell>
   if (stage === 'complete' && identity) return <Completion event={event} questions={questions} players={players} answers={answers} identity={identity} isEventPlayer={isEventPlayer} onLogout={logout} />
