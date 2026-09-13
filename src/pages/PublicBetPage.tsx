@@ -387,6 +387,29 @@ export default function PublicBetPage() {
     return loadedResult
   }
 
+  async function findSubmittedResult(eventId: string, currentIdentity: Identity, bettorAccountId: string | null, preferredParticipantId: string | null) {
+    const { data: participantRows, error: participantError } = await db.from('betting_participants')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('submitted_at', { ascending: false })
+    if (participantError) throw participantError
+    const matchingParticipants = ((participantRows ?? []) as Participant[]).filter(participant =>
+      participant.id === preferredParticipantId ||
+      participant.identity_token === currentIdentity.identity_token ||
+      (bettorAccountId != null && participant.bettor_account_id === bettorAccountId) ||
+      (participant.pin === currentIdentity.pin && participant.display_name.trim().toLocaleLowerCase() === currentIdentity.display_name.trim().toLocaleLowerCase()),
+    )
+    for (const participant of matchingParticipants) {
+      try {
+        const loadedResult = await loadResults(eventId, participant.id)
+        if (loadedResult.bets.length) return { participant, loadedResult }
+      } catch {
+        // Continue checking duplicate participant rows for this identity.
+      }
+    }
+    return null
+  }
+
   useEffect(() => {
     if (!event || stage !== 'questions' || !Object.keys(answers).length) return
     writeStorage(draftKey(event.id), { answers, current_question: currentQuestion } satisfies BettingDraft)
@@ -593,9 +616,11 @@ export default function PublicBetPage() {
       setIsEventPlayer(codeCorrect)
       if (!createdId) throw new Error('Osallistujaa ei löytynyt')
       try {
-        const existingResult = await loadResults(event.id, createdId)
-        if (existingResult.bets.length) {
-          const submission: Submission = { submitted: true, participant_id: createdId, submitted_at: existingResult.current?.submitted_at ?? new Date().toISOString() }
+        const submitted = await findSubmittedResult(event.id, savedIdentity, account.id, createdId)
+        if (submitted) {
+          setParticipantId(submitted.participant.id)
+          setIsEventPlayer(Boolean(submitted.participant.is_event_player))
+          const submission: Submission = { submitted: true, participant_id: submitted.participant.id, submitted_at: submitted.loadedResult.current?.submitted_at ?? new Date().toISOString() }
           writeStorage(submissionKey(event.id), submission)
           setStage('results')
           return
@@ -697,9 +722,13 @@ export default function PublicBetPage() {
       const submitError = error as { code?: string; message?: string }
       if (currentParticipantId && (submitError.code === 'P0001' || submitError.message?.includes('Veikkaukset on jo lähetetty'))) {
         try {
-          const existingResult = await loadResults(event.id, currentParticipantId)
-          if (existingResult.bets.length) {
-            writeStorage(submissionKey(event.id), { submitted: true, participant_id: currentParticipantId, submitted_at: existingResult.current?.submitted_at ?? new Date().toISOString() } satisfies Submission)
+          const submitted = identity
+            ? await findSubmittedResult(event.id, identity, null, currentParticipantId)
+            : null
+          if (submitted) {
+            setParticipantId(submitted.participant.id)
+            setIsEventPlayer(Boolean(submitted.participant.is_event_player))
+            writeStorage(submissionKey(event.id), { submitted: true, participant_id: submitted.participant.id, submitted_at: submitted.loadedResult.current?.submitted_at ?? new Date().toISOString() } satisfies Submission)
             setStage('results')
             return
           }
