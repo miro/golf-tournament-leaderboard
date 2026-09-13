@@ -12,7 +12,7 @@ Return ONLY the following block, nothing else — no preamble, no markdown code 
 
 ---GC-RESULT---
 hcp: [player HCP as number]
-total_points: [total stableford points as integer]
+total_points: [total bogeypoint points as integer]
 total_strokes: [total raw strokes as integer]
 to_par: [strokes relative to par, e.g. -3 or +5]
 summary: [Exactly 3 sentences in Finnish. Casual but sharp tone — like a knowledgeable friend reporting to a WhatsApp group. Player name is ${playerName}, use first name only after first mention.

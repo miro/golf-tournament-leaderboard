@@ -146,7 +146,7 @@ export default function BeatTheLeaderQuestion({
         Kuka päihittää heidät tällä kierroksella?
       </h2>
       <p className="text-gc-muted mb-6" style={{ fontSize: 14 }}>
-        Stableford-pisteet tällä kierroksella
+        Bogeypoint-pisteet tällä kierroksella
       </p>
 
       <div

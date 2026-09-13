@@ -233,7 +233,7 @@ function StablefordResult({ points }: { points: number }) {
   return <div className="mb-5 text-center">
     <div className={`font-display text-[72px] font-black leading-none ${delta < 0 ? 'text-gc-red' : 'text-white'}`}>{delta === 0 ? 'E' : delta > 0 ? `+${delta}` : delta}</div>
     <div className="mt-1 text-[11px] uppercase tracking-wide text-gc-muted">{delta === 0 ? 'par' : delta > 0 ? 'yli parin' : 'alle parin'}</div>
-    <div className="mt-2 font-display text-lg font-bold text-white">{points}p <span className="font-sans text-xs font-normal text-gc-muted">Stableford</span></div>
+    <div className="mt-2 font-display text-lg font-bold text-white">{points}p <span className="font-sans text-xs font-normal text-gc-muted">Bogeypoint</span></div>
   </div>
 }
 

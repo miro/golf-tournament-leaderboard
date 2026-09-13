@@ -108,8 +108,8 @@ export default function CompositionQuestion({ value, onChange, playerHandicap = 
             </span>
           </div>
           {showStablefordPreview
-            ? <span className="text-gc-muted text-right text-[12px]"><span className="block font-display font-bold text-lg text-white">{playerHandicap == null ? '–' : `${stablefordPoints}p`}</span>{playerHandicap == null ? 'HCP puuttuu' : 'Stableford'}</span>
-            : <span className="text-gc-muted text-[13px]">{points}p stableford</span>}
+            ? <span className="text-gc-muted text-right text-[12px]"><span className="block font-display font-bold text-lg text-white">{playerHandicap == null ? '–' : `${stablefordPoints}p`}</span>{playerHandicap == null ? 'HCP puuttuu' : 'Bogeypoint'}</span>
+            : <span className="text-gc-muted text-[13px]">{points}p Bogeypoint</span>}
         </div>
         <div className="flex items-center text-[11px] font-display font-semibold">
           <span className="w-9 shrink-0 text-center text-white/60">Väylä</span>

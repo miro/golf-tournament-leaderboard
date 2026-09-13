@@ -247,7 +247,7 @@ export default function BetPage() {
           <QuestionShell
             index={8}
             questionText="Laita top 3 järjestykseen"
-            context="Paras stableford-tulos voittaa"
+            context="Paras bogeypoint-tulos voittaa"
             lockDisabled={answers.q9Podium.some(s => s === null)}
             onLock={commit}
             transitioningOut={transitioningOut}
