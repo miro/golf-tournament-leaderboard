@@ -202,7 +202,7 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['betting_question_types']['Insert']>
       }
       betting_questions: {
-        Row: { id: string; event_id: string; question_type_id: string; display_order: number; question_text: string | null; parameters: Json; correct_answer: Json }
+        Row: { id: string; event_id: string; question_type_id: string; question_type_key: string | null; display_order: number; question_text: string | null; parameters: Json; correct_answer: Json }
         Insert: Omit<Database['public']['Tables']['betting_questions']['Row'], 'id' | 'correct_answer'> & { correct_answer?: Json }
         Update: Partial<Database['public']['Tables']['betting_questions']['Insert']>
       }
