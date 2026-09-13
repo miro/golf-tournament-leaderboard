@@ -32,11 +32,25 @@ export function canonicalQuestionTypeKey(row: any): string {
 }
 
 export function normalizeEventQuestion(row: any): EventQuestion {
+  const embeddedType = Array.isArray(row.question_type)
+    ? row.question_type[0] ?? {}
+    : row.question_type ?? {}
+  const questionType = {
+    ...embeddedType,
+    question_type_key: embeddedType.question_type_key ?? row.question_type_key,
+    type_key: embeddedType.type_key ?? row.type_key,
+    slug: embeddedType.slug ?? row.slug,
+    id: embeddedType.id ?? row.question_type_id,
+    display_name: embeddedType.display_name ?? row.question_text ?? '',
+    description: embeddedType.description ?? '',
+    max_points: embeddedType.max_points ?? row.points_possible ?? 0,
+    requires_target_player: embeddedType.requires_target_player ?? false,
+  }
   return {
     ...row,
     question_type: {
-      ...row.question_type,
-      key: canonicalQuestionTypeKey(row.question_type ?? {}),
+      ...questionType,
+      key: canonicalQuestionTypeKey(questionType),
     },
   } as EventQuestion
 }
