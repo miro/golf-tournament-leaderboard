@@ -610,7 +610,10 @@ export default function PublicBetPage() {
 
   function resumeIncompleteQuestion() {
     const firstIncompleteIndex = questions.findIndex(question => answers[question.id] == null)
-    if (firstIncompleteIndex >= 0) setCurrentQuestion(firstIncompleteIndex)
+    if (firstIncompleteIndex >= 0) {
+      const resumeIndex = combinedQuestionIndexSet.has(firstIncompleteIndex) ? combinedStartIndex : firstIncompleteIndex
+      setCurrentQuestion(resumeIndex)
+    }
     setStage('questions')
   }
 
@@ -639,7 +642,7 @@ export default function PublicBetPage() {
     const missingQuestions = questions.filter(question => answers[question.id] == null)
     if (missingQuestions.length) {
       setMessage(`Täytä vielä: ${missingQuestions.map(question => questionTitle(question, players)).join(', ')}`)
-      setStage('submit-error')
+      resumeIncompleteQuestion()
       return
     }
     setSubmitting(true)
