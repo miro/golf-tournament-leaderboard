@@ -39,11 +39,13 @@ function firstUnassigned(assignments: CombinedAssignments): BetKey | null {
   return BET_TYPES.find(b => !assignments[b.key])?.key ?? null
 }
 
-function sortForCarousel(players: Player[]): Player[] {
+function sortForCarousel(players: Player[], seasonalHandicaps: Record<string, number>): Player[] {
   return [...players].sort((a, b) => {
-    if (a.hcp_fallback !== null && b.hcp_fallback !== null) return a.hcp_fallback - b.hcp_fallback
-    if (a.hcp_fallback !== null) return -1
-    if (b.hcp_fallback !== null) return 1
+    const aHcp = seasonalHandicaps[a.id] ?? a.hcp_fallback
+    const bHcp = seasonalHandicaps[b.id] ?? b.hcp_fallback
+    if (aHcp !== null && aHcp !== undefined && bHcp !== null && bHcp !== undefined) return aHcp - bHcp
+    if (aHcp !== null && aHcp !== undefined) return -1
+    if (bHcp !== null && bHcp !== undefined) return 1
     return a.full_name.localeCompare(b.full_name)
   })
 }
@@ -55,10 +57,13 @@ interface Props {
   onAssign: (key: BetKey, playerId: string | null) => void
   onLock: () => void
   transitioningOut: boolean
+  seasonalHandicaps?: Record<string, number>
+  questionStartIndex?: number
+  totalQuestions?: number
 }
 
-export default function CombinedPlayerPickScreen({ players, standingsByPlayer, assignments, onAssign, onLock, transitioningOut }: Props) {
-  const sorted = sortForCarousel(players)
+export default function CombinedPlayerPickScreen({ players, standingsByPlayer, assignments, onAssign, onLock, transitioningOut, seasonalHandicaps = {}, questionStartIndex = 2, totalQuestions = 9 }: Props) {
+  const sorted = sortForCarousel(players, seasonalHandicaps)
   const playersById = new Map(players.map(p => [p.id, p]))
   const containerRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -166,7 +171,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
 
   const assignedCount = BET_TYPES.filter(b => assignments[b.key]).length
   const allAssigned = assignedCount === 4
-  const filledCount = 2 + assignedCount
+  const filledCount = questionStartIndex + assignedCount
   const centeredPlayer = sorted[centeredIndex]
 
   let instruction: { text: string; green?: boolean }
@@ -195,7 +200,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
             }`}
           />
         ))}
-        <span className="label ml-2 shrink-0">3–6/9</span>
+        <span className="label ml-2 shrink-0">{questionStartIndex + 1}–{questionStartIndex + BET_TYPES.length}/{totalQuestions}</span>
       </div>
 
       <h2 className="font-display font-bold text-3xl text-white leading-tight mb-1">Valitse veikkauksesi</h2>
@@ -314,7 +319,7 @@ export default function CombinedPlayerPickScreen({ players, standingsByPlayer, a
                 {p.full_name}
               </div>
               <div className="text-gc-muted mt-1" style={{ fontSize: 14 }}>
-                HCP {p.hcp_fallback ?? '—'}
+                HCP {seasonalHandicaps[p.id] ?? p.hcp_fallback ?? '—'}
               </div>
               {standing && (
                 <>

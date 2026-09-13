@@ -9,6 +9,7 @@ import { playerImagePath } from '../lib/playerImage'
 import { getCurrentSeason, getLeaderboard } from '../lib/queries'
 import CompositionQuestion from './proto/bet/CompositionQuestion'
 import { COMPOSITION_HOLE_PARS, EMPTY_COMPOSITION, compositionPoints, lockComposition, type CompositionAnswer as PrototypeCompositionAnswer, type CompositionLineAnswer as PrototypeCompositionLineAnswer } from './proto/bet/types'
+import CombinedPlayerPickScreen, { type BetKey, type CombinedAssignments } from './proto/bet/CombinedPlayerPickScreen'
 
 const db = supabase as any
 
@@ -28,6 +29,12 @@ type PageStage = 'identity' | 'returning' | 'wrong-code' | 'questions' | 'comple
 
 const IDENTITY_KEY = 'betting_identity'
 const submissionKey = (eventId: string) => `betting_submission_${eventId}`
+const COMBINED_KEY_BY_QUESTION: Record<string, BetKey> = {
+  player_pick_best_total: 'best_total',
+  player_pick_best_front: 'best_front',
+  player_pick_best_back: 'best_back',
+  player_pick_best_scratch: 'best_scratch',
+}
 
 function readStorage<T>(key: string): T | null {
   try {
@@ -239,6 +246,23 @@ export default function PublicBetPage() {
   const [submitting, setSubmitting] = useState(false)
 
   const players = useMemo(() => eventPlayers.map(item => item.player), [eventPlayers])
+  const combinedPlayerQuestions = useMemo(
+    () => questions.filter(question => COMBINED_KEY_BY_QUESTION[question.question_type.key] != null),
+    [questions],
+  )
+  const combinedQuestionIndexes = combinedPlayerQuestions.map(question => questions.indexOf(question))
+  const combinedStartIndex = combinedPlayerQuestions.length === 4 && Math.max(...combinedQuestionIndexes) - Math.min(...combinedQuestionIndexes) === 3
+    ? Math.min(...combinedQuestionIndexes)
+    : -1
+  const combinedEndIndex = combinedStartIndex >= 0 ? combinedStartIndex + 3 : -1
+  const standingsByPlayer = useMemo(() => {
+    const entries: Array<[string, { rank: number; points: number }]> = []
+    players.forEach(player => {
+      const standing = seasonStats[player.id]
+      if (standing?.rank != null && standing.points != null) entries.push([player.id, { rank: Number(standing.rank), points: Number(standing.points) }])
+    })
+    return new Map(entries)
+  }, [players, seasonStats])
 
   async function loadResults(eventId: string, currentParticipantId: string) {
     const [{ data: participants, error: participantError }, { data: bets, error: betError }] = await Promise.all([
@@ -417,6 +441,24 @@ export default function PublicBetPage() {
     } finally { setSubmitting(false) }
   }
 
+  function assignCombined(key: BetKey, playerId: string | null) {
+    const question = combinedPlayerQuestions.find(item => COMBINED_KEY_BY_QUESTION[item.question_type.key] === key)
+    if (!question) return
+    setAnswers(current => {
+      const next = { ...current }
+      if (playerId) next[question.id] = playerId
+      else delete next[question.id]
+      return next
+    })
+  }
+
+  function lockCombined() {
+    if (submitting || combinedEndIndex < 0) return
+    if (combinedEndIndex === questions.length - 1) { submitAnswers(); return }
+    setMoving(true)
+    window.setTimeout(() => { setCurrentQuestion(combinedEndIndex + 1); setMoving(false) }, 180)
+  }
+
   function lockQuestion() {
     if (submitting) return
     if (!questions[currentQuestion]) return
@@ -430,6 +472,10 @@ export default function PublicBetPage() {
   if (stage === 'identity') return <IdentityForm event={event} initialIdentity={identity} onSubmit={createOrRecoverParticipant} busy={identityBusy} />
   if (stage === 'returning' && identity) return <ReturningIdentity event={event} identity={identity} onContinue={(code) => createOrRecoverParticipant(identity.display_name, identity.pin, code)} onChangeIdentity={changeIdentity} busy={identityBusy} />
   if (stage === 'wrong-code') return <WrongCodeNotice onRetry={retryParticipantCode} onContinue={() => setStage('questions')} />
+  if (stage === 'questions' && currentQuestion === combinedStartIndex) {
+    const assignments = Object.fromEntries(combinedPlayerQuestions.map(question => [COMBINED_KEY_BY_QUESTION[question.question_type.key], typeof answers[question.id] === 'string' ? answers[question.id] : null])) as CombinedAssignments
+    return <MainShell><CombinedPlayerPickScreen players={players} standingsByPlayer={standingsByPlayer} assignments={assignments} onAssign={assignCombined} onLock={lockCombined} transitioningOut={moving} seasonalHandicaps={playerHandicaps} questionStartIndex={combinedStartIndex} totalQuestions={questions.length} /></MainShell>
+  }
   if (stage === 'questions' && questions[currentQuestion]) return <MainShell><QuestionCard question={questions[currentQuestion]} index={currentQuestion} total={questions.length} answer={answers[questions[currentQuestion].id] ?? null} players={players} event={event} seasonStats={seasonStats} playerHandicaps={playerHandicaps} holeGuide={holeGuide} moving={moving} submitting={submitting} onChange={answer => setAnswers(current => ({ ...current, [questions[currentQuestion].id]: answer }))} onLock={lockQuestion} /></MainShell>
   if (stage === 'complete' && identity) return <Completion event={event} questions={questions} players={players} answers={answers} identity={identity} isEventPlayer={isEventPlayer} />
   if (stage === 'results' && result) return <Results event={event} questions={questions} players={players} data={result} identity={identity} />
