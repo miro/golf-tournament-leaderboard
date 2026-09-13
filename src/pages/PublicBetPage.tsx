@@ -91,9 +91,17 @@ function answerLabel(question: EventQuestion, answer: Answer | null | undefined,
   if (key === 'slider_player_points') return `${answer}p`
   if (key === 'composition_player_line' && isCompositionAnswer(answer)) {
     const target = playerFrom(question.parameters, 'player_id', players) ?? playerFrom(question.parameters, 'target_player_id', players)
-    const predictedPoints = 'summary' in answer && typeof answer.summary.predicted_points === 'number' ? answer.summary.predicted_points : compositionPoints(answer)
+    const summary = 'summary' in answer ? answer.summary : null
+    const stablefordPoints = summary && typeof summary.stableford_points === 'number' ? summary.stableford_points : null
+    if (stablefordPoints != null) {
+      const stablefordDelta = 36 - stablefordPoints
+      const comparison = stablefordDelta === 0 ? 'E' : stablefordDelta > 0 ? `+${stablefordDelta}` : String(stablefordDelta)
+      return `${target?.full_name ?? 'Pelaaja'} · ${comparison} (${stablefordPoints}p)`
+    }
+    const predictedPoints = summary && typeof summary.predicted_points === 'number' ? summary.predicted_points : compositionPoints(answer)
     return `${target?.full_name ?? 'Pelaaja'} · ${predictedPoints}p`
   }
+  if (key === 'yes_no_head_to_head') return players.find(player => player.id === answer)?.full_name ?? '–'
   if (key.startsWith('yes_no_')) return answer === true ? 'Kyllä' : 'Ei'
   if (key === 'podium_top3') {
     const podium = answer as PodiumAnswer
@@ -449,13 +457,16 @@ export default function PublicBetPage() {
     setSubmitting(true)
     try {
       const submittedAt = new Date().toISOString()
+      const submittedAnswers = { ...answers }
       const rows = questions.map(question => {
         const rawAnswer = answers[question.id]
         let answer = rawAnswer
         if (question.question_type.key === 'composition_player_line' && isCompositionAnswer(rawAnswer) && !('type' in rawAnswer)) {
           const target = playerFrom(question.parameters, 'player_id', players) ?? playerFrom(question.parameters, 'target_player_id', players) ?? players[0]
           if (!target) throw new Error('Tälle kysymykselle ei ole kohdepelaajaa')
-          answer = lockComposition(rawAnswer, target.id, holeGuide.map(hole => hole.par))
+          const targetHandicap = playerHandicaps[target.id] ?? target.hcp_fallback ?? null
+          answer = lockComposition(rawAnswer, target.id, holeGuide.map(hole => hole.par), targetHandicap, holeGuide.map(hole => hole.stroke_index))
+          submittedAnswers[question.id] = answer
         }
         return { participant_id: participantId, question_id: question.id, answer, points_awarded: null }
       })
@@ -465,6 +476,7 @@ export default function PublicBetPage() {
       writeStorage(submissionKey(event.id), submission)
       const participant = { id: participantId, event_id: event.id, display_name: identity?.display_name ?? '', pin: identity?.pin ?? null, identity_token: identity?.identity_token ?? null, bettor_account_id: null, is_event_player: isEventPlayer, submitted_at: submittedAt, total_points_awarded: 0 }
       setResult({ current: participant, participants: [participant], bets: rows as BetRow[] })
+      setAnswers(submittedAnswers)
       setStage('complete')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Veikkausten lähetys epäonnistui')

@@ -97,19 +97,36 @@ export interface CompositionLineAnswer {
   type: 'composition_line'
   featured_player_id: string
   holes: { hole: number; category: HoleCategory; par: number }[]
-  summary: Record<HoleCategory, number> & { predicted_points: number; stbl_delta: number }
+  summary: Record<HoleCategory, number> & { predicted_points: number; stbl_delta: number; stableford_points?: number; stableford_delta?: number }
 }
 
-export function lockComposition(value: CompositionAnswer, playerId: string, holePars = COMPOSITION_HOLE_PARS): CompositionLineAnswer {
+function handicapStrokesForHole(handicap: number, strokeIndex: number) {
+  const playingHandicap = Math.max(0, Math.round(handicap))
+  return Math.floor(playingHandicap / 18) + (strokeIndex <= playingHandicap % 18 ? 1 : 0)
+}
+
+function stablefordPointsForHole(category: HoleCategory | null, handicap: number | null | undefined, strokeIndex: number) {
+  if (!category || handicap == null || !Number.isFinite(handicap)) return null
+  const netToPar = CATEGORY_META[category].strokeOffset - handicapStrokesForHole(handicap, strokeIndex)
+  return Math.max(0, 2 - netToPar)
+}
+
+export function compositionStablefordPoints(value: CompositionAnswer, handicap: number | null | undefined, holeHandicapIndexes: number[]): number | null {
+  if (handicap == null || !Number.isFinite(handicap)) return null
+  return value.holes.reduce((sum, category, index) => sum + (stablefordPointsForHole(category, handicap, holeHandicapIndexes[index] ?? index + 1) ?? 0), 0)
+}
+
+export function lockComposition(value: CompositionAnswer, playerId: string, holePars = COMPOSITION_HOLE_PARS, playerHandicap: number | null | undefined = null, holeHandicapIndexes = Array.from({ length: 18 }, (_, index) => index + 1)): CompositionLineAnswer {
   if (value.holes.length !== 18 || value.holes.some(category => category === null)) {
     throw new Error('All 18 holes must be set before locking')
   }
   const predicted_points = compositionPoints(value)
+  const stableford_points = compositionStablefordPoints(value, playerHandicap, holeHandicapIndexes)
   return {
     type: 'composition_line',
     featured_player_id: playerId,
     holes: value.holes.map((category, index) => ({ hole: index + 1, category: category!, par: holePars[index] ?? COMPOSITION_HOLE_PARS[index] })),
-    summary: { ...compositionCounts(value), predicted_points, stbl_delta: 36 - predicted_points },
+    summary: { ...compositionCounts(value), predicted_points, stbl_delta: 36 - predicted_points, ...(stableford_points == null ? {} : { stableford_points, stableford_delta: 36 - stableford_points }) },
   }
 }
 
