@@ -180,6 +180,46 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['invitational_schedule']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['invitational_schedule']['Insert']>
       }
+      league_events: {
+        Row: { id: string; league_id: string; name: string; event_date: string; course_id: string | null; status: 'draft' | 'betting_open' | 'betting_closed' | 'scoring' | 'results_ready' | 'presented'; betting_url_token: string; created_at: string }
+        Insert: Omit<Database['public']['Tables']['league_events']['Row'], 'id' | 'betting_url_token' | 'created_at'> & { betting_url_token?: string }
+        Update: Partial<Database['public']['Tables']['league_events']['Insert']>
+      }
+      league_event_players: {
+        Row: { event_id: string; player_id: string; display_order: number }
+        Insert: Database['public']['Tables']['league_event_players']['Row']
+        Update: Partial<Database['public']['Tables']['league_event_players']['Insert']>
+      }
+      betting_question_types: {
+        Row: { id: string; key: string; display_name: string; description: string; max_points: number; requires_target_player: boolean; active: boolean }
+        Insert: Omit<Database['public']['Tables']['betting_question_types']['Row'], 'id'>
+        Update: Partial<Database['public']['Tables']['betting_question_types']['Insert']>
+      }
+      betting_questions: {
+        Row: { id: string; event_id: string; question_type_id: string; display_order: number; parameters: Json; correct_answer: Json }
+        Insert: Omit<Database['public']['Tables']['betting_questions']['Row'], 'id' | 'correct_answer'> & { correct_answer?: Json }
+        Update: Partial<Database['public']['Tables']['betting_questions']['Insert']>
+      }
+      betting_participants: {
+        Row: { id: string; event_id: string; display_name: string; emoji_pin: string | null; submitted_at: string; total_points_awarded: number }
+        Insert: Omit<Database['public']['Tables']['betting_participants']['Row'], 'id' | 'submitted_at' | 'total_points_awarded'>
+        Update: Partial<Database['public']['Tables']['betting_participants']['Insert']>
+      }
+      bets: {
+        Row: { id: string; participant_id: string; question_id: string; answer: Json; points_awarded: number; points_breakdown: Json }
+        Insert: Omit<Database['public']['Tables']['bets']['Row'], 'id' | 'points_awarded' | 'points_breakdown'> & { points_awarded?: number; points_breakdown?: Json }
+        Update: Partial<Database['public']['Tables']['bets']['Insert']>
+      }
+      event_scores: {
+        Row: { id: string; event_id: string; player_id: string; played_date: string; total_points: number; total_strokes: number | null; submitted_at: string; is_corrected: boolean }
+        Insert: Omit<Database['public']['Tables']['event_scores']['Row'], 'id' | 'submitted_at' | 'is_corrected'> & { is_corrected?: boolean }
+        Update: Partial<Database['public']['Tables']['event_scores']['Insert']>
+      }
+      event_hole_results: {
+        Row: { id: string; event_score_id: string; hole_number: number; points: number }
+        Insert: Omit<Database['public']['Tables']['event_hole_results']['Row'], 'id'>
+        Update: Partial<Database['public']['Tables']['event_hole_results']['Insert']>
+      }
     }
     Views: { [_ in never]: never }
     Functions: { [_ in never]: never }

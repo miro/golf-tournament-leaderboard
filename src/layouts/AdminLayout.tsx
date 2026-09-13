@@ -10,6 +10,7 @@ const links = [
   { to: '/admin/rounds', label: 'Kierrokset' },
   { to: '/admin/cards', label: 'Kortit' },
   { to: '/admin/hype', label: 'Hype Tools' },
+  { to: '/admin/events', label: 'Tapahtumat' },
 ]
 
 export default function AdminLayout() {

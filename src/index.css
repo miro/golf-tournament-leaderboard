@@ -33,6 +33,10 @@
     @apply bg-gc-card rounded-xl border border-white/10;
   }
 
+  .input {
+    @apply bg-gc-dark border border-white/10 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:border-gc-green;
+  }
+
   .btn-primary {
     @apply bg-gc-green hover:bg-gc-green/85 text-gc-dark font-bold px-4 py-2 rounded-lg transition-colors;
   }

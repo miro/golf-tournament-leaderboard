@@ -16,6 +16,9 @@ import AdminPlayers from './pages/admin/AdminPlayers'
 import AdminRounds from './pages/admin/AdminRounds'
 import AdminCards from './pages/admin/AdminCards'
 import AdminHype from './pages/admin/AdminHype'
+import AdminEvents from './pages/admin/AdminEvents'
+import AdminEventNew from './pages/admin/AdminEventNew'
+import AdminEventDetail from './pages/admin/AdminEventDetail'
 import BetPage from './pages/proto/BetPage'
 import InvitationalRosterPage from './pages/invitational/RosterPage'
 import InvitationalLanding from './pages/invitational/InvitationalLanding'
@@ -64,6 +67,9 @@ export default function App() {
           <Route path="rounds" element={<AdminRounds />} />
           <Route path="cards" element={<AdminCards />} />
           <Route path="hype" element={<AdminHype />} />
+          <Route path="events" element={<AdminEvents />} />
+          <Route path="events/new" element={<AdminEventNew />} />
+          <Route path="events/:id" element={<AdminEventDetail />} />
         </Route>
       </Route>
     </Routes>
