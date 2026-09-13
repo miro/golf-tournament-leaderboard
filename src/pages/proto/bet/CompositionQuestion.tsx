@@ -96,7 +96,7 @@ export default function CompositionQuestion({ value, onChange, playerHandicap = 
         <div className="flex items-center justify-between gap-2 py-3">
           <div className="text-gc-muted text-[13px]"><span className="block text-white font-display font-bold text-xl">{scratch} lyöntiä</span>Scratch</div>
           <div className="text-center">
-            <span className={`block font-display font-black text-[42px] leading-none ${showStablefordPreview && stablefordDelta != null && stablefordDelta > 0 ? 'text-gc-red' : 'text-white'}`}>
+            <span className={`block font-display font-black text-[42px] leading-none ${showStablefordPreview && stablefordDelta != null && stablefordDelta < 0 ? 'text-gc-red' : 'text-white'}`}>
               {showStablefordPreview
                 ? stablefordDelta == null ? '–' : stablefordDelta === 0 ? 'E' : stablefordDelta > 0 ? `+${stablefordDelta}` : stablefordDelta
                 : delta === 0 ? 'E' : delta > 0 ? `+${delta}` : delta}
