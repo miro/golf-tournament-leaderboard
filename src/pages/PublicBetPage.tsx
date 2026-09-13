@@ -584,16 +584,12 @@ export default function PublicBetPage() {
       setIdentity(savedIdentity)
       const codeCorrect = Boolean(code) && Boolean(event.participant_code) && code.trim().toLocaleLowerCase() === event.participant_code!.trim().toLocaleLowerCase()
       const payload = { event_id: event.id, display_name: savedIdentity.display_name, pin: savedIdentity.pin, identity_token: savedIdentity.identity_token, bettor_account_id: account.id, is_event_player: codeCorrect }
-      let createdId = participantId
-      if (createdId) {
-        const updated = await db.rpc('update_public_betting_participant', { p_participant_id: createdId, p_pin: savedIdentity.pin, p_identity_token: savedIdentity.identity_token, p_bettor_account_id: account.id, p_is_event_player: codeCorrect })
-        if (updated.error) throw updated.error
-      } else {
-        const insertedParticipant = await db.rpc('create_public_betting_participant', { p_event_id: payload.event_id, p_display_name: payload.display_name, p_pin: payload.pin, p_identity_token: payload.identity_token, p_bettor_account_id: payload.bettor_account_id, p_is_event_player: payload.is_event_player })
-        if (insertedParticipant.error || !insertedParticipant.data) throw insertedParticipant.error ?? new Error('Osallistujan luonti epäonnistui')
-        createdId = insertedParticipant.data as string
-        setParticipantId(createdId)
-      }
+      // Always resolve through the idempotent function. The in-memory participantId
+      // can refer to an older empty row while this account already has submitted bets.
+      const insertedParticipant = await db.rpc('create_public_betting_participant', { p_event_id: payload.event_id, p_display_name: payload.display_name, p_pin: payload.pin, p_identity_token: payload.identity_token, p_bettor_account_id: payload.bettor_account_id, p_is_event_player: payload.is_event_player })
+      if (insertedParticipant.error || !insertedParticipant.data) throw insertedParticipant.error ?? new Error('Osallistujan luonti epäonnistui')
+      const createdId = insertedParticipant.data as string
+      setParticipantId(createdId)
       setIsEventPlayer(codeCorrect)
       if (!createdId) throw new Error('Osallistujaa ei löytynyt')
       try {
