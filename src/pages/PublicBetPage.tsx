@@ -492,37 +492,64 @@ export default function PublicBetPage() {
         }
         if (loadedEvent.status === 'draft') { setMessage('Veikkaukset eivät ole vielä auki'); setStage('message'); return }
         if (savedSubmission?.submitted) {
-          setParticipantId(savedSubmission.participant_id)
-          const loadedResult = await loadResults(loadedEvent.id, savedSubmission.participant_id)
-          if (loadedEvent.status === 'betting_open' && savedIdentity && loadedResult.bets.length === 0) {
-            setStage('returning')
-            return
+          try {
+            const loadedResult = await loadResults(loadedEvent.id, savedSubmission.participant_id)
+            if (loadedResult.bets.length) {
+              setParticipantId(savedSubmission.participant_id)
+              if (loadedResult.current) setIsEventPlayer(Boolean(loadedResult.current.is_event_player))
+              if (!cancelled) setStage('results')
+              return
+            }
+          } catch {
+            // A stale local marker must not prevent account based recovery below.
           }
-          if (!cancelled) setStage('results')
-          return
+          try { window.localStorage.removeItem(submissionKey(loadedEvent.id)) } catch { /* storage is optional */ }
         }
         if (savedIdentity) {
-          const { data: matchingParticipants, error: matchingParticipantError } = await db.from('betting_participants')
+          let bettorAccountId: string | null = null
+          try {
+            const { data: account } = await db.from('bettor_accounts')
+              .select('id')
+              .eq('pin', savedIdentity.pin)
+              .ilike('display_name', savedIdentity.display_name)
+              .maybeSingle()
+            bettorAccountId = account?.id ?? null
+          } catch {
+            // The identity token and legacy name/PIN matching below are sufficient fallbacks.
+          }
+          const { data: participantRows, error: participantError } = await db.from('betting_participants')
             .select('*')
             .eq('event_id', loadedEvent.id)
-            .eq('identity_token', savedIdentity.identity_token)
             .order('submitted_at', { ascending: false })
-            .limit(1)
-          const matchingParticipant = !matchingParticipantError ? (matchingParticipants?.[0] as Participant | undefined) : undefined
-          if (matchingParticipant) {
-            setParticipantId(matchingParticipant.id)
-            setIsEventPlayer(Boolean(matchingParticipant.is_event_player))
+          const matchingParticipants = !participantError
+            ? ((participantRows ?? []) as Participant[]).filter(participant =>
+              participant.id === savedSubmission?.participant_id ||
+              participant.identity_token === savedIdentity.identity_token ||
+              (bettorAccountId != null && participant.bettor_account_id === bettorAccountId) ||
+              (participant.pin === savedIdentity.pin && participant.display_name.trim().toLocaleLowerCase() === savedIdentity.display_name.trim().toLocaleLowerCase()),
+            )
+            : []
+          let resumableParticipant: Participant | undefined
+          for (const matchingParticipant of matchingParticipants) {
             try {
               const serverResult = await loadResults(loadedEvent.id, matchingParticipant.id)
               if (serverResult.bets.length) {
+                setParticipantId(matchingParticipant.id)
+                setIsEventPlayer(Boolean(matchingParticipant.is_event_player))
                 writeStorage(submissionKey(loadedEvent.id), { submitted: true, participant_id: matchingParticipant.id, submitted_at: matchingParticipant.submitted_at } satisfies Submission)
                 setStage('results')
                 return
               }
             } catch {
-              // Continue through the normal identity flow if the optional resume read fails.
+              // Continue checking other participant rows for the same identity.
             }
-            if (loadedEvent.status === 'betting_open') { setStage('questions'); return }
+            if (!resumableParticipant) resumableParticipant = matchingParticipant
+          }
+          if (resumableParticipant && loadedEvent.status === 'betting_open') {
+            setParticipantId(resumableParticipant.id)
+            setIsEventPlayer(Boolean(resumableParticipant.is_event_player))
+            setStage('questions')
+            return
           }
         }
         if (loadedEvent.status !== 'betting_open') { setMessage('Veikkaukset on suljettu'); setStage('message'); return }
@@ -665,6 +692,7 @@ export default function PublicBetPage() {
       if (betsInsert.error) throw betsInsert.error
       const submission: Submission = { submitted: true, participant_id: currentParticipantId, submitted_at: submittedAt }
       writeStorage(submissionKey(event.id), submission)
+      clearDraft(event.id)
       const participant = { id: currentParticipantId, event_id: event.id, display_name: identity?.display_name ?? '', pin: identity?.pin ?? null, identity_token: identity?.identity_token ?? null, bettor_account_id: null, is_event_player: isEventPlayer, submitted_at: submittedAt, total_points_awarded: 0 }
       setResult({ current: participant, participants: [participant], bets: rows as BetRow[] })
       setAnswers(submittedAnswers)
