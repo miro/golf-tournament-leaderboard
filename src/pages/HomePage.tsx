@@ -196,6 +196,12 @@ function useCountdownDays(deadline: string): number {
   return days
 }
 
+function formatDeadline(deadline: string): string {
+  const [year, month, day] = deadline.slice(0, 10).split('-')
+  if (!year || !month || !day) return deadline
+  return `${Number(day)}.${Number(month)}.${year}`
+}
+
 interface CourseInfo { id: string; name: string; slug: string; color_hex: string | null }
 
 interface PlayerVaylamestariStats {
@@ -370,7 +376,7 @@ export default function HomePage() {
           <div className="text-[22px] font-semibold mt-1 font-display" style={{ color: daysColor }}>
             päivää jäljellä
           </div>
-          <div className="text-[13px] text-gray-600 mt-1">Deadline 31.8.2026</div>
+          <div className="text-[13px] text-gray-600 mt-1">Deadline {formatDeadline(deadline)}</div>
         </div>
       </div>
 
