@@ -57,13 +57,13 @@ export function normalizeEventQuestion(row: any): EventQuestion {
 }
 
 export async function getLeagueEvents(): Promise<EventRow[]> {
-  const { data, error } = await scopedTable('league_events').select('*, course:courses(name)').order('event_date', { ascending: false })
+  const { data, error } = await scopedTable('league_events').select('*, course:courses(name, par_total)').order('event_date', { ascending: false })
   if (error) throw error
   return (data ?? []) as unknown as EventRow[]
 }
 
 export async function getLeagueEvent(id: string): Promise<EventRow> {
-  const { data, error } = await scopedTable('league_events').select('*, course:courses(name)').eq('id', id).single()
+  const { data, error } = await scopedTable('league_events').select('*, course:courses(name, par_total)').eq('id', id).single()
   if (error) throw error
   return data as unknown as EventRow
 }

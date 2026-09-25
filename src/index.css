@@ -13,6 +13,7 @@
   --border-accent: rgba(255,255,255,0.15);
   --league-primary-rgb: 232 168 32;
   --league-secondary-rgb: 224 82 24;
+  --gala-result: #129e95;
   --status-positive: #22c55e;
   --status-negative: #ef4444;
   --league-logo: url('/gc-logo.png');
@@ -150,6 +151,20 @@
 .gala-split-bar-animate {
   animation: gala-split-bar-grow 1000ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+@keyframes gala-binary-split-side-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.gala-binary-split-side-animate {
+  animation: gala-binary-split-side-grow 1000ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes gala-bet-bar-confirm {
+  from { background-color: var(--league-primary); }
+  to { background-color: var(--gala-result); }
+}
+.gala-bet-bar-confirm {
+  animation: gala-bet-bar-confirm 700ms ease-out both;
+}
 
 @keyframes gala-bet-marker-in {
   from { opacity: 0; transform: translateY(8px) scale(0.7); }
@@ -174,6 +189,195 @@
 .gala-opening-answer-label-animate {
   animation: gala-opening-answer-label-in 900ms ease-out both;
 }
+@keyframes gala-opening-stats-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.gala-opening-stats-animate {
+  animation: gala-opening-stats-in 650ms ease-out both;
+}
+@keyframes gala-combined-hole-in {
+  from { opacity: 0; transform: translateY(12px) scale(.82); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.gala-combined-hole-in {
+  animation: gala-combined-hole-in 260ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+/* A quiet setup screen for checking the shared display before the gala starts. */
+.gala-test-card {
+  isolation: isolate;
+  font-family: 'Courier New', Courier, ui-monospace, monospace;
+  font-variant-ligatures: none;
+  text-rendering: geometricPrecision;
+}
+.gala-test-card::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: repeating-linear-gradient(to bottom, rgba(255,255,255,.055) 0, rgba(255,255,255,.055) 1px, transparent 1px, transparent 4px);
+  content: '';
+  mix-blend-mode: overlay;
+  opacity: .5;
+  pointer-events: none;
+}
+.gala-test-card::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image: radial-gradient(rgba(255,255,255,.16) .6px, transparent .8px), radial-gradient(rgba(0,0,0,.28) .6px, transparent .8px);
+  background-position: 0 0, 3px 2px;
+  background-size: 7px 7px, 11px 11px;
+  content: '';
+  mix-blend-mode: soft-light;
+  opacity: .18;
+  pointer-events: none;
+}
+.gala-test-card-colour-bars {
+  position: absolute;
+  inset: 0 0 34%;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.gala-test-card-bar-white { background: #bfc2bc; }
+.gala-test-card-bar-yellow { background: #b9aa5a; }
+.gala-test-card-bar-cyan { background: #76aeb0; }
+.gala-test-card-bar-green { background: #83a66f; }
+.gala-test-card-bar-magenta { background: #ad7c9d; }
+.gala-test-card-bar-red { background: #bb7772; }
+.gala-test-card-bar-blue { background: #738eaf; }
+.gala-test-card-lower {
+  position: absolute;
+  inset: 66% 0 0;
+  display: grid;
+  grid-template-columns: minmax(16rem, .8fr) minmax(24rem, 1.2fr);
+  gap: 3vw;
+  align-items: end;
+  padding: 0 8vw 7vh;
+  background: #090a0b;
+}
+.gala-test-card-lower-bars,
+.gala-test-card-ramp {
+  display: grid;
+  height: 24%;
+  min-height: 2.8rem;
+  border: 1px solid rgba(255,255,255,.18);
+}
+.gala-test-card-lower-bars { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.gala-test-card-lower-bar-blue { background: #516c8b; }
+.gala-test-card-lower-bar-black { background: #090a0b; }
+.gala-test-card-lower-bar-magenta { background: #8e647f; }
+.gala-test-card-lower-bar-cyan { background: #5f9194; }
+.gala-test-card-ramp { grid-template-columns: repeat(11, minmax(0, 1fr)); }
+.gala-test-card-centre {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.gala-test-card-logo-well {
+  display: flex;
+  width: clamp(7rem, 12vw, 12rem);
+  height: clamp(7rem, 12vw, 12rem);
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(255,255,255,.38);
+  background: rgba(8,9,10,.7);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 0 2rem rgba(0,0,0,.22);
+}
+.gala-test-card-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(2px 0 rgba(255,72,72,.58)) drop-shadow(-2px 0 rgba(73,218,255,.58));
+}
+.gala-test-card-kicker {
+  padding: .5rem .8rem;
+  color: rgba(255,255,255,.78);
+  background: rgba(8,9,10,.68);
+  font-size: clamp(.65rem, 1vw, 1rem);
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-shadow: 1px 0 rgba(255,72,72,.7), -1px 0 rgba(73,218,255,.7);
+}
+.gala-test-card-name {
+  max-width: 82vw;
+  margin-top: .9rem;
+  padding: .45rem 1rem;
+  color: #fff;
+  background: rgba(8,9,10,.78);
+  font-size: clamp(1.4rem, 3.5vw, 4rem);
+  font-weight: 700;
+  letter-spacing: .08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-shadow: 2px 0 rgba(255,72,72,.78), -2px 0 rgba(73,218,255,.78), 0 0 14px rgba(255,255,255,.22);
+}
+.gala-test-card-instructions {
+  position: absolute;
+  right: 3vw;
+  bottom: 2.5vh;
+  z-index: 3;
+  color: rgba(255,255,255,.62);
+  font-size: clamp(.6rem, .8vw, .85rem);
+  letter-spacing: .14em;
+}
+.gala-test-card-frame {
+  position: absolute;
+  inset: 2px;
+  z-index: 4;
+  border: 1px solid rgba(255,255,255,.72);
+  pointer-events: none;
+}
+
+/* Only the content wrapper transitions. The presentation chrome stays fixed. */
+.gala-slide-content-forward {
+  animation: gala-slide-content-forward 300ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.gala-slide-content-backward {
+  animation: gala-slide-content-backward 300ms cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes gala-slide-content-forward {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes gala-slide-content-backward {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.gala-slide-content-black {
+  position: relative;
+  isolation: isolate;
+}
+.gala-slide-content-black::before {
+  position: absolute;
+  inset: -2rem;
+  z-index: 2;
+  background: var(--bg-dark);
+  content: '';
+  pointer-events: none;
+  animation: gala-slide-black-wash 620ms ease-out both;
+}
+.gala-slide-content-black > * {
+  position: relative;
+  z-index: 1;
+  animation: gala-slide-black-content-in 430ms 170ms cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes gala-slide-black-wash {
+  0%, 24% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes gala-slide-black-content-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 @keyframes gala-roster-card-in {
   0% { opacity: 0; transform: scale(0.72); }
@@ -185,72 +389,24 @@
   transform-origin: center;
 }
 
-/* Lineup cards reveal at centre stage, then travel into their invisible grid slot. */
+/* Lineup cards reveal directly in their grid slots. The width is set by the
+   four-column row so a short final row keeps the same card size. */
 .gala-lineup-slot {
-  min-height: 18rem;
+  min-height: 16rem;
 }
 @media (min-width: 1280px) {
   .gala-lineup-slot {
-    min-height: 21rem;
+    min-height: 17rem;
   }
 }
-.gala-lineup-flight {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--lineup-flight-width);
-  transform-origin: center;
-  will-change: transform, opacity;
+@keyframes gala-lineup-honours-layer-in {
+  0% { opacity: 0; transform: scale(.92); }
+  12% { opacity: 1; transform: scale(1); }
+  76% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
 }
-.gala-lineup-flight-short {
-  animation: gala-lineup-flight-short var(--lineup-flight-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.gala-lineup-flight-long {
-  animation: gala-lineup-flight-long var(--lineup-flight-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes gala-lineup-flight-short {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(1.24);
-  }
-  8% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.24);
-  }
-  57% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.24);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(calc(-50% + var(--lineup-target-x)), calc(-50% + var(--lineup-target-y))) scale(var(--lineup-target-scale));
-  }
-}
-@keyframes gala-lineup-flight-long {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(1.24);
-  }
-  8% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.24);
-  }
-  72% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.24);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(calc(-50% + var(--lineup-target-x)), calc(-50% + var(--lineup-target-y))) scale(var(--lineup-target-scale));
-  }
-}
-@keyframes gala-lineup-honours-overlay-in {
-  0%, 8% { opacity: 0; }
-  16%, 72% { opacity: 1; }
-  100% { opacity: 0; }
-}
-.gala-lineup-honours-overlay {
-  animation: gala-lineup-honours-overlay-in var(--lineup-flight-duration, 1150ms) ease-out both;
+.gala-lineup-honours-layer {
+  animation: gala-lineup-honours-layer-in 1400ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
 @keyframes gala-liekkipoika-room-flash {
@@ -311,19 +467,23 @@
 }
 
 .gala-composition-row-current {
-  min-height: 7rem;
+  min-height: 9rem;
   opacity: 1;
+  position: relative;
+  z-index: 20;
+  border-color: color-mix(in srgb, var(--league-primary) 70%, white 10%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--league-primary) 45%, transparent), 0 0 26px color-mix(in srgb, var(--league-primary) 22%, transparent), 0 1rem 2rem rgba(0,0,0,.24);
 }
 .gala-composition-row-recent {
-  min-height: 5.5rem;
-  opacity: .78;
-  transform: scale(.985);
+  min-height: 6.5rem;
+  opacity: .66;
+  transform: scale(.975);
   transform-origin: bottom center;
 }
 .gala-composition-row-old {
-  min-height: 4rem;
-  opacity: .45;
-  transform: scale(.96);
+  min-height: 5.25rem;
+  opacity: .28;
+  transform: scale(.95);
   transform-origin: bottom center;
 }
 .gala-composition-prediction-segment {
@@ -331,13 +491,27 @@
 }
 .gala-composition-prediction-correct {
   filter: brightness(1.55) saturate(1.3);
-  box-shadow: inset 0 0 0 3px rgba(255,255,255,.9), 0 0 18px rgba(255,255,255,.45);
+  outline: 2px solid rgba(255,255,255,.95);
+  outline-offset: -2px;
   transform: scaleY(1.12);
   z-index: 1;
 }
 .gala-composition-ranking-row {
   transition: transform 550ms cubic-bezier(.22, 1, .36, 1), opacity 350ms ease;
   will-change: transform;
+}
+.gala-composition-ranking-entry {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  gap: .75rem;
+}
+@keyframes gala-composition-ranking-entry-in {
+  from { opacity: 0; transform: translateX(-1.25rem) scale(.96); filter: blur(4px); }
+  to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }
+}
+.gala-composition-ranking-entry-arrive {
+  animation: gala-composition-ranking-entry-in 650ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
 @keyframes gala-composition-final-row-in {
@@ -348,12 +522,44 @@
   animation: gala-composition-final-row-in 520ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
+@keyframes gala-closing-detail-in {
+  from { opacity: 0; transform: translateY(1.4rem) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.gala-closing-detail-in {
+  animation: gala-closing-detail-in 900ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.gala-podium-card {
+  position: relative;
+}
+.gala-podium-card-winner {
+  filter: drop-shadow(0 0 28px color-mix(in srgb, var(--league-primary) 35%, transparent));
+}
+.gala-podium-card-in {
+  animation: gala-podium-card-in 650ms cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes gala-podium-card-in {
+  from { opacity: 0; transform: translateY(2rem) scale(.78); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.gala-podium-incomplete {
+  width: min(30rem, 80%);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  padding: .8rem 1.4rem;
+}
+
 @keyframes gala-composition-correct-flash {
   0% { opacity: 0; transform: translateY(8px) scale(.94); }
   18%, 68% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-4px) scale(1.02); }
 }
 .gala-composition-correct-flash {
+  z-index: 50;
+  white-space: nowrap;
+  transform-origin: bottom center;
   animation: gala-composition-correct-flash 1500ms ease-out both;
 }
 
