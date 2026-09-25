@@ -23,6 +23,10 @@ import { playerImagePath } from '../../lib/playerImage'
 import type { InvitationalResult, Player } from '../../lib/database.types'
 import { CATEGORY_META, CATEGORY_ORDER, type HoleCategory } from '../proto/bet/types'
 
+function GalaLogoBox({ className = '', logoClassName = '', alt }: { className?: string; logoClassName?: string; alt?: string }) {
+  return <div className={`gala-logo-box ${className}`}><LeagueLogo alt={alt} className={logoClassName} /></div>
+}
+
 const HELD_KEYS = new Set(['player_pick_best_scratch', 'player_pick_best_total', 'podium_top3'])
 const PRESENTATION_EXIT_WARNING = 'Olet poistumassa gala-esityksestä. Jos palaat tai päivität sivun, esityksen kohta nollautuu. Haluatko varmasti poistua?'
 
@@ -439,7 +443,7 @@ function honoursForPlayers(players: readonly EventPlayer[], results: readonly In
   return honours
 }
 
-function PresentationPlayerCard({ player, count, maxCount, honours, compact, leaderCard = false, featured = false, podium = false, lineup = false, animate, delay, positionCounts, hcpOverride, suppressHonoursOverlay = false, resultMetric, categoryBadge, betConfirmed = false, animateBetConfirmation = false }: {
+function PresentationPlayerCard({ player, count, maxCount, honours, compact, leaderCard = false, featured = false, rulingWinner = false, podium = false, lineup = false, animate, delay, positionCounts, hcpOverride, suppressHonoursOverlay = false, resultMetric, categoryBadge, betConfirmed = false, animateBetConfirmation = false }: {
   player: Player
   count?: number
   maxCount?: number
@@ -447,6 +451,7 @@ function PresentationPlayerCard({ player, count, maxCount, honours, compact, lea
   compact: boolean
   leaderCard?: boolean
   featured?: boolean
+  rulingWinner?: boolean
   podium?: boolean
   lineup?: boolean
   animate: boolean
@@ -465,19 +470,20 @@ function PresentationPlayerCard({ player, count, maxCount, honours, compact, lea
   const percentage = maxCount && count != null ? (count / maxCount) * 100 : 0
   const overlayText = !suppressHonoursOverlay && animate ? honoursOverlayText(honours) : null
   const showBetStats = count != null
-  return <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-card)] shadow-xl ${compact ? 'p-2' : 'p-3'} ${lineup ? 'h-[16rem] xl:h-[17rem]' : ''} ${animate ? 'gala-roster-card-animate' : ''}`} style={{ animationDelay: `${delay}ms` }}>
+  return <div className={`relative overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-card)] shadow-xl ${compact ? 'p-2' : 'p-3'} ${lineup ? 'gala-lineup-card w-full' : ''} ${animate ? 'gala-roster-card-animate' : ''}`} style={{ animationDelay: `${delay}ms` }}>
     {overlayText && <div className="gala-honours-overlay absolute inset-0 z-20 flex items-center justify-center bg-black/80 px-4 text-center text-xl font-black leading-tight text-white xl:text-2xl" style={{ animationDelay: `${delay}ms` }}>{overlayText}</div>}
-    <div className={`relative overflow-hidden rounded-lg bg-[var(--bg-dark)] ${lineup ? 'h-[8.5rem] xl:h-[9.5rem]' : podium ? featured ? 'h-72 xl:h-[22rem]' : 'h-64 xl:h-[20rem]' : featured ? 'h-72 xl:h-[22rem]' : compact ? leaderCard ? 'h-28 xl:h-32' : 'h-16' : 'h-36 xl:h-44'}`}>
+    <div className={`relative shrink-0 overflow-hidden rounded-lg bg-[var(--bg-dark)] ${lineup ? 'gala-lineup-photo' : rulingWinner ? 'h-56 xl:h-[18rem]' : podium ? featured ? 'h-72 xl:h-[22rem]' : 'h-64 xl:h-[20rem]' : featured ? 'h-72 xl:h-[22rem]' : compact ? leaderCard ? 'h-28 xl:h-32' : 'h-16' : 'h-36 xl:h-44'}`}>
       {failed ? <div className="flex h-full items-center justify-center bg-[var(--league-primary)] text-3xl font-black text-[var(--bg-dark)]">{player.full_name.substring(0, 2).toUpperCase()}</div> : <img src={image} alt="" onError={() => {
         if (image !== fallbackPath) setImage(fallbackPath)
         else setFailed(true)
-      }} className="h-full w-full object-cover" />}
+      }} className="h-full w-full object-cover object-center" />}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
       {categoryBadge && <div className="absolute right-2 top-2 flex min-h-10 min-w-10 items-center justify-center rounded-xl px-3 py-1 shadow-lg" style={{ backgroundColor: categoryBadge.color }} aria-label={`${categoryBadge.value} kyseistä tulosta`}><span className="font-display text-3xl font-black leading-none text-white xl:text-4xl">{categoryBadge.value}</span></div>}
     </div>
-    <div className={`${compact ? 'pt-2' : 'pt-3'} min-w-0`}>
-      <div className={`${compact ? 'text-base' : 'text-2xl xl:text-3xl'} flex min-w-0 items-center gap-2 font-display font-bold text-white`}><span className="truncate">{player.full_name}</span><LiekkipoikaMark honours={honours} className={compact ? 'text-base' : 'text-xl xl:text-2xl'} /></div>
-      <div className={`mt-1 flex flex-wrap gap-1 ${lineup ? 'h-6 overflow-hidden' : ''}`}>
+    <div className={`${lineup ? 'gala-lineup-details pt-2' : compact ? 'pt-2' : 'pt-3'} min-w-0`}>
+      <div className={`${lineup ? 'text-xl xl:text-2xl' : compact ? 'text-base' : 'text-2xl xl:text-3xl'} flex min-w-0 ${lineup ? 'flex-nowrap' : 'flex-wrap'} items-center gap-2 font-display font-bold text-white`}><span className="truncate">{player.full_name}</span><LiekkipoikaMark honours={honours} className={compact ? 'text-base' : 'text-xl xl:text-2xl'} /></div>
+      {betConfirmed && <div className="mt-2 inline-flex rounded-lg bg-[var(--gala-result)] px-2.5 py-1 text-xs font-black uppercase tracking-[.12em] text-[var(--bg-dark)] shadow-[0_0_1rem_color-mix(in_srgb,var(--gala-result)_40%,transparent)] xl:text-sm">✓ Oikea vastaus</div>}
+      <div className={`mt-1 flex flex-wrap gap-1 ${lineup ? 'gala-lineup-badges' : ''}`}>
         {hcpOverride !== undefined && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/70">HCP {hcpOverride ?? '—'}</span>}
         {honours.scratch > 0 && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/70">{honours.scratch}× Scratch</span>}
         {honours.liekkipoika > 0 && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/70">{honours.liekkipoika}× Liekkipoika</span>}
@@ -556,12 +562,22 @@ function PlayerBetDistribution({ question, bets, eventPlayers, honours, animate,
   const crowded = summaries.length > 6
   const maxCount = summaries[0].count
   const correctPlayerId = showCorrect && resolution?.status === 'resolved' ? String(resolution.answer) : null
-  return <div className={`grid w-full gap-6 ${crowded ? 'grid-cols-12' : 'grid-cols-3'}`}>
-    {summaries.map((summary, index) => <div key={summary.player.id} className={crowded ? (index < 3 ? 'col-span-4' : 'col-span-3') : 'col-span-1'}>
-      <div className={`rounded-2xl transition-all duration-500 ${correctPlayerId === summary.player.id ? 'ring-2 ring-[var(--gala-result)] shadow-[0_0_2rem_color-mix(in_srgb,var(--gala-result)_35%,transparent)]' : ''}`}>
-        <PresentationPlayerCard player={summary.player} count={summary.count} maxCount={maxCount} honours={honours.get(summary.player.id) ?? emptyHonours()} compact={compact} animate={animate} delay={(summaries.length - 1 - index) * 700} betConfirmed={correctPlayerId === summary.player.id} animateBetConfirmation={animateCorrect && correctPlayerId === summary.player.id} />
+  const ruling = correctPlayerId !== null
+  return <div className={ruling ? 'relative mx-auto w-full max-w-[38rem]' : `grid w-full gap-6 ${crowded ? 'grid-cols-12' : 'grid-cols-3'}`}>
+    {summaries.map((summary, index) => {
+      const isWinner = correctPlayerId === summary.player.id
+      const card = <PresentationPlayerCard player={summary.player} count={summary.count} maxCount={maxCount} honours={honours.get(summary.player.id) ?? emptyHonours()} compact={ruling ? false : compact} featured={ruling && isWinner} rulingWinner={ruling && isWinner} animate={animate} delay={(summaries.length - 1 - index) * 700} betConfirmed={isWinner} animateBetConfirmation={animateCorrect && isWinner} />
+      if (ruling) {
+        return isWinner
+          ? <div key={summary.player.id} className={`relative z-20 mx-auto w-full rounded-2xl ring-2 ring-[var(--gala-result)] shadow-[0_0_2.5rem_color-mix(in_srgb,var(--gala-result)_38%,transparent)] transition-all duration-700 ${animateCorrect ? 'gala-player-pick-winner-in' : ''}`}>{card}</div>
+          : <div key={summary.player.id} className="pointer-events-none absolute inset-x-0 top-0 scale-75 opacity-0 transition-all duration-700">{card}</div>
+      }
+      return <div key={summary.player.id} className={crowded ? (index < 3 ? 'col-span-4' : 'col-span-3') : 'col-span-1'}>
+        <div className="rounded-2xl transition-all duration-500">
+          {card}
+        </div>
       </div>
-    </div>)}
+    })}
   </div>
 }
 
@@ -747,27 +763,18 @@ function AccumulatingPlayerPickRuling({ question, questionNumber, questionTotal,
     ? `${correct.length} oikein · ${correct.map(bet => participantLabel(bet.participant_id, participants)).join(', ')}`
     : 'Kukaan ei saanut pisteitä'
 
-  return <div className="mx-auto flex h-full min-h-[42rem] w-full max-w-[1500px] flex-col">
+  return <div className="mx-auto flex h-full min-h-0 w-full max-w-[1500px] flex-col">
     <div className="shrink-0 text-center">
       <div className="text-3xl font-semibold uppercase tracking-[.2em] text-white/45">VEIKKAUS</div>
       <h2 className="mt-5 text-6xl font-black leading-[.95] xl:text-7xl">{questionTitle(question)}</h2>
       <div className="mt-5 text-2xl text-white/45">Kysymys {questionNumber} / {questionTotal}</div>
     </div>
-    <div className="mt-7 w-full shrink-0 border-t border-white/10 pt-6">
+    <div className="mt-7 flex min-h-0 w-full flex-1 flex-col items-center border-t border-white/10 pt-6 text-center">
       <div className="text-center text-sm font-bold uppercase tracking-[.2em] text-white/40">Miten veikattiin</div>
-      <div className="mt-4">
-        <PlayerBetDistribution question={question} bets={bets} eventPlayers={eventPlayers} honours={honours} animate={animateDistribution} compact showCorrect resolution={resolution} animateCorrect={animateRuling} />
+      <div className="mt-4 w-full">
+        <PlayerBetDistribution question={question} bets={bets} eventPlayers={eventPlayers} honours={honours} animate={animateDistribution} compact showCorrect={resolution.status === 'resolved'} resolution={resolution} animateCorrect={animateRuling} />
       </div>
-    </div>
-    <div className="mt-6 flex min-h-0 flex-1 flex-col items-center border-t border-white/10 pt-6 text-center">
-      {resolution.status === 'unresolved' ? <Ruling question={question} resolution={resolution} bets={bets} participants={participants} players={players} eventPlayers={eventPlayers} honours={honours} /> : resolvedPlayer ? <>
-        <div className="text-2xl font-semibold uppercase tracking-[.18em] text-white/45">Oikea vastaus</div>
-        <div className={`mt-3 rounded-xl bg-[var(--gala-result)] px-5 py-2 text-2xl font-black uppercase tracking-[.12em] text-[var(--bg-dark)] shadow-[0_0_1.5rem_color-mix(in_srgb,var(--gala-result)_40%,transparent)] ${animateRuling ? 'gala-roster-card-animate' : ''}`}>✓ {resolvedPlayer.full_name}</div>
-        <div className={`mt-4 w-full max-w-[30rem] ${animateRuling ? 'gala-roster-card-animate' : ''}`}>
-          <PresentationPlayerCard player={resolvedPlayer} honours={honours.get(resolvedPlayer.id) ?? emptyHonours()} compact={false} featured animate={false} delay={0} />
-        </div>
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[.04] px-8 py-4 text-2xl font-bold text-white/80 xl:text-3xl">{correctLine}</div>
-      </> : <Ruling question={question} resolution={resolution} bets={bets} participants={participants} players={players} eventPlayers={eventPlayers} honours={honours} />}
+      {resolution.status === 'unresolved' ? <div className="mt-5"><Ruling question={question} resolution={resolution} bets={bets} participants={participants} players={players} eventPlayers={eventPlayers} honours={honours} /></div> : <div className="mt-4 max-w-[38rem] rounded-2xl border border-white/10 bg-white/[.04] px-8 py-3 text-xl font-bold text-white/80 xl:text-2xl">{resolvedPlayer ? correctLine : 'Vastaus ei löytynyt jakaumasta'}</div>}
     </div>
   </div>
 }
@@ -1116,18 +1123,18 @@ function EventPlayerRoster({ players, honours, animate }: { players: EventPlayer
 
   const rows = Array.from({ length: Math.ceil(ordered.length / 4) }, (_, rowIndex) => ordered.slice(rowIndex * 4, rowIndex * 4 + 4))
   const activeOverlay = revealState?.phase === 'overlay' ? ordered[revealState.index] : null
-  return <div className="relative mx-auto h-full w-full max-w-[1760px] pt-4 xl:pt-6">
+  return <div className="relative mx-auto h-full w-full max-w-[1840px] pt-2 xl:pt-4">
     {activeOverlay && <LineupHonoursOverlay player={activeOverlay.player} honours={honours.get(activeOverlay.player_id) ?? emptyHonours()} />}
     <div className="text-3xl font-semibold uppercase tracking-[.18em] text-white/45">{players.length} PELAAJAA</div>
     <h2 className="mt-5 text-7xl font-black">Päivän lineup</h2>
-    <div className="mt-8 space-y-6">
-      {rows.map((row, rowIndex) => <div key={rowIndex} className="flex justify-center gap-6">
+    <div className="mt-6 space-y-4 xl:mt-7 xl:space-y-5">
+      {rows.map((row, rowIndex) => <div key={rowIndex} className="flex justify-center gap-4 xl:gap-5">
         {row.map((eventPlayer, index) => {
           const globalIndex = rowIndex * 4 + index
           const playerHonours = honours.get(eventPlayer.player_id) ?? emptyHonours()
           const isLanded = globalIndex < landedCount || (revealState?.index === globalIndex && revealState.phase === 'card')
           const isAppearing = revealState?.index === globalIndex && revealState.phase === 'card'
-          return <div key={eventPlayer.player_id} className="gala-lineup-slot flex min-w-0 items-stretch" style={{ width: 'calc((100% - 72px) / 4)' }}>
+          return <div key={eventPlayer.player_id} className="gala-lineup-slot flex min-w-0 items-stretch">
             {isLanded && <PresentationPlayerCard player={eventPlayer.player} honours={playerHonours} compact={false} lineup animate={isAppearing} delay={0} suppressHonoursOverlay />}
           </div>
         })}
@@ -1141,7 +1148,7 @@ function HiddenLeaderCard({ animate, delay }: { animate: boolean; delay: number 
     <div className="relative flex h-36 items-center justify-center overflow-hidden bg-[#24153f] xl:h-44">
       <div className="absolute inset-0 flex flex-col justify-between p-4 text-sm font-black uppercase tracking-[.2em] text-white/55"><span>JOKERI</span><span className="self-end rotate-180">JOKERI</span></div>
       <div className="absolute text-[8rem] font-black leading-none text-[var(--league-primary)]/90 xl:text-[10rem]">?</div>
-      <LeagueLogo className="relative h-20 w-20 object-contain opacity-20 xl:h-24 xl:w-24" />
+      <GalaLogoBox className="relative h-24 w-24" logoClassName="h-20 w-20 object-contain opacity-20 xl:h-24 xl:w-24" />
     </div>
     <div className="px-4 py-3 xl:px-5 xl:py-4">
       <div className="font-display text-2xl font-black text-white xl:text-3xl">Tulos tulee kohta</div>
@@ -1255,6 +1262,12 @@ function ClosingEndCard({ event, winner, winnerScore, scratchWinner, scratchWinn
   const scratchStrokes = scratchWinnerScore ? rawStrokes(scratchWinnerScore) : null
   const holes = winnerScore ? compositionActualHoles(winnerScore) : compositionActualHoles(null)
   const winnerImage = winner ? (winner.player.avatar_url || playerImagePath(winner.player.full_name)) : null
+  const winnerNameCounts = new Map<string, number>()
+  roll.forEach(item => {
+    const key = item.name?.trim().toLocaleLowerCase('fi-FI')
+    if (key) winnerNameCounts.set(key, (winnerNameCounts.get(key) ?? 0) + 1)
+  })
+  const newestWinnerYear = roll.length > 0 ? roll[roll.length - 1].year : undefined
   const [image, setImage] = useState(winnerImage)
   const [imageFailed, setImageFailed] = useState(false)
 
@@ -1284,7 +1297,7 @@ function ClosingEndCard({ event, winner, winnerScore, scratchWinner, scratchWinn
   return <div className="mx-auto flex h-full w-full max-w-[1840px] flex-col justify-between gap-5 py-3 xl:gap-7">
     <div className={`flex items-center justify-between gap-8 ${revealed(1)}`}>
       <div className="flex items-center gap-5">
-        <LeagueLogo className="h-16 w-16 object-contain xl:h-20 xl:w-20" />
+        <GalaLogoBox className="h-20 w-20 xl:h-24 xl:w-24" logoClassName="h-full w-full object-contain" />
         <div>
           <div className="text-sm font-bold uppercase tracking-[.28em] text-white/45">Golf Company Invitational</div>
           <div className="mt-1 text-2xl font-black uppercase tracking-[.16em] text-white/80">Liekkipoika 2026</div>
@@ -1331,10 +1344,23 @@ function ClosingEndCard({ event, winner, winnerScore, scratchWinner, scratchWinn
           </div>
         </div>
         <div className="mt-4 grid grid-cols-[minmax(0,1.2fr)_minmax(16rem,.8fr)] gap-4">
-          <div className="rounded-2xl border border-white/10 bg-white/[.04] px-5 py-4">
+          <div className="flex h-full min-h-[18rem] min-w-0 flex-col rounded-2xl border border-white/10 bg-white/[.04] px-5 py-4">
             <div className="text-xs font-black uppercase tracking-[.18em] text-white/40">Liekkipoika · 2018–{new Date(`${event.event_date}T00:00:00`).getFullYear()}</div>
-            <div className="mt-3 grid grid-cols-3 gap-x-5 gap-y-1 text-sm text-white/70">
-              {roll.map(item => <div key={item.year} className="flex min-w-0 gap-2"><span className="shrink-0 font-black text-white/40">{item.year}</span><span className="truncate">{item.name ?? '—'}</span></div>)}
+            <div className="mt-4 grid flex-1 content-start grid-cols-2 gap-3 text-lg font-semibold leading-tight text-white/80 xl:gap-3 xl:text-2xl">
+              {roll.map(item => {
+                const key = item.name?.trim().toLocaleLowerCase('fi-FI')
+                const repeated = Boolean(key && (winnerNameCounts.get(key) ?? 0) > 1)
+                const newest = item.year === newestWinnerYear
+                const rowTone = newest
+                  ? 'border-[var(--league-primary)]/70 bg-[var(--league-primary)]/15 shadow-[0_0_1.5rem_color-mix(in_srgb,var(--league-primary)_18%,transparent)]'
+                  : repeated
+                    ? 'border-[var(--league-primary)]/40 bg-[var(--league-primary)]/[.08]'
+                    : 'border-white/10 bg-white/[.025]'
+                return <div key={item.year} className={`flex min-w-0 items-center gap-3 rounded-xl border px-3 py-2.5 ${rowTone}`}>
+                  <span className={`shrink-0 font-black ${newest || repeated ? 'text-[var(--league-primary)]' : 'text-white/45'}`}>{item.year}</span>
+                  <span className={`truncate ${newest ? 'font-black text-white' : repeated ? 'font-bold text-white' : 'text-white/80'}`}>{item.name ?? '—'}</span>
+                </div>
+              })}
             </div>
           </div>
           <div className="flex flex-col items-center justify-center rounded-2xl border border-white/20 bg-white p-4 text-center shadow-xl">
@@ -1364,7 +1390,7 @@ function PresentationTestCard({ eventName, needsFullscreenStart, onStartFullscre
     </div>
     <div className="gala-test-card-centre">
       <div className="gala-test-card-logo-well">
-        <LeagueLogo className="gala-test-card-logo" />
+        <GalaLogoBox className="gala-test-card-logo-well" logoClassName="gala-test-card-logo" />
       </div>
       <div className="gala-test-card-kicker">SIGNAL CHECK · GALA ADMIN</div>
       <div className="gala-test-card-name">{eventName}</div>
@@ -1484,7 +1510,7 @@ export default function AdminEventPresentation() {
       id: 'opening-title',
       next: 'Pelaajat',
       content: <div className="flex items-center gap-16">
-        <LeagueLogo className="h-40 w-40 object-contain" />
+        <GalaLogoBox className="h-48 w-48" logoClassName="h-full w-full object-contain" />
         <div><div className="text-3xl font-semibold uppercase tracking-[.2em] text-white/45">Gala-esitys</div><h1 className="mt-4 max-w-6xl text-8xl font-black leading-[.92]">{event.name}</h1><div className="mt-7 text-3xl capitalize text-white/60">{formatDate(event.event_date)}</div></div>
       </div>,
     })
@@ -1720,7 +1746,7 @@ export default function AdminEventPresentation() {
     <div className="absolute inset-0 opacity-[.035]" style={{ backgroundImage: 'var(--league-logo)', backgroundSize: '300px 300px' }} />
     <div className="relative flex h-full flex-col px-12 py-10 xl:px-20 xl:py-14">
       <header className="flex items-center justify-between">
-        <div className="flex items-center gap-5"><LeagueLogo className="h-12 w-12 object-contain" /><span className="text-xl font-semibold uppercase tracking-[.2em] text-white/45">{league.name}</span></div>
+        <div className="flex items-center gap-5"><GalaLogoBox className="h-14 w-14" logoClassName="h-full w-full object-contain" /><span className="text-xl font-semibold uppercase tracking-[.2em] text-white/45">{league.name}</span></div>
         <div className="text-lg text-white/35">{beatIndex + 1} / {beats.length}</div>
       </header>
       <section key={`${beat.id}-${transitionId}`} className="flex min-h-0 flex-1 items-center py-8">

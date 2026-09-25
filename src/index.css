@@ -280,6 +280,16 @@
   text-align: center;
   pointer-events: none;
 }
+.gala-logo-box {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: .75rem;
+  background: #fff;
+  padding: .5rem;
+}
 .gala-test-card-logo-well {
   display: flex;
   width: clamp(7rem, 12vw, 12rem);
@@ -289,7 +299,7 @@
   margin-bottom: 2rem;
   padding: 1.25rem;
   border: 1px solid rgba(255,255,255,.38);
-  background: rgba(8,9,10,.7);
+  background: #fff;
   box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 0 2rem rgba(0,0,0,.22);
 }
 .gala-test-card-logo {
@@ -389,14 +399,39 @@
   transform-origin: center;
 }
 
-/* Lineup cards reveal directly in their grid slots. The width is set by the
-   four-column row so a short final row keeps the same card size. */
+@keyframes gala-player-pick-winner-in {
+  0% { opacity: 0; transform: translateY(1.25rem) scale(.72); filter: saturate(.7); }
+  55% { opacity: 1; transform: translateY(0) scale(1.035); filter: saturate(1.15); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: saturate(1); }
+}
+.gala-player-pick-winner-in {
+  animation: gala-player-pick-winner-in 750ms cubic-bezier(.22, 1, .36, 1) both;
+  transform-origin: top center;
+}
+
+/* Lineup cards reveal directly in their grid slots. Their height follows the
+   viewport so all three rows remain visible on the presentation screen. */
+.gala-lineup-card {
+  height: clamp(12rem, 20vh, 15rem);
+}
+.gala-lineup-photo {
+  height: calc(clamp(12rem, 20vh, 15rem) - 5.5rem);
+}
+.gala-lineup-details {
+  height: 4rem;
+  overflow: hidden;
+}
+.gala-lineup-badges {
+  height: 1.25rem;
+  overflow: hidden;
+}
 .gala-lineup-slot {
-  min-height: 16rem;
+  min-height: clamp(12rem, 20vh, 15rem);
+  width: calc((100% - 48px) / 4);
 }
 @media (min-width: 1280px) {
   .gala-lineup-slot {
-    min-height: 17rem;
+    width: calc((100% - 60px) / 4);
   }
 }
 @keyframes gala-lineup-honours-layer-in {
