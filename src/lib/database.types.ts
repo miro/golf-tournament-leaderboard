@@ -217,13 +217,13 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['bets']['Insert']>
       }
       event_scores: {
-        Row: { id: string; event_id: string; player_id: string; played_date: string; total_points: number; total_strokes: number | null; submitted_at: string; is_corrected: boolean }
-        Insert: Omit<Database['public']['Tables']['event_scores']['Row'], 'id' | 'submitted_at' | 'is_corrected'> & { is_corrected?: boolean }
+        Row: { id: string; event_id: string; player_id: string; hcp: number | null; total_points: number; total_strokes: number | null; has_complete_strokes: boolean; submitted_at: string; is_corrected: boolean }
+        Insert: Omit<Database['public']['Tables']['event_scores']['Row'], 'id' | 'submitted_at' | 'is_corrected' | 'has_complete_strokes'> & { is_corrected?: boolean }
         Update: Partial<Database['public']['Tables']['event_scores']['Insert']>
       }
       event_hole_results: {
-        Row: { id: string; event_score_id: string; hole_number: number; points: number }
-        Insert: Omit<Database['public']['Tables']['event_hole_results']['Row'], 'id'>
+        Row: { id: string; event_score_id: string; hole: number; par: number | null; stroke_index: number | null; strokes_played: number | null; hcp_strokes: number | null; points: number }
+        Insert: Omit<Database['public']['Tables']['event_hole_results']['Row'], 'id' | 'par' | 'stroke_index' | 'strokes_played' | 'hcp_strokes'> & Partial<Pick<Database['public']['Tables']['event_hole_results']['Row'], 'par' | 'stroke_index' | 'strokes_played' | 'hcp_strokes'>>
         Update: Partial<Database['public']['Tables']['event_hole_results']['Insert']>
       }
     }

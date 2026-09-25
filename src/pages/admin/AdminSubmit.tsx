@@ -2,48 +2,15 @@ import { useEffect, useState } from 'react'
 import { getCurrentSeason, getActivePlayers, getCourses } from '../../lib/queries'
 import { scopedTable, getActiveLeagueId } from '../../lib/leagueClient'
 import { getLeagueBrand } from '../../lib/branding'
+import { buildGameBookPrompt } from '../../lib/gamebookPrompt'
 import type { Player, Course } from '../../lib/database.types'
 
-function buildPrompt(playerName: string): string {
+function buildPrompt(playerIdentifier: string): string {
   const league = getLeagueBrand()
-  return `You are processing a GameBook golf scorecard screenshot for the ${league.name} ${league.tournament_name} 2026 tournament admin system.
-
-Return ONLY the following block, nothing else — no preamble, no markdown code fences, no explanation:
-
----GC-RESULT---
-hcp: [player HCP as number]
-total_points: [total bogeypoint points as integer]
-total_strokes: [total raw strokes as integer]
-to_par: [strokes relative to par, e.g. -3 or +5]
-summary: [Exactly 3 sentences in Finnish. Casual but sharp tone — like a knowledgeable friend reporting to a WhatsApp group. Player name is ${playerName}, use first name only after first mention.
-
-Sentence 1: The overall result — total points and the general character of the round in one sentence.
-Sentence 2: The most interesting specific moment — best hole, a collapse, front/back nine contrast, or a streak. Must reference a specific hole number or sequence.
-Sentence 3: A punchy concluding verdict on the round. Factual — no opinion on tournament standings or what the result means for the competition.
-
-Summary rules:
-- Exactly 3 sentences, no more no less
-- Never mention tournament position, standings, or rivals
-- Never use filler without a specific fact attached — forbidden phrases: "vahva kokonaisuus", "tasainen kierros", "hieno suoritus"
-- Emojis: only 📈 or ✍️ permitted, maximum one total, only if it genuinely adds something — default is no emoji
-- No exclamation marks]
-
-CSV:
-hole,par,stroke_index,strokes_played,hcp_strokes,points
-1,[par],[stroke_index],[strokes],[hcp_strokes],[points]
-2,[par],[stroke_index],[strokes],[hcp_strokes],[points]
-[...all 18 holes...]
-18,[par],[stroke_index],[strokes],[hcp_strokes],[points]
----END---
-
-Rules:
-- Player name: always use exactly "${playerName}" as the player name in the summary. Ignore any name shown on the screenshot — the name in this prompt is the authoritative source.
-- IMPORTANT: The screenshot must be from the "Pistebogey NET" tab in GameBook, not "Lyöntipeli NET". If the data you are reading appears to be stroke play (no points column, or points values that look like raw strokes), add this line to the output block before ---END---:
-  warning: LYÖNTIPELI — tarkista välilehti
-- to_par: negative number if under par (e.g. -3), positive if over
-- If any hole value is missing or illegible, write NULL for that value
-- CSV must have exactly 18 data rows, one per hole
-- Do not add any extra fields or change the order`
+  return buildGameBookPrompt({
+    context: `${league.name} ${league.tournament_name} 2026 tournament`,
+    roster: [{ identifier: playerIdentifier, displayName: playerIdentifier }],
+  })
 }
 
 interface ParsedHole {
@@ -460,7 +427,7 @@ export default function AdminSubmit() {
               <table className="w-full text-xs font-mono">
                 <thead>
                   <tr className="border-b border-white/10 bg-black/20">
-                    {['Reikä', 'Par', 'HI', 'Lyönnit', 'HCP lyönnit', 'Pisteet'].map(h => (
+                    {['Reikä', 'Par', 'HI', 'Lyönnit', 'Net lyönnit', 'Pisteet'].map(h => (
                       <th key={h} className="px-3 py-2 text-left text-gray-500 font-medium">{h}</th>
                     ))}
                   </tr>

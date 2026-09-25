@@ -10,7 +10,7 @@ export type EventPlayer = { event_id: string; player_id: string; display_order: 
 export type QuestionType = { id: string; key: string; display_name: string; description: string; max_points: number; requires_target_player: boolean; active: boolean }
 export type EventQuestion = { id: string; event_id: string; question_type_id: string; question_type_key: string | null; display_order: number; question_text: string | null; points_possible: number | null; parameters: Record<string, unknown>; correct_answer: unknown; question_type: QuestionType }
 export type EventParticipant = { id: string; event_id: string; display_name: string; emoji_pin: string | null; pin: string | null; identity_token: string | null; bettor_account_id: string | null; is_event_player: boolean; submitted_at: string; total_points_awarded: number }
-export type EventScore = { id: string; event_id: string; player_id: string; played_date: string; total_points: number; total_strokes: number | null; submitted_at: string; is_corrected: boolean; player?: Player; holes?: Array<{ id: string; event_score_id: string; hole_number: number; points: number }> }
+export type EventScore = { id: string; event_id: string; player_id: string; hcp: number | null; total_points: number; total_strokes: number | null; has_complete_strokes: boolean; submitted_at: string; is_corrected: boolean; player?: Player; holes?: Array<{ id: string; event_score_id: string; hole: number; par: number | null; stroke_index: number | null; strokes_played: number | null; hcp_strokes: number | null; points: number }> }
 
 export function canonicalQuestionTypeKey(row: any): string {
   if (typeof row.key === 'string' && row.key.trim()) return row.key
@@ -94,7 +94,7 @@ export async function getEventParticipants(eventId: string): Promise<EventPartic
 export async function getEventScores(eventId: string): Promise<EventScore[]> {
   const [{ data: scores, error }, { data: holes, error: holeError }] = await Promise.all([
     scopedTable('event_scores').select('*, player:players(*), event:league_events!inner(league_id)').eq('event_id', eventId).order('submitted_at'),
-    scopedTable('event_hole_results').select('*, score:event_scores!inner(event_id, event:league_events!inner(league_id))').eq('score.event_id', eventId).order('hole_number'),
+    scopedTable('event_hole_results').select('*, score:event_scores!inner(event_id, event:league_events!inner(league_id))').eq('score.event_id', eventId).order('hole'),
   ])
   if (error) throw error
   if (holeError) throw holeError
@@ -102,6 +102,25 @@ export async function getEventScores(eventId: string): Promise<EventScore[]> {
   for (const score of (scores ?? []) as unknown as EventScore[]) byScore.set(score.id, { ...score, holes: [] })
   for (const hole of (holes ?? []) as any[]) byScore.get(hole.event_score_id)?.holes?.push(hole)
   return [...byScore.values()]
+}
+
+export async function getCourseHoleGuide(courseId: string): Promise<Array<{ hole: number; par: number }>> {
+  const { data: rounds, error: roundsError } = await scopedTable('rounds')
+    .select('id')
+    .eq('course_id', courseId)
+    .eq('status', 'published')
+    .order('played_date', { ascending: false })
+    .limit(1)
+  if (roundsError) throw roundsError
+  const roundId = (rounds?.[0] as { id: string } | undefined)?.id
+  if (!roundId) return []
+
+  const { data: holes, error: holesError } = await scopedTable('hole_results')
+    .select('hole_number, par, round:rounds!inner(league_id)')
+    .eq('round_id', roundId)
+    .order('hole_number')
+  if (holesError) throw holesError
+  return (holes ?? []).map((hole: any) => ({ hole: hole.hole_number, par: hole.par }))
 }
 
 export async function createEvent(payload: { name: string; event_date: string; course_id: string | null; participant_code: string | null; playerIds: string[]; questions: Array<{ question_type_id: string; question_type_key: string; question_text: string; points_possible: number; display_order: number; parameters: Record<string, unknown> }> }) {
