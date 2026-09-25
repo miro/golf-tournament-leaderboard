@@ -28,7 +28,7 @@ export default function CompletionScreen({ name, emojis, answers, playerA, targe
     `${playerA.full_name} pisteet → ${answers.q1Score}p`,
     `Kierroksen kokoonpano → ${compositionPoints(answers.q2Composition)}p (${q2Top3})`,
     `Paras tulos → ${answers.q3BestGroup ? playerById.get(answers.q3BestGroup)?.full_name : '–'}`,
-    `Paras etuyhdeksän → ${answers.q4BestFront9 ? playerById.get(answers.q4BestFront9)?.full_name : '–'}`,
+    `Paras etuysi → ${answers.q4BestFront9 ? playerById.get(answers.q4BestFront9)?.full_name : '–'}`,
     `Paras takayhdeksän → ${answers.q5BestBack9 ? playerById.get(answers.q5BestBack9)?.full_name : '–'}`,
     `Paras scratch → ${answers.q6BestScratch ? playerById.get(answers.q6BestScratch)?.full_name : '–'}`,
     `Kuka päihittää ${targetPlayer.full_name}? → ${beatLeaderPick?.full_name ?? '–'}`,

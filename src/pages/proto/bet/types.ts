@@ -96,7 +96,7 @@ export function initialCompositionForHandicap(handicap: number | null | undefine
 export interface CompositionLineAnswer {
   type: 'composition_line'
   featured_player_id: string
-  holes: { hole: number; category: HoleCategory; par: number }[]
+  holes: { hole: number; category: HoleCategory | null; par: number }[]
   summary: Record<HoleCategory, number> & { predicted_points: number; stbl_delta: number; stableford_points?: number; stableford_delta?: number }
 }
 

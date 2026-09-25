@@ -30,7 +30,7 @@ export type CombinedAssignments = Record<BetKey, string | null>
 
 const BET_TYPES: Array<{ key: BetKey; icon: string; label: string }> = [
   { key: 'best_total', icon: '🏆', label: 'Paras tulos' },
-  { key: 'best_front', icon: '⛳', label: 'Paras etuyhdeksän' },
+  { key: 'best_front', icon: '⛳', label: 'Paras etuysi' },
   { key: 'best_back', icon: '🏌️', label: 'Paras takayhdeksän' },
   { key: 'best_scratch', icon: '📊', label: 'Paras scratch' },
 ]

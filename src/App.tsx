@@ -19,6 +19,7 @@ import AdminHype from './pages/admin/AdminHype'
 import AdminEvents from './pages/admin/AdminEvents'
 import AdminEventNew from './pages/admin/AdminEventNew'
 import AdminEventDetail from './pages/admin/AdminEventDetail'
+import AdminEventPresentation from './pages/admin/AdminEventPresentation'
 import BetPage from './pages/proto/BetPage'
 import PublicBetPage from './pages/PublicBetPage'
 import InvitationalRosterPage from './pages/invitational/RosterPage'
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="hype" element={<AdminHype />} />
           <Route path="events" element={<AdminEvents />} />
           <Route path="events/new" element={<AdminEventNew />} />
+          <Route path="events/:id/present" element={<AdminEventPresentation />} />
           <Route path="events/:id" element={<AdminEventDetail />} />
         </Route>
       </Route>

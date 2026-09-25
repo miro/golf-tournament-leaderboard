@@ -10,6 +10,7 @@ export type EventPlayer = { event_id: string; player_id: string; display_order: 
 export type QuestionType = { id: string; key: string; display_name: string; description: string; max_points: number; requires_target_player: boolean; active: boolean }
 export type EventQuestion = { id: string; event_id: string; question_type_id: string; question_type_key: string | null; display_order: number; question_text: string | null; points_possible: number | null; parameters: Record<string, unknown>; correct_answer: unknown; question_type: QuestionType }
 export type EventParticipant = { id: string; event_id: string; display_name: string; emoji_pin: string | null; pin: string | null; identity_token: string | null; bettor_account_id: string | null; is_event_player: boolean; submitted_at: string; total_points_awarded: number }
+export type EventBet = { id: string; participant_id: string; question_id: string; answer: unknown; points_awarded: number | null }
 export type EventScore = { id: string; event_id: string; player_id: string; hcp: number | null; total_points: number; total_strokes: number | null; has_complete_strokes: boolean; submitted_at: string; is_corrected: boolean; player?: Player; holes?: Array<{ id: string; event_score_id: string; hole: number; par: number | null; stroke_index: number | null; strokes_played: number | null; hcp_strokes: number | null; points: number }> }
 
 export function canonicalQuestionTypeKey(row: any): string {
@@ -89,6 +90,14 @@ export async function getEventParticipants(eventId: string): Promise<EventPartic
   const { data, error } = await scopedTable('betting_participants').select('*, event:league_events!inner(league_id)').eq('event_id', eventId).order('submitted_at')
   if (error) throw error
   return (data ?? []) as EventParticipant[]
+}
+
+export async function getEventBets(eventId: string): Promise<EventBet[]> {
+  const { data, error } = await scopedTable('bets')
+    .select('id, participant_id, question_id, answer, points_awarded, participant:betting_participants!inner(event_id, event:league_events!inner(league_id))')
+    .eq('participant.event_id', eventId)
+  if (error) throw error
+  return (data ?? []) as unknown as EventBet[]
 }
 
 export async function getEventScores(eventId: string): Promise<EventScore[]> {

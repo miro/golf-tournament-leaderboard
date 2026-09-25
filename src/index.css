@@ -135,6 +135,238 @@
   animation: bet-reveal 400ms ease-out both;
 }
 
+@keyframes gala-bet-bar-grow {
+  from { width: 0; }
+  to { width: var(--gala-bet-width); }
+}
+.gala-bet-bar-animate {
+  animation: gala-bet-bar-grow 1000ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes gala-split-bar-grow {
+  from { width: 0; }
+  to { width: var(--gala-split-width); }
+}
+.gala-split-bar-animate {
+  animation: gala-split-bar-grow 1000ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes gala-bet-marker-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.7); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.gala-bet-marker-animate {
+  animation: gala-bet-marker-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes gala-shot-bar-grow {
+  from { height: 0; }
+  to { height: var(--gala-shot-height); }
+}
+.gala-shot-bar-animate {
+  animation: gala-shot-bar-grow 1500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes gala-opening-answer-label-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.gala-opening-answer-label-animate {
+  animation: gala-opening-answer-label-in 900ms ease-out both;
+}
+
+@keyframes gala-roster-card-in {
+  0% { opacity: 0; transform: scale(0.72); }
+  1% { opacity: 1; transform: scale(0.72); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.gala-roster-card-animate {
+  animation: gala-roster-card-in 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center;
+}
+
+/* Lineup cards reveal at centre stage, then travel into their invisible grid slot. */
+.gala-lineup-slot {
+  min-height: 18rem;
+}
+@media (min-width: 1280px) {
+  .gala-lineup-slot {
+    min-height: 21rem;
+  }
+}
+.gala-lineup-flight {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--lineup-flight-width);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+.gala-lineup-flight-short {
+  animation: gala-lineup-flight-short var(--lineup-flight-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.gala-lineup-flight-long {
+  animation: gala-lineup-flight-long var(--lineup-flight-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes gala-lineup-flight-short {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.24);
+  }
+  8% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.24);
+  }
+  57% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.24);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--lineup-target-x)), calc(-50% + var(--lineup-target-y))) scale(var(--lineup-target-scale));
+  }
+}
+@keyframes gala-lineup-flight-long {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.24);
+  }
+  8% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.24);
+  }
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.24);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--lineup-target-x)), calc(-50% + var(--lineup-target-y))) scale(var(--lineup-target-scale));
+  }
+}
+@keyframes gala-lineup-honours-overlay-in {
+  0%, 8% { opacity: 0; }
+  16%, 72% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.gala-lineup-honours-overlay {
+  animation: gala-lineup-honours-overlay-in var(--lineup-flight-duration, 1150ms) ease-out both;
+}
+
+@keyframes gala-liekkipoika-room-flash {
+  0%, 100% { opacity: 0; }
+  8% { opacity: .98; }
+  16% { opacity: .28; }
+  27% { opacity: .9; }
+  39% { opacity: .16; }
+  52% { opacity: .72; }
+  72% { opacity: .12; }
+}
+.gala-liekkipoika-room-flash {
+  animation: gala-liekkipoika-room-flash 1400ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--league-primary) 78%, transparent), color-mix(in srgb, var(--league-secondary) 34%, transparent) 42%, transparent 76%);
+  mix-blend-mode: screen;
+}
+.gala-liekkipoika-firefield {
+  position: absolute;
+  inset: 8% 2% auto;
+  color: var(--league-primary);
+  font-size: clamp(3rem, 8vw, 9rem);
+  line-height: 1.55;
+  letter-spacing: .1em;
+  opacity: .58;
+  text-align: center;
+  filter: saturate(1.7) drop-shadow(0 0 24px var(--league-primary));
+  transform: rotate(-2deg) scale(1.05);
+}
+.gala-liekkipoika-hype-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 8rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-align: center;
+  text-shadow: 0 0 18px var(--league-primary), 0 0 52px var(--league-secondary);
+  animation: gala-liekkipoika-hype-label-in 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes gala-liekkipoika-hype-label-in {
+  0% { opacity: 0; transform: scale(.5) rotate(-3deg); }
+  15% { opacity: 1; transform: scale(1.1) rotate(1deg); }
+  32% { opacity: .7; transform: scale(.96) rotate(-1deg); }
+  52% { opacity: 1; transform: scale(1.04) rotate(0); }
+  100% { opacity: 0; transform: scale(1.18); }
+}
+
+@keyframes gala-composition-hole-in {
+  from { opacity: 0; transform: translateY(18px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.gala-composition-hole-in {
+  animation: gala-composition-hole-in 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.gala-composition-row-current {
+  min-height: 7rem;
+  opacity: 1;
+}
+.gala-composition-row-recent {
+  min-height: 5.5rem;
+  opacity: .78;
+  transform: scale(.985);
+  transform-origin: bottom center;
+}
+.gala-composition-row-old {
+  min-height: 4rem;
+  opacity: .45;
+  transform: scale(.96);
+  transform-origin: bottom center;
+}
+.gala-composition-prediction-segment {
+  transition: filter 300ms ease, box-shadow 300ms ease, transform 300ms ease;
+}
+.gala-composition-prediction-correct {
+  filter: brightness(1.55) saturate(1.3);
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.9), 0 0 18px rgba(255,255,255,.45);
+  transform: scaleY(1.12);
+  z-index: 1;
+}
+.gala-composition-ranking-row {
+  transition: transform 550ms cubic-bezier(.22, 1, .36, 1), opacity 350ms ease;
+  will-change: transform;
+}
+
+@keyframes gala-composition-final-row-in {
+  from { opacity: 0; transform: translateY(1.2rem) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.gala-composition-final-row-in {
+  animation: gala-composition-final-row-in 520ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+@keyframes gala-composition-correct-flash {
+  0% { opacity: 0; transform: translateY(8px) scale(.94); }
+  18%, 68% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-4px) scale(1.02); }
+}
+.gala-composition-correct-flash {
+  animation: gala-composition-correct-flash 1500ms ease-out both;
+}
+
+@keyframes gala-honours-overlay-in {
+  0%, 10% { opacity: 0; }
+  18%, 68% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.gala-honours-overlay {
+  animation: gala-honours-overlay-in 3200ms ease-out both;
+  pointer-events: none;
+}
+
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;

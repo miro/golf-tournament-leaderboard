@@ -75,9 +75,20 @@ function completeScratchScores(scores: readonly EventScore[]): EventScore[] {
   return scores.filter(score => score.has_complete_strokes)
 }
 
-function podium(scores: readonly EventScore[]): PodiumAnswer {
-  const sorted = [...scores].sort((a, b) => pointsCompare(a, b, totalPoints))
-  return { first: sorted[0]?.player_id ?? null, second: sorted[1]?.player_id ?? null, third: sorted[2]?.player_id ?? null }
+function rankScores(question: EventQuestion, scores: readonly EventScore[]): EventScore[] {
+  const key = question.question_type.key
+  if (key === 'player_pick_best_scratch') return completeScratchScores(scores).sort(scratchCompare)
+  if (key === 'player_pick_best_front' || key === 'player_pick_best_back') {
+    const start = key.endsWith('front') ? 1 : 10
+    const end = key.endsWith('front') ? 9 : 18
+    return [...scores].sort((a, b) => pointsCompare(a, b, score => holePoints(score, start, end)))
+  }
+  if (key === 'player_pick_best_total' || key === 'podium_top3') return [...scores].sort((a, b) => pointsCompare(a, b, totalPoints))
+  return []
+}
+
+export function rankScoresForQuestion(question: EventQuestion, allScores: readonly EventScore[], eventPlayers: readonly ResolverPlayer[] = []): EventScore[] {
+  return rankScores(question, eventScores(allScores, eventPlayers))
 }
 
 function targetId(question: EventQuestion): string {
@@ -105,11 +116,20 @@ function zeroPointHoleCount(scores: readonly EventScore[]): number {
   }, 0)
 }
 
-function compositionCategory(points: number): HoleCategory {
-  if (points >= 3) return 'birdie'
-  if (points === 2) return 'par'
-  if (points === 1) return 'bogey'
-  return 'worse'
+export function compositionCategoryForHole(hole: { par: number | null; strokes_played: number | null; points: number | null }): HoleCategory | null {
+  if (hole.strokes_played != null && hole.par != null) {
+    const relativeToPar = hole.strokes_played - hole.par
+    if (relativeToPar <= -1) return 'birdie'
+    if (relativeToPar === 0) return 'par'
+    if (relativeToPar === 1) return 'bogey'
+    if (relativeToPar === 2) return 'double'
+    if (relativeToPar === 3) return 'triple'
+    return 'worse'
+  }
+  if ((hole.points ?? 0) >= 3) return 'birdie'
+  if ((hole.points ?? 0) === 2) return 'par'
+  if ((hole.points ?? 0) === 1) return 'bogey'
+  return null
 }
 
 function compositionAnswer(question: EventQuestion, scores: readonly EventScore[]): CompositionLineAnswer | null {
@@ -121,11 +141,11 @@ function compositionAnswer(question: EventQuestion, scores: readonly EventScore[
   if (!target || !score?.holes) return null
   const holes = holePars.map((par, index) => {
     const result = score.holes?.find(hole => hole.hole === index + 1)
-    return result ? { hole: index + 1, category: compositionCategory(result.points), par } : null
+    return result ? { hole: index + 1, category: compositionCategoryForHole(result), par } : null
   })
   if (holes.some(hole => hole === null)) return null
-  const completeHoles = holes as { hole: number; category: HoleCategory; par: number }[]
-  const categoryAnswer = { holes: completeHoles.map(hole => hole.category) } as any
+  const completeHoles = holes as { hole: number; category: HoleCategory | null; par: number }[]
+  const categoryAnswer = { holes: completeHoles.map(hole => hole.category) }
   const predicted_points = compositionPoints(categoryAnswer)
   return {
     type: 'composition_line',
@@ -138,22 +158,23 @@ function compositionAnswer(question: EventQuestion, scores: readonly EventScore[
 function resolveFieldQuestion(question: EventQuestion, scores: EventScore[], players: readonly ResolverPlayer[]): Resolution {
   const key = question.question_type.key
   if (key === 'player_pick_best_total') {
-    const winner = [...scores].sort((a, b) => pointsCompare(a, b, totalPoints))[0]
+    const winner = rankScores(question, scores)[0]
     return { status: 'resolved', answer: winner?.player_id ?? null }
   }
   if (key === 'player_pick_best_front' || key === 'player_pick_best_back') {
-    const start = key.endsWith('front') ? 1 : 10
-    const end = key.endsWith('front') ? 9 : 18
-    const winner = [...scores].sort((a, b) => pointsCompare(a, b, score => holePoints(score, start, end)))[0]
+    const winner = rankScores(question, scores)[0]
     return { status: 'resolved', answer: winner?.player_id ?? null }
   }
   if (key === 'player_pick_best_scratch') {
     const complete = completeScratchScores(scores)
     if (!complete.length) return { status: 'unresolved', reason: 'Ei yhtään korttia, jossa kaikki 18 lyöntiä on kirjattu' }
-    const winner = [...complete].sort(scratchCompare)[0]
+    const winner = rankScores(question, scores)[0]
     return { status: 'resolved', answer: winner.player_id }
   }
-  if (key === 'podium_top3') return { status: 'resolved', answer: podium(scores) }
+  if (key === 'podium_top3') {
+    const ranked = rankScores(question, scores)
+    return { status: 'resolved', answer: { first: ranked[0]?.player_id ?? null, second: ranked[1]?.player_id ?? null, third: ranked[2]?.player_id ?? null } }
+  }
   if (key === 'yes_no_birdie') {
     const count = birdieCount(scores)
     const warning = count > 0 ? undefined : thresholdWarning('birdietä', count, scores, players)

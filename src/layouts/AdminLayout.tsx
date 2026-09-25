@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useLeague } from '../contexts/LeagueContext'
 
@@ -15,6 +15,7 @@ const links = [
 
 export default function AdminLayout() {
   const league = useLeague()
+  const location = useLocation()
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -56,6 +57,11 @@ export default function AdminLayout() {
       </div>
     )
   }
+
+  // The gala presenter keeps the same admin authentication guard but deliberately
+  // has no admin sidebar, header, padding, or scroll container around it.
+  const isPresentation = /^\/admin\/events\/[^/]+\/present\/?$/.test(location.pathname)
+  if (isPresentation) return <Outlet />
 
   const navLinks = links.map(l => (
     <NavLink

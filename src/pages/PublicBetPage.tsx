@@ -78,7 +78,7 @@ function questionTitle(question: EventQuestion, players: Player[]) {
   const target = playerFrom(question.parameters, 'player_id', players) ?? playerFrom(question.parameters, 'target_player_id', players)
   if (key === 'slider_player_points') return target ? `Kuinka monta pistettä ${target.full_name} tekee?` : 'Kuinka monta pistettä kohdepelaaja tekee?'
   if (key === 'composition_player_line') return target ? `Miten ${target.full_name} pelaa kierroksen?` : 'Miten kohdepelaaja pelaa kierroksen?'
-  if (question.question_text?.trim()) return question.question_text
+  if (question.question_text?.trim()) return question.question_text.replace(/etuyhdeksän/gi, match => match[0] === 'E' ? 'Etuysin' : 'etuysin')
   if (key === 'player_pick_best_total') return 'Kuka tekee parhaan tuloksen?'
   if (key === 'player_pick_best_front') return 'Kuka tekee parhaan etuysin?'
   if (key === 'player_pick_best_back') return 'Kuka tekee parhaan takaysin?'

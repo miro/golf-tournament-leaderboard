@@ -23,7 +23,7 @@ export async function scoreEvent(eventId: string) {
   }
 
   const { data: bets, error } = await scopedTable('bets')
-    .select('*, participant:betting_participants!inner(event_id), question:betting_questions!inner(event_id, question_type:betting_question_types(*))')
+    .select('*, participant:betting_participants!inner(event_id, event:league_events!inner(league_id)), question:betting_questions!inner(event_id, question_type:betting_question_types(*))')
     .eq('participant.event_id', eventId)
   if (error) throw error
 
