@@ -1295,25 +1295,22 @@ function ClosingEndCard({ event, winner, winnerScore, scratchWinner, scratchWinn
   const eventDate = new Date(`${event.event_date}T00:00:00`).toLocaleDateString('fi-FI')
 
   return <div className="mx-auto flex h-full w-full max-w-[1840px] flex-col justify-between gap-5 py-3 xl:gap-7">
-    <div className={`flex items-center justify-between gap-8 ${revealed(1)}`}>
-      <div className="flex items-center gap-5">
-        <GalaLogoBox className="h-20 w-20 xl:h-24 xl:w-24" logoClassName="h-full w-full object-contain" />
-        <div>
-          <div className="text-sm font-bold uppercase tracking-[.28em] text-white/45">Golf Company Invitational</div>
-          <div className="mt-1 text-2xl font-black uppercase tracking-[.16em] text-white/80">Liekkipoika 2026</div>
-        </div>
+    <div className={`flex items-end justify-between gap-8 ${revealed(1)}`}>
+      <div className="min-w-0 max-w-[62rem]">
+        <div className="text-sm font-bold uppercase tracking-[.28em] text-white/45">Golf Company Invitational</div>
+        <div className="mt-2 text-4xl font-black uppercase leading-none tracking-[.08em] text-white/90 xl:text-6xl">{event.name}</div>
+        <div className="mt-3 text-xl font-bold uppercase tracking-[.16em] text-white/55 xl:text-2xl">Liekkipoika 2026</div>
       </div>
-      <div className="max-w-[38rem] text-right">
-        <div className="text-xs font-black uppercase tracking-[.2em] text-white/40">{event.name}</div>
-        <div className="mt-1 text-3xl font-black text-white/90 xl:text-4xl">{event.course?.name ?? 'Lake & Forest'}</div>
-        <div className="mt-1 text-xl font-semibold text-white/65 xl:text-2xl">{eventDate}</div>
+      <div className="shrink-0 max-w-[38rem] text-right">
+        <div className="text-4xl font-black text-white/90 xl:text-5xl">{event.course?.name ?? 'Lake & Forest'}</div>
+        <div className="mt-1 text-2xl font-semibold text-white/65 xl:text-3xl">{eventDate}</div>
       </div>
     </div>
 
     <div className="grid min-h-0 grid-cols-[minmax(22rem,.82fr)_minmax(0,1.5fr)] gap-6 xl:gap-10">
       <section className={`min-w-0 ${revealed(2)}`}>
         <div className="overflow-hidden rounded-3xl border border-white/15 bg-[var(--bg-card)] shadow-2xl">
-          <div className="relative h-[19rem] overflow-hidden bg-[var(--bg-dark)] xl:h-[23rem]">
+          <div className="relative h-[28rem] overflow-hidden bg-[var(--bg-dark)] xl:h-[35rem]">
             {image && !imageFailed
               ? <img src={image} alt="" onError={() => {
                 const fallback = winner ? playerImagePath(winner.player.full_name) : null
