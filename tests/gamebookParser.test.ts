@@ -66,6 +66,17 @@ test('accepts a partial card and reports missing holes for manual completion', (
   assert.ok(findings.some(finding => finding.severity === 'INFO' && finding.message.includes('Puuttuvat väylät: 14')))
 })
 
+test('uses CSV par values when the course guide is unavailable', () => {
+  const parsed = parseBlocks(resultBlock({
+    holes: [
+      { hole: 1, par: 5, strokes: 7, points: 3 },
+      { hole: 2, par: 4, strokes: 6, points: 3 },
+    ],
+  }))
+  const findings = validateBlock(parsed.blocks[0], { holes: [] }, players)
+  assert.equal(findings.some(finding => finding.severity === 'BLOCKING'), false)
+})
+
 test('reports an unknown player as blocking', () => {
   const parsed = parseBlocks(resultBlock({ player: 'nobody' }))
   const findings = validateBlock(parsed.blocks[0], course, players)

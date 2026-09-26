@@ -247,13 +247,9 @@ export function validateBlock(
 
   for (const row of block.holes) {
     const expectedPar = coursePar(course, row.hole)
-    if (expectedPar === null) {
-      findings.push({ severity: 'BLOCKING', message: `Väylälle ${row.hole} ei löydy kurssin par-tietoa` })
-      continue
-    }
     if (row.par === null) {
       findings.push({ severity: 'BLOCKING', message: `Väylä ${row.hole} par puuttuu` })
-    } else if (row.par !== expectedPar) {
+    } else if (expectedPar !== null && row.par !== expectedPar) {
       findings.push({ severity: 'BLOCKING', message: `Väylä ${row.hole}: CSV par ${row.par}, kurssin par ${expectedPar}` })
     }
     if (row.points === null) {
