@@ -66,7 +66,7 @@ Rules for every block:
 - player: copy exactly one identifier from the authoritative roster list. The player name shown in the screenshot is not authoritative and must not be copied into this field unless it is exactly the roster identifier.
 - Use the screenshot name only to match the card to one roster entry. If you cannot confidently match a card to exactly one roster entry, use player: UNKNOWN rather than guessing; the admin will hold that block.
 - The roster identifier and the summary player name come from the roster list, not from an invented or corrected screenshot name.
-- IMPORTANT: the screenshot must be from the "Pistebogey NET" tab in GameBook, not "Lyöntipeli NET". If the data appears to be stroke play (no points column, or points values that look like raw strokes), add this line before ---END---:
+- IMPORTANT: the screenshot must be from the "Pistebogey NET" tab in GameBook, not "Lyöntipeli NET". If the data appears to be stroke play (no points column, or points values that look like raw strokes), add this line directly above the "CSV:" line:
   warning: LYÖNTIPELI — tarkista välilehti
 - to_par is calculated from RAW strokes, not handicap-adjusted strokes: total_strokes minus the par for the represented holes. For a complete card this is the full course par; for a partial card it is the visible-hole subtotal. Negative if under par and positive if over par.
 - If a hole is cropped out or not present in the screenshot, omit that hole's row entirely. Never invent a row for a hole that is not visible.

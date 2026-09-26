@@ -145,6 +145,13 @@ function parseBody(body: string, raw: string): ParsedBlock {
     const trimmed = line.trim()
     if (!trimmed) continue
 
+    // The prompt used to ask for the LYÖNTIPELI warning just before the end marker, i.e. after the CSV rows.
+    const warning = trimmed.match(/^warning:\s*(.*)$/i)
+    if (warning) {
+      values.warning = warning[1]
+      continue
+    }
+
     const cells = trimmed.split(',')
     if (cells.length !== 6) {
       throw new BlockParseError(`CSV-rivillä ${index + 1} on ${cells.length} saraketta, odotettu 6`)

@@ -7,6 +7,8 @@ export type Resolved<T = unknown> = {
   status: 'resolved'
   answer: T
   warning?: string
+  // Every answer that earns points when more than one is correct; `answer` stays the headline one.
+  acceptedAnswers?: unknown[]
 }
 
 export type Unresolved = {
@@ -106,7 +108,7 @@ function thresholdWarning(label: string, count: number, scores: readonly EventSc
 }
 
 function birdieCount(scores: readonly EventScore[]): number {
-  return scores.reduce((count, score) => count + (score.holes ?? []).filter(hole => hole.strokes_played != null && hole.par != null && hole.strokes_played === hole.par - 1).length, 0)
+  return scores.reduce((count, score) => count + (score.holes ?? []).filter(hole => hole.strokes_played != null && hole.par != null && hole.strokes_played - hole.par <= -1).length, 0)
 }
 
 function zeroPointHoleCount(scores: readonly EventScore[]): number {
@@ -209,6 +211,7 @@ export function resolveQuestion(question: EventQuestion, allScores: readonly Eve
   if (key === 'yes_no_head_to_head') {
     const playerA = String(question.parameters.player_a_id ?? '')
     const playerB = String(question.parameters.player_b_id ?? '')
+    if (!playerA || !playerB || playerA === playerB) return { status: 'unresolved', reason: 'Kysymykseltä puuttuu kaksi eri pelaajaa' }
     const missing = [playerA, playerB].filter(id => id && !scores.some(score => score.player_id === id))
     if (missing.length) return { status: 'unresolved', reason: missingReason(missing, eventPlayers) }
     const ordered = scores.filter(score => score.player_id === playerA || score.player_id === playerB).sort((a, b) => pointsCompare(a, b, totalPoints))
@@ -226,10 +229,11 @@ export function resolveQuestion(question: EventQuestion, allScores: readonly Eve
     const target = targetId(question)
     const targetScore = scores.find(score => score.player_id === target)
     if (!targetScore) return { status: 'unresolved', reason: `${playerName(target || 'Kohdepelaaja', eventPlayers)}: ei korttia` }
-    const winner = [...scores]
+    const overtakers = [...scores]
       .filter(score => score.player_id !== target && totalPoints(score) > totalPoints(targetScore))
-      .sort((a, b) => pointsCompare(a, b, totalPoints))[0]
-    return { status: 'resolved', answer: winner?.player_id ?? null }
+      .sort((a, b) => pointsCompare(a, b, totalPoints))
+      .map(score => score.player_id)
+    return { status: 'resolved', answer: overtakers[0] ?? null, acceptedAnswers: overtakers }
   }
 
   return { status: 'unresolved', reason: `Tuntematon kysymystyyppi: ${key}` }
@@ -260,5 +264,6 @@ export function scoreAnswer(question: EventQuestion, betAnswer: any, resolution:
     const exact = actual.filter((hole: any, index: number) => predicted[index]?.category === hole.category).length
     return Math.round(exact / 18 * question.question_type.max_points)
   }
+  if (resolution.acceptedAnswers) return resolution.acceptedAnswers.includes(betAnswer) ? question.question_type.max_points : 0
   return Object.is(betAnswer, correct) ? question.question_type.max_points : 0
 }

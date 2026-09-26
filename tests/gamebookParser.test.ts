@@ -114,3 +114,10 @@ test('leaves dashes inside summary text untouched', () => {
   assert.equal(parsed.parseErrors.length, 0)
   assert.match(parsed.blocks[0].summary, /16–18 — END — hyvin/)
 })
+
+test('accepts a LYÖNTIPELI warning placed after the CSV rows', () => {
+  const parsed = parseBlocks(resultBlock().replace('---END---', 'warning: LYÖNTIPELI — tarkista välilehti\n---END---'))
+  assert.equal(parsed.parseErrors.length, 0)
+  assert.equal(parsed.blocks[0].holes.length, 18)
+  assert.ok(validateBlock(parsed.blocks[0], course, players).some(finding => finding.severity === 'INFO' && finding.message.startsWith('LYÖNTIPELI')))
+})

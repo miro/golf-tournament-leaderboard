@@ -106,3 +106,23 @@ test('podium scoring awards name hits, position hits, and the exact bonus', () =
   assert.equal(scoreAnswer(q, { first: 'p1', second: 'p2', third: 'x' }, resolution), 4)
   assert.equal(scoreAnswer(q, { first: 'p1', second: 'p2', third: 'p3' }, resolution), 8)
 })
+
+test('birdie questions count eagles and better', () => {
+  const eagle = score('p1', { holes: [{ hole: 1, par: 5, strokes_played: 3, points: 5 }] })
+  assert.equal((resolveQuestion(question('yes_no_birdie', {}, 2), [eagle], players) as { answer: unknown }).answer, true)
+})
+
+test('head-to-head is unresolved instead of crashing when a player is not configured', () => {
+  const result = resolveQuestion(question('yes_no_head_to_head', { player_a_id: 'p1' }, 2), [fullStrokeCard('p1'), fullStrokeCard('p2')], players)
+  assert.equal(result.status, 'unresolved')
+})
+
+test('beat the leader pays every player who beat the target', () => {
+  const q = question('beat_the_leader', { player_id: 'p3' }, 3)
+  const card = (playerId: string, pointsPerHole: number) => score(playerId, { holes: Array.from({ length: 18 }, (_, index) => ({ hole: index + 1, points: pointsPerHole })) })
+  const resolution = resolveQuestion(q, [card('p1', 3), card('p2', 2), card('p3', 1)], players)
+  assert.equal((resolution as { answer: unknown }).answer, 'p1')
+  assert.equal(scoreAnswer(q, 'p1', resolution), 3)
+  assert.equal(scoreAnswer(q, 'p2', resolution), 3)
+  assert.equal(scoreAnswer(q, 'p3', resolution), 0)
+})
