@@ -32,7 +32,7 @@ GameBook name-matching aid. The name shown on a GameBook scorecard may be a shor
 - Tatu — Tatu
 - Tero — Tero
 - Tommi — Tommi
-Only use the mapped value in `player:` when that exact identifier appears in the authoritative roster. If the match is not certain, use `player: UNKNOWN`.
+Only use the mapped value in "player:" when that exact identifier appears in the authoritative roster. If the match is not certain, use "player: UNKNOWN".
 
 Return ONLY the result blocks, one after another, with no preamble, markdown code fences, explanation, or text between blocks.
 
