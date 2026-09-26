@@ -28,7 +28,7 @@ GameBook name-matching aid. The name shown on a GameBook scorecard may be a shor
 - Nyyssönen — Niko Nyyssönen
 - Pauli — Pauli
 - Pekka — Pekka
-- Pete — Pete
+- Pete — Petri
 - Tatu — Tatu
 - Tero — Tero
 - Tommi — Tommi
