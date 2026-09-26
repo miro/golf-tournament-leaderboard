@@ -55,11 +55,15 @@ test('reports a confirmable points sum mismatch', () => {
   assert.ok(findings.some(finding => finding.severity === 'CONFIRMABLE' && finding.message === 'CSV summa 36, ilmoitettu 35'))
 })
 
-test('reports a missing hole specifically', () => {
-  const holes = Array.from({ length: 18 }, (_, index) => ({ hole: index === 13 ? 15 : index + 1, par: pars[index], strokes: 5, points: 2 }))
+test('accepts a partial card and reports missing holes for manual completion', () => {
+  const holes = Array.from({ length: 17 }, (_, index) => {
+    const hole = index < 13 ? index + 1 : index + 2
+    return { hole, par: pars[hole - 1], strokes: 5, points: 2 }
+  })
   const parsed = parseBlocks(resultBlock({ holes }))
   const findings = validateBlock(parsed.blocks[0], course, players)
-  assert.ok(findings.some(finding => finding.severity === 'BLOCKING' && finding.message === 'Väylä 14 puuttuu'))
+  assert.equal(findings.some(finding => finding.severity === 'BLOCKING'), false)
+  assert.ok(findings.some(finding => finding.severity === 'INFO' && finding.message.includes('Puuttuvat väylät: 14')))
 })
 
 test('reports an unknown player as blocking', () => {

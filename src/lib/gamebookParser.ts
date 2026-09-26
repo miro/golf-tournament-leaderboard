@@ -223,17 +223,22 @@ export function validateBlock(
 
   for (const hole of block.holes) counts.set(hole.hole, (counts.get(hole.hole) ?? 0) + 1)
 
-  if (block.holes.length !== 18) {
-    findings.push({ severity: 'BLOCKING', message: `CSV-rivejä ${block.holes.length}, odotettu 18` })
+  if (block.holes.length === 0) {
+    findings.push({ severity: 'BLOCKING', message: 'CSV:stä ei löytynyt yhtään väylää' })
   }
 
-  for (let hole = 1; hole <= 18; hole++) {
-    const count = counts.get(hole) ?? 0
-    if (count === 0) {
-      findings.push({ severity: 'BLOCKING', message: `Väylä ${hole} puuttuu` })
+  for (const [hole, count] of counts) {
+    if (hole < 1 || hole > 18) {
+      findings.push({ severity: 'BLOCKING', message: `Väylä ${hole} ei kuulu kierrokseen 1–18` })
     } else if (count > 1) {
       findings.push({ severity: 'BLOCKING', message: `Väylä ${hole} esiintyy ${count} kertaa` })
     }
+  }
+
+  const missingHoles = Array.from({ length: 18 }, (_, index) => index + 1)
+    .filter(hole => !counts.has(hole))
+  if (missingHoles.length > 0) {
+    findings.push({ severity: 'INFO', message: `Puuttuvat väylät: ${missingHoles.join(', ')} — täydennä manuaalisesti` })
   }
 
   if (!resolvedPlayer(block, eventPlayers)) {
@@ -242,9 +247,13 @@ export function validateBlock(
 
   for (const row of block.holes) {
     const expectedPar = coursePar(course, row.hole)
+    if (expectedPar === null) {
+      findings.push({ severity: 'BLOCKING', message: `Väylälle ${row.hole} ei löydy kurssin par-tietoa` })
+      continue
+    }
     if (row.par === null) {
       findings.push({ severity: 'BLOCKING', message: `Väylä ${row.hole} par puuttuu` })
-    } else if (expectedPar !== null && row.par !== expectedPar) {
+    } else if (row.par !== expectedPar) {
       findings.push({ severity: 'BLOCKING', message: `Väylä ${row.hole}: CSV par ${row.par}, kurssin par ${expectedPar}` })
     }
     if (row.points === null) {
@@ -253,12 +262,14 @@ export function validateBlock(
   }
 
   const csvPoints = block.holes.reduce((sum, hole) => sum + (hole.points ?? 0), 0)
-  if (csvPoints !== block.total_points) {
+  const hasAllHoles = missingHoles.length === 0 && block.holes.length === 18
+  if (hasAllHoles && csvPoints !== block.total_points) {
     findings.push({ severity: 'CONFIRMABLE', message: `CSV summa ${csvPoints}, ilmoitettu ${block.total_points}` })
   }
 
   const csvStrokes = block.holes.reduce((sum, hole) => sum + (hole.strokes_played ?? 0), 0)
-  if (csvStrokes !== block.total_strokes) {
+  const hasAllStrokes = hasAllHoles && block.holes.every(hole => hole.strokes_played !== null)
+  if (hasAllStrokes && csvStrokes !== block.total_strokes) {
     findings.push({ severity: 'CONFIRMABLE', message: `CSV lyöntisumma ${csvStrokes}, ilmoitettu ${block.total_strokes}` })
   }
 
@@ -266,7 +277,7 @@ export function validateBlock(
     findings.push({ severity: 'INFO', message: `LYÖNTIPELI-varoitus: ${block.warning}` })
   }
 
-  if (block.holes.length !== 18 || counts.size !== 18 || block.holes.some(hole => hole.strokes_played === null)) {
+  if (!hasAllHoles || block.holes.some(hole => hole.strokes_played === null)) {
     findings.push({ severity: 'INFO', message: 'Kaikilla 18 väylällä ei ole lyöntimäärää (has_complete_strokes = false)' })
   }
 

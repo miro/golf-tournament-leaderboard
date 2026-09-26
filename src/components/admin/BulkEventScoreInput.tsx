@@ -4,6 +4,7 @@ import { scoreEvent } from '../../lib/eventScoring'
 import { scopedTable } from '../../lib/leagueClient'
 import { getLeagueBrand } from '../../lib/branding'
 import { buildGameBookPrompt } from '../../lib/gamebookPrompt'
+import { isCompleteEventScore } from '../../lib/eventScoreCompleteness'
 import {
   parseBlocks,
   validateBlock,
@@ -162,21 +163,31 @@ export default function BulkEventScoreInput({ event, players, scores, courseHole
 
       try {
         const existing = scores.find(score => score.player_id === target.player_id)
+        const mergedByHole = new Map<number, NonNullable<EventScore['holes']>[number] | ParsedBlock['holes'][number]>()
+        for (const hole of existing?.holes ?? []) mergedByHole.set(hole.hole, hole)
+        for (const hole of card.block.holes) mergedByHole.set(hole.hole, hole)
+        const mergedHoles = [...mergedByHole.values()].sort((left, right) => left.hole - right.hole)
+        const mergedPoints = mergedHoles.reduce((sum, hole) => sum + (hole.points ?? 0), 0)
+        const completeImport = mergedHoles.length === 18
+          && mergedHoles.every(hole => hole.points !== null && hole.strokes_played !== null)
+        const visibleStrokes = completeImport
+          ? mergedHoles.reduce((sum, hole) => sum + (hole.strokes_played ?? 0), 0)
+          : null
         const { data: score, error: scoreError } = await scopedTable('event_scores')
           .upsert({
             ...(existing ? { id: existing.id } : {}),
             event_id: event.id,
             player_id: target.player_id,
             hcp: card.block.hcp,
-            total_points: card.block.total_points,
-            total_strokes: card.block.total_strokes,
+            total_points: mergedPoints,
+            total_strokes: visibleStrokes,
             is_corrected: Boolean(existing),
           }, { onConflict: 'event_id,player_id' })
           .select()
           .single()
         if (scoreError || !score) throw scoreError ?? new Error('Tuloskortin tallennus epäonnistui')
 
-        const holes = card.block.holes.map(hole => ({
+        const holes = mergedHoles.map(hole => ({
           event_score_id: (score as { id: string }).id,
           hole: hole.hole,
           par: hole.par,
@@ -204,9 +215,12 @@ export default function BulkEventScoreInput({ event, players, scores, courseHole
     if (publishedNames.length) {
       try {
         const latestScores = await getEventScores(event.id)
-        const allPlayersScored = players.length > 0 && players.every(player => latestScores.some(score => score.player_id === player.player_id))
+        const allPlayersComplete = players.length > 0 && players.every(player => {
+          const score = latestScores.find(candidate => candidate.player_id === player.player_id)
+          return isCompleteEventScore(score)
+        })
         const hasFailures = working.some(card => card.status === 'failed')
-        if (allPlayersScored && !hasFailures) {
+        if (allPlayersComplete && !hasFailures) {
           await scoreEvent(event.id)
           const { error } = await scopedTable('league_events').update({ status: 'results_ready' }).eq('id', event.id)
           if (error) throw error
@@ -278,7 +292,7 @@ export default function BulkEventScoreInput({ event, players, scores, courseHole
               <div key={card.key} className="rounded-lg border border-white/10 overflow-hidden">
                 <div className="flex flex-wrap items-center gap-2 border-b border-white/10 bg-black/20 px-3 py-3">
                   <span className="font-bold text-white">{target?.player.full_name ?? card.block.player}</span>
-                  <span className="text-xs text-gray-500">HCP {card.block.hcp} · {card.block.total_points}p · {card.block.total_strokes} lyöntiä</span>
+                  <span className="text-xs text-gray-500">HCP {card.block.hcp} · {card.block.holes.length}/18 reikää · {card.block.holes.reduce((sum, hole) => sum + (hole.points ?? 0), 0)}p näkyvissä{card.block.holes.length === 18 && card.block.holes.every(hole => hole.strokes_played !== null) ? ` · ${card.block.holes.reduce((sum, hole) => sum + (hole.strokes_played ?? 0), 0)} lyöntiä` : ''}</span>
                   {card.replaced && <span className="rounded bg-gc-gold/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gc-gold">korvattu</span>}
                   {card.status === 'published' && <span className="rounded bg-gc-green/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gc-green">julkaistu</span>}
                   {card.status === 'failed' && <span className="rounded bg-red-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-200">ei julkaistu</span>}

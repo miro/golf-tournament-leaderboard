@@ -20,6 +20,20 @@ Several screenshot files may be attached in the same request. Read every attache
 Authoritative event roster. The value after "player:" must be copied exactly from the identifier column below:
 ${rosterLines}
 
+GameBook name-matching aid. The name shown on a GameBook scorecard may be a short name. Use this map to match it to the authoritative roster identifier above:
+- Brukke — Miikkae
+- Jussi — Jussi
+- Kankkunen — Jesse Kankkunen
+- Lauri — Lauri
+- Nyyssönen — Niko Nyyssönen
+- Pauli — Pauli
+- Pekka — Pekka
+- Pete — Pete
+- Tatu — Tatu
+- Tero — Tero
+- Tommi — Tommi
+Only use the mapped value in `player:` when that exact identifier appears in the authoritative roster. If the match is not certain, use `player: UNKNOWN`.
+
 Return ONLY the result blocks, one after another, with no preamble, markdown code fences, explanation, or text between blocks.
 
 ---GC-RESULT---
@@ -44,9 +58,7 @@ Summary rules:
 CSV:
 hole,par,stroke_index,strokes_played,hcp_strokes,points
 1,[par],[stroke_index],[strokes],[hcp_strokes],[points]
-2,[par],[stroke_index],[strokes],[hcp_strokes],[points]
-[...all 18 holes...]
-18,[par],[stroke_index],[strokes],[hcp_strokes],[points]
+[...one row for each visible and legible hole, in hole-number order...]
 ---END---
 
 Rules for every block:
@@ -56,9 +68,11 @@ Rules for every block:
 - The roster identifier and the summary player name come from the roster list, not from an invented or corrected screenshot name.
 - IMPORTANT: the screenshot must be from the "Pistebogey NET" tab in GameBook, not "Lyöntipeli NET". If the data appears to be stroke play (no points column, or points values that look like raw strokes), add this line before ---END---:
   warning: LYÖNTIPELI — tarkista välilehti
-- to_par is calculated from RAW strokes, not handicap-adjusted strokes: total_strokes minus total course par. Negative if under par and positive if over par.
-- If any hole value is missing or illegible, write NULL for that value. strokes_played may be NULL when raw strokes are not visible.
-- CSV must have exactly 18 data rows, one per hole, in hole order from 1 through 18.
+- to_par is calculated from RAW strokes, not handicap-adjusted strokes: total_strokes minus the par for the represented holes. For a complete card this is the full course par; for a partial card it is the visible-hole subtotal. Negative if under par and positive if over par.
+- If a hole is cropped out or not present in the screenshot, omit that hole's row entirely. Never invent a row for a hole that is not visible.
+- If a visible hole value is illegible, write NULL for that value. strokes_played may be NULL when raw strokes are not visible.
+- The CSV may contain any non-empty subset of holes 1–18, in hole order. The admin will fill missing holes manually.
+- total_points, total_strokes, and to_par are the visible subtotal when the screenshot does not show all 18 holes. Do not use them to invent missing rows.
 - Do not add extra fields or change the field order.
 
 IMPORTANT DEFINITIONS:
@@ -133,11 +147,11 @@ Before returning each result block, validate the extracted data.
 4. For zero-point holes, verify:
    2 + par - hcp_strokes <= 0
 
-5. Verify that all 18 points values sum exactly to total_points shown on the scorecard.
+5. When all 18 holes are present, verify that all 18 points values sum exactly to total_points shown on the scorecard. For a partial screenshot, verify only the visible rows and treat total_points as a visible subtotal.
 
-6. Verify that all 18 strokes_played values sum exactly to total_strokes shown on the scorecard when all raw scores are visible.
+6. When all 18 raw scores are visible, verify that all 18 strokes_played values sum exactly to total_strokes shown on the scorecard. For a partial screenshot, verify only the visible rows and treat total_strokes as a visible subtotal.
 
-7. Verify:
+7. When all 18 holes are present, verify:
    to_par = total_strokes - total course par
 
 8. If any validation fails, re-read the screenshot and correct the extraction or calculation before returning the result.
