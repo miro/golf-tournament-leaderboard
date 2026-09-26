@@ -52,6 +52,16 @@ const END_MARKER = '---END---'
 const CSV_HEADER = 'hole,par,stroke_index,strokes_played,hcp_strokes,points'
 const METADATA_KEYS = new Set(['player', 'hcp', 'total_points', 'total_strokes', 'to_par', 'summary', 'warning'])
 
+// Chat UIs and smart punctuation often turn "---" into en/em dashes, so accept any
+// dash run around a marker line and rewrite it to the canonical form before parsing.
+const DASH = '[-\\u2010-\\u2015\\u2212\\uFE58\\uFE63\\uFF0D]'
+const MARKER_LINE = new RegExp(`^[ \\t]*${DASH}+[ \\t]*(GC${DASH}RESULT|END)[ \\t]*${DASH}+[ \\t\\r]*$`, 'gimu')
+
+function normalizeMarkers(text: string): string {
+  return text.replace(MARKER_LINE, (_line, name: string) =>
+    name.toUpperCase() === 'END' ? END_MARKER : START_MARKER)
+}
+
 class BlockParseError extends Error {}
 
 function normalize(value: string): string {
@@ -166,7 +176,8 @@ function parseBody(body: string, raw: string): ParsedBlock {
   }
 }
 
-export function parseBlocks(text: string): { blocks: ParsedBlock[]; parseErrors: ParseError[] } {
+export function parseBlocks(input: string): { blocks: ParsedBlock[]; parseErrors: ParseError[] } {
+  const text = normalizeMarkers(input)
   const blocks: ParsedBlock[] = []
   const parseErrors: ParseError[] = []
   const starts = [...text.matchAll(new RegExp(START_MARKER, 'g'))]

@@ -97,3 +97,20 @@ test('accepts NULL strokes and reports an incomplete stroke card', () => {
   const findings = validateBlock(parsed.blocks[0], course, players)
   assert.ok(findings.some(finding => finding.severity === 'INFO' && finding.message.includes('has_complete_strokes = false')))
 })
+
+test('accepts markers whose dashes were converted to en or em dashes', () => {
+  const block = resultBlock()
+    .replace('---GC-RESULT---', '—GC-RESULT—')
+    .replace('---END---', '–– END ––')
+    .replace(/\n/g, '\r\n')
+  const parsed = parseBlocks(block)
+  assert.equal(parsed.parseErrors.length, 0)
+  assert.equal(parsed.blocks.length, 1)
+  assert.deepEqual(validateBlock(parsed.blocks[0], course, players), [])
+})
+
+test('leaves dashes inside summary text untouched', () => {
+  const parsed = parseBlocks(resultBlock().replace('Toinen lause.', 'Reiät 16–18 — END — hyvin.'))
+  assert.equal(parsed.parseErrors.length, 0)
+  assert.match(parsed.blocks[0].summary, /16–18 — END — hyvin/)
+})
