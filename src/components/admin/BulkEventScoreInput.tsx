@@ -5,6 +5,7 @@ import { scopedTable } from '../../lib/leagueClient'
 import { getLeagueBrand } from '../../lib/branding'
 import { buildGameBookPrompt } from '../../lib/gamebookPrompt'
 import { isCompleteEventScore } from '../../lib/eventScoreCompleteness'
+import { errorMessage, upsertEventScore } from '../../lib/eventScoreWrite'
 import {
   parseBlocks,
   validateBlock,
@@ -173,22 +174,18 @@ export default function BulkEventScoreInput({ event, players, scores, courseHole
         const visibleStrokes = completeImport
           ? mergedHoles.reduce((sum, hole) => sum + (hole.strokes_played ?? 0), 0)
           : null
-        const { data: score, error: scoreError } = await scopedTable('event_scores')
-          .upsert({
-            ...(existing ? { id: existing.id } : {}),
-            event_id: event.id,
-            player_id: target.player_id,
-            hcp: card.block.hcp,
-            total_points: mergedPoints,
-            total_strokes: visibleStrokes,
-            is_corrected: Boolean(existing),
-          }, { onConflict: 'event_id,player_id' })
-          .select()
-          .single()
-        if (scoreError || !score) throw scoreError ?? new Error('Tuloskortin tallennus epäonnistui')
+        const score = await upsertEventScore({
+          ...(existing ? { id: existing.id } : {}),
+          event_id: event.id,
+          player_id: target.player_id,
+          hcp: card.block.hcp,
+          total_points: mergedPoints,
+          total_strokes: visibleStrokes,
+          is_corrected: Boolean(existing),
+        }, event.event_date)
 
         const holes = mergedHoles.map(hole => ({
-          event_score_id: (score as { id: string }).id,
+          event_score_id: score.id,
           hole: hole.hole,
           par: hole.par,
           stroke_index: hole.stroke_index,
@@ -202,7 +199,7 @@ export default function BulkEventScoreInput({ event, players, scores, courseHole
 
         working = working.map(item => item.key === card.key ? { ...item, status: 'published', publishError: undefined } : item)
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Tallennus epäonnistui'
+        const message = errorMessage(error, 'Tallennus epäonnistui')
         working = working.map(item => item.key === card.key ? { ...item, status: 'failed', publishError: message } : item)
       }
     }
@@ -227,7 +224,7 @@ export default function BulkEventScoreInput({ event, players, scores, courseHole
         }
         await onReload()
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Tulosten laskenta epäonnistui'
+        const message = errorMessage(error, 'Tulosten laskenta epäonnistui')
         setPublishSummary(previous => `${previous ?? ''} · Laskenta epäonnistui: ${message}`)
       }
     }

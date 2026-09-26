@@ -19,7 +19,8 @@ export async function scoreEvent(eventId: string) {
   for (const question of questions) {
     const resolution = resolveQuestion(question, scores, resolverPlayers)
     resolutions.set(question, resolution)
-    await scopedTable('betting_questions').update({ correct_answer: resolvedAnswer(resolution) }).eq('id', question.id)
+    const { error: questionError } = await scopedTable('betting_questions').update({ correct_answer: resolvedAnswer(resolution) }).eq('id', question.id)
+    if (questionError) throw questionError
   }
 
   const { data: bets, error } = await scopedTable('bets')
@@ -35,13 +36,15 @@ export async function scoreEvent(eventId: string) {
     const resolution = resolutions.get(question) ?? resolveQuestion(question, scores, resolverPlayers)
     const awarded = scoreAnswer(question, bet.answer, resolution)
     totals.set(bet.participant_id, (totals.get(bet.participant_id) ?? 0) + awarded)
-    await scopedTable('bets')
+    const { error: betError } = await scopedTable('bets')
       .update({ points_awarded: awarded, points_breakdown: { correct: resolvedAnswer(resolution), awarded } })
       .eq('id', bet.id)
+    if (betError) throw betError
   }
   for (const participant of participants) {
-    await scopedTable('betting_participants')
+    const { error: participantError } = await scopedTable('betting_participants')
       .update({ total_points_awarded: totals.get(participant.id) ?? 0 })
       .eq('id', participant.id)
+    if (participantError) throw participantError
   }
 }

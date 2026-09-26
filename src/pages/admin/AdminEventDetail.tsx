@@ -16,6 +16,7 @@ import {
   type EventScore,
 } from '../../lib/eventQueries'
 import { isCompleteEventScore } from '../../lib/eventScoreCompleteness'
+import { errorMessage, upsertEventScore } from '../../lib/eventScoreWrite'
 import { scoreEvent } from '../../lib/eventScoring'
 import BulkEventScoreInput from '../../components/admin/BulkEventScoreInput'
 import EventResolutionStatus from '../../components/admin/EventResolutionStatus'
@@ -196,21 +197,15 @@ export default function AdminEventDetail() {
 
     setBusy(true)
     try {
-      const scoreValues = {
+      const { id: scoreId } = await upsertEventScore({
+        ...(existing ? { id: existing.id } : {}),
         event_id: currentEvent.id,
         player_id: selectedPlayer,
         hcp: existing?.hcp ?? null,
         total_points: totalPoints,
         total_strokes: totalStrokes,
         is_corrected: Boolean(existing),
-      }
-      const scoreQuery = existing
-        ? scopedTable('event_scores').update(scoreValues).eq('id', existing.id)
-        : scopedTable('event_scores').insert(scoreValues)
-      const { data, error } = await scoreQuery.select().single()
-      if (error || !data) throw error ?? new Error('Tuloskortin tallennus epäonnistui')
-
-      const scoreId = (data as { id: string }).id
+      }, currentEvent.event_date)
       const { error: holesError } = await scopedTable('event_hole_results').upsert(
         rows.map(row => ({ event_score_id: scoreId, ...row })),
         { onConflict: 'event_score_id,hole' },
@@ -232,7 +227,7 @@ export default function AdminEventDetail() {
       }
       await reload()
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Tallennus epäonnistui')
+      setMessage(errorMessage(error, 'Tallennus epäonnistui'))
     } finally {
       setBusy(false)
     }

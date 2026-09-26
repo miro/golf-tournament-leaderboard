@@ -7,6 +7,8 @@ export function getActiveLeagueId(): string {
   return activeLeagueId
 }
 
+const EMBED_SCOPED = new Set(['season_courses', 'hole_results', 'league_event_players', 'betting_questions', 'betting_participants', 'event_scores', 'event_hole_results', 'bets'])
+
 export function leagueQuery(table: string, leagueId: string) {
   const base = (supabase.from(table) as any)
   const applyScope = (query: any) => {
@@ -34,8 +36,10 @@ export function leagueQuery(table: string, leagueId: string) {
       const addLeague = (value: any) => ({ ...value, league_id: value?.league_id ?? leagueId })
       return applyScope(base.upsert(Array.isArray(values) ? values.map(addLeague) : addLeague(values), options))
     },
-    update(values: any) { return applyScope(base.update(values)) },
-    delete() { return applyScope(base.delete()) },
+    // Child tables are scoped through an embedded resource, which PostgREST rejects on writes
+    // without a matching select embed. Callers filter these by id, and RLS enforces the league.
+    update(values: any) { return EMBED_SCOPED.has(table) ? base.update(values) : applyScope(base.update(values)) },
+    delete() { return EMBED_SCOPED.has(table) ? base.delete() : applyScope(base.delete()) },
   }
 }
 
